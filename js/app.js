@@ -1,390 +1,82 @@
 "use strict";
 (() => {
   const CARNET_URL = "https://carnetentrainementv2.vercel.app/";
-  const STORAGE_KEY = "chronoCarnetEPS_v1";
+  const STORAGE_KEY = "chronoCarnetEPS_v2";
   const $ = (id) => document.getElementById(id);
   const nowMs = () => performance.now();
-
-  const state = loadState();
   let rafId = null;
 
   function baseState() {
-    return {
-      started: false,
-      running: false,
-      startedAt: 0,
-      accumulatedMs: 0,
-      runners: [],
-      results: [],
-      sessionLabel: "Séance chrono"
-    };
+    return {started:false,running:false,startedAt:0,accumulatedMs:0,runners:[],results:[],sessionLabel:"Séance chrono",totalDistance:1000,splitDistance:100,displayMode:"both",targetMs:null};
   }
+  function loadState(){try{const raw=localStorage.getItem(STORAGE_KEY)||localStorage.getItem("chronoCarnetEPS_v1");if(!raw)return baseState();const p=JSON.parse(raw);return {...baseState(),...p,running:false,startedAt:0,runners:Array.isArray(p.runners)?p.runners:[],results:Array.isArray(p.results)?p.results:[]};}catch{return baseState();}}
+  const state=loadState();
+  function saveState(){localStorage.setItem(STORAGE_KEY,JSON.stringify({...state,running:false,startedAt:0}));}
+  function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+  function elapsedMs(){return state.accumulatedMs+(state.running?nowMs()-state.startedAt:0);}
+  function formatTime(ms){ms=Math.max(0,Math.round(ms||0));const cs=Math.floor((ms%1000)/10),s=Math.floor(ms/1000)%60,m=Math.floor(ms/60000)%60,h=Math.floor(ms/3600000);return h>0?`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}.${String(cs).padStart(2,"0")}`:`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}.${String(cs).padStart(2,"0")}`;}
+  function parseTarget(v){if(!v.trim())return null;const a=v.trim().replace(",",".").split(":").map(Number);if(a.some(Number.isNaN))return null;let sec=a.length===1?a[0]:a.length===2?a[0]*60+a[1]:a[0]*3600+a[1]*60+a[2];return sec>0?sec*1000:null;}
+  function fmtSpeed(distance,ms){return ms>0?(distance/(ms/1000)*3.6).toFixed(1):"—";}
+  function signedMs(ms){if(ms==null)return"—";const sign=ms>0?"+":ms<0?"−":"±";return `${sign}${formatTime(Math.abs(ms))}`;}
+  function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+  function showToast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>t.hidden=true,2200);}
+  function totalSplits(){return Math.floor(state.totalDistance/state.splitDistance);}
+  function configValid(){return state.totalDistance>0&&state.splitDistance>0&&state.totalDistance%state.splitDistance===0;}
+  function runnerResults(id){return state.results.filter(r=>r.runnerId===id);}
+  function isFinished(id){return runnerResults(id).length>=totalSplits();}
 
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return baseState();
-      const parsed = JSON.parse(raw);
-      return {
-        ...baseState(),
-        ...parsed,
-        running: false,
-        startedAt: 0,
-        runners: Array.isArray(parsed.runners) ? parsed.runners : [],
-        results: Array.isArray(parsed.results) ? parsed.results : []
-      };
-    } catch {
-      return baseState();
-    }
+  function readConfig(){
+    const td=$("totalDistance").value,sd=$("splitDistance").value;
+    state.totalDistance=td==="custom"?Math.max(1,Number($("customDistance").value)||0):Number(td);
+    state.splitDistance=sd==="custom"?Math.max(1,Number($("customSplit").value)||0):Number(sd);
+    state.displayMode=$("displayMode").value;
+    state.targetMs=parseTarget($("targetTime").value);
+    saveState();renderConfig();renderRunners();renderResults();renderStats();
   }
-
-  function saveState() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      ...state,
-      running: false,
-      startedAt: 0
-    }));
+  function syncConfigInputs(){
+    const totals=[200,400,600,800,1000,1200,1500,2000,3000],splits=[50,100,150,200,250,400];
+    $("totalDistance").value=totals.includes(state.totalDistance)?String(state.totalDistance):"custom";$("customDistance").value=state.totalDistance;$("customDistanceWrap").classList.toggle("hidden",$("totalDistance").value!=="custom");
+    $("splitDistance").value=splits.includes(state.splitDistance)?String(state.splitDistance):"custom";$("customSplit").value=state.splitDistance;$("customSplitWrap").classList.toggle("hidden",$("splitDistance").value!=="custom");
+    $("displayMode").value=state.displayMode;$("targetTime").value=state.targetMs?formatTime(state.targetMs):"";
   }
-
-  function uid() {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  function renderConfig(){
+    const ok=configValid(),n=ok?totalSplits():0;$("configState").className=`configState ${ok?"ok":"warn"}`;$("configState").textContent=ok?"Configuration valide":"À corriger";
+    $("configMessage").textContent=ok?"":`${state.totalDistance} m n’est pas divisible par ${state.splitDistance} m. Choisis un intervalle cohérent.`;
+    $("plannedSplits").textContent=ok?`${n} passage${n>1?"s":""} prévu${n>1?"s":""}`:"Configuration incohérente";
+    $("targetSummary").textContent=state.targetMs?`Cible ${formatTime(state.targetMs)} · ${formatTime(state.targetMs/n)} / ${state.splitDistance} m`:"Sans temps cible";
   }
+  function renderTimer(){$("mainTime").textContent=formatTime(elapsedMs());$("startBtn").textContent=state.running?"En cours…":state.started?"Reprendre":"Démarrer";$("startBtn").disabled=state.running||!configValid();$("pauseBtn").disabled=!state.running;const p=$("statusPill");p.className=`statusPill ${state.running?"running":state.started?"paused":"idle"}`;p.textContent=state.running?"En cours":state.started?"En pause":"Prêt";}
+  function tick(){renderTimer();rafId=requestAnimationFrame(tick);}
+  function startTimer(){if(state.running||!configValid())return;state.started=true;state.running=true;state.startedAt=nowMs();renderTimer();}
+  function pauseTimer(){if(!state.running)return;state.accumulatedMs+=nowMs()-state.startedAt;state.startedAt=0;state.running=false;saveState();renderTimer();}
+  function resetTimer(){if(state.results.length&&!confirm("Remettre le chrono à zéro ? Les passages restent enregistrés."))return;state.started=false;state.running=false;state.startedAt=0;state.accumulatedMs=0;saveState();renderTimer();}
 
-  function elapsedMs() {
-    return state.accumulatedMs + (state.running ? nowMs() - state.startedAt : 0);
+  function addRunner(){const i=$("runnerName"),name=i.value.trim();if(!name)return;state.runners.push({id:uid(),name});i.value="";saveState();renderRunners();}
+  function clearRunners(){if(!state.runners.length)return;if(!confirm("Supprimer tous les coureurs et résultats ?"))return;state.runners=[];state.results=[];saveState();renderAll();}
+  function lastMetrics(id){const rr=runnerResults(id);if(!rr.length)return null;const last=rr[rr.length-1],prev=rr.length>1?rr[rr.length-2]:null;return {last,delta:prev?last.lapMs-prev.lapMs:null};}
+  function renderRunners(){
+    const g=$("runnersGrid");if(!state.runners.length){g.innerHTML='<div class="empty compact">Ajoute au moins un coureur.</div>';return;}
+    const n=configValid()?totalSplits():0;
+    g.innerHTML=state.runners.map(r=>{const rr=runnerResults(r.id),done=n&&rr.length>=n,m=lastMetrics(r.id),remaining=Math.max(0,state.totalDistance-rr.length*state.splitDistance);const display=m?(state.displayMode==="lap"?`Tour ${formatTime(m.last.lapMs)}`:state.displayMode==="cumulative"?`Cumul ${formatTime(m.last.cumulativeMs)}`:`Tour ${formatTime(m.last.lapMs)} · Cumul ${formatTime(m.last.cumulativeMs)}`):"Aucun passage";return `<button class="runnerCard ${done?"done":""}" data-runner="${r.id}" ${done?"disabled":""}><span class="runnerName">${escapeHtml(r.name)}</span><span class="runnerMeta">${rr.length}/${n||"?"} passages · ${remaining} m restants</span><div class="runnerMetrics"><span class="metric">${display}</span>${m?`<span class="metric ${m.delta!=null?(m.delta<0?"good":"warn"):""}">${fmtSpeed(state.splitDistance,m.last.lapMs)} km/h</span>`:""}</div><span class="runnerTap">${done?"Terminé":"Enregistrer passage"}</span></button>`;}).join("");
+    g.querySelectorAll("[data-runner]").forEach(b=>b.addEventListener("click",()=>recordPassage(b.dataset.runner)));
   }
+  function recordPassage(id){if(!configValid())return showToast("Corrige d’abord la configuration.");const runner=state.runners.find(r=>r.id===id);if(!runner||isFinished(id))return;if(!state.started)startTimer();const cumulativeMs=elapsedMs(),rr=runnerResults(id),previous=rr.length?rr[rr.length-1].cumulativeMs:0,lapMs=cumulativeMs-previous,passage=rr.length+1,distance=passage*state.splitDistance,lapSpeed=Number(fmtSpeed(state.splitDistance,lapMs)),prevLap=rr.length?rr[rr.length-1].lapMs:null,deltaMs=prevLap!=null?lapMs-prevLap:null,targetCumulative=state.targetMs?state.targetMs*(distance/state.totalDistance):null,targetDelta=targetCumulative!=null?cumulativeMs-targetCumulative:null;state.results.push({id:uid(),runnerId:id,runnerName:runner.name,passage,distance,cumulativeMs,lapMs,lapSpeed,deltaMs,targetDelta,recordedAt:Date.now()});saveState();renderRunners();renderResults();renderStats();if(navigator.vibrate)navigator.vibrate(18);}
+  function undoLast(){if(!state.results.length)return showToast("Aucun passage à annuler.");state.results.pop();saveState();renderRunners();renderResults();renderStats();showToast("Dernier passage annulé.");}
+  function renderResults(){const empty=$("resultsEmpty"),table=$("resultsTable"),body=$("resultsBody");if(!state.results.length){empty.hidden=false;table.classList.add("hidden");body.innerHTML="";return;}empty.hidden=true;table.classList.remove("hidden");body.innerHTML=state.results.map((r,i)=>`<tr><td>${i+1}</td><td><strong>${escapeHtml(r.runnerName)}</strong></td><td>${r.distance} m</td><td><strong>${formatTime(r.lapMs)}</strong></td><td>${formatTime(r.cumulativeMs)}</td><td>${fmtSpeed(state.splitDistance,r.lapMs)} km/h</td><td class="${r.deltaMs==null?"deltaNeutral":r.deltaMs<0?"deltaGood":"deltaBad"}">${signedMs(r.deltaMs)}</td><td class="${r.targetDelta==null?"deltaNeutral":r.targetDelta<=0?"deltaGood":"deltaBad"}">${signedMs(r.targetDelta)}</td></tr>`).join("");}
+  function statsFor(id){const rr=runnerResults(id);if(!rr.length)return null;const laps=rr.map(r=>r.lapMs),total=rr[rr.length-1].cumulativeMs,covered=rr[rr.length-1].distance,avgSpeed=fmtSpeed(covered,total),best=Math.min(...laps),worst=Math.max(...laps),mean=laps.reduce((a,b)=>a+b,0)/laps.length,sd=Math.sqrt(laps.reduce((s,x)=>s+(x-mean)**2,0)/laps.length),regularity=mean?Math.max(0,100-(sd/mean*100)):100;return {total,covered,avgSpeed,best,worst,spread:worst-best,regularity};}
+  function renderStats(){const g=$("statsGrid");const cards=state.runners.map(r=>{const s=statsFor(r.id);if(!s)return"";return `<div class="statCard"><h3>${escapeHtml(r.name)}</h3><div class="statRow"><span>Distance</span><strong>${s.covered}/${state.totalDistance} m</strong></div><div class="statRow"><span>Temps</span><strong>${formatTime(s.total)}</strong></div><div class="statRow"><span>Vitesse moyenne</span><strong>${s.avgSpeed} km/h</strong></div><div class="statRow"><span>Meilleur segment</span><strong>${formatTime(s.best)}</strong></div><div class="statRow"><span>Plus lent</span><strong>${formatTime(s.worst)}</strong></div><div class="statRow"><span>Écart meilleur/pire</span><strong>${formatTime(s.spread)}</strong></div><div class="statRow"><span>Régularité</span><strong>${s.regularity.toFixed(1)} %</strong></div></div>`;}).join("");g.innerHTML=cards||'<div class="empty compact">Le bilan apparaîtra après les premiers passages.</div>';}
 
-  function formatTime(ms) {
-    ms = Math.max(0, Math.round(ms));
-    const cs = Math.floor((ms % 1000) / 10);
-    const totalSeconds = Math.floor(ms / 1000);
-    const seconds = totalSeconds % 60;
-    const minutes = Math.floor(totalSeconds / 60) % 60;
-    const hours = Math.floor(totalSeconds / 3600);
-    if (hours > 0) {
-      return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(cs).padStart(2, "0")}`;
-    }
-    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(cs).padStart(2, "0")}`;
+  function buildCarnetContent(){const groups=state.runners.map(r=>({runner:r,results:runnerResults(r.id),stats:statsFor(r.id)})).filter(g=>g.results.length);const title=`Résultats chrono · ${state.totalDistance} m · relevé tous les ${state.splitDistance} m`;const rows=groups.flatMap(({runner,results})=>results.map((r,idx)=>`<tr style="background-color:${idx%2===0?"#f8fafc":"#ffffff"}"><td style="padding:8px 10px;border:1px solid #e2e8f0;text-align:left;font-weight:${idx===0?"bold":"normal"}">${escapeHtml(runner.name)}</td><td style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center">${r.distance} m</td><td style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:bold;color:#15803d">${formatTime(r.lapMs)}</td><td style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center">${formatTime(r.cumulativeMs)}</td><td style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center">${fmtSpeed(state.splitDistance,r.lapMs)} km/h</td><td style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center;color:${r.deltaMs!=null&&r.deltaMs<0?"#15803d":"#92400e"}">${signedMs(r.deltaMs)}</td></tr>`)).join("");const summaries=groups.map(({runner,stats})=>`<p><strong style="color:#3730a3">${escapeHtml(runner.name)} :</strong> ${stats.covered} m · ${formatTime(stats.total)} · ${stats.avgSpeed} km/h de moyenne · régularité ${stats.regularity.toFixed(1)} %</p>`).join("");const html=`<h3 style="color:#4338ca;font-size:20px">${escapeHtml(title)}</h3><p><strong>Distance totale :</strong> ${state.totalDistance} m · <strong>Relevé :</strong> ${state.splitDistance} m</p>${state.targetMs?`<p><strong>Objectif :</strong> ${formatTime(state.targetMs)}</p>`:""}<hr style="border:1px solid #e2e8f0"><table style="border-collapse:collapse;width:100%;max-width:900px"><thead><tr>${["Élève","Distance","Tour","Cumul","Vitesse","Écart"].map(h=>`<th style="background:linear-gradient(90deg,#4f46e5,#3b82f6);color:#ffffff;padding:8px 10px;text-align:center;border:1px solid #4338ca;font-weight:bold">${h}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table><hr style="border:1px solid #e2e8f0">${summaries}`;const text=[title,`Distance totale : ${state.totalDistance} m`,`Relevé : ${state.splitDistance} m`,state.targetMs?`Objectif : ${formatTime(state.targetMs)}`:"",...groups.flatMap(({runner,results,stats})=>["",runner.name,...results.map(r=>`${r.distance} m — tour ${formatTime(r.lapMs)} — cumul ${formatTime(r.cumulativeMs)} — ${fmtSpeed(state.splitDistance,r.lapMs)} km/h — écart ${signedMs(r.deltaMs)}`),`Bilan — ${formatTime(stats.total)} — ${stats.avgSpeed} km/h — régularité ${stats.regularity.toFixed(1)} %`])].filter(Boolean).join("\n");return {html,text};}
+  function copyToClipboard(html,text){function h(e){e.clipboardData.setData("text/plain",text);e.clipboardData.setData("text/html",`<!--CARNET_RESULTS_V1-->${html}`);e.preventDefault();}document.addEventListener("copy",h);const ok=document.execCommand("copy");document.removeEventListener("copy",h);return ok;}
+  async function openCarnet(){if(!state.results.length)return showToast("Aucun résultat à copier.");const {html,text}=buildCarnetContent();let ok=copyToClipboard(html,text);if(!ok){try{await navigator.clipboard.writeText(text);ok=true;}catch{}}$("carnetDialog").close();if(ok)showToast("Résultats copiés.");window.open(CARNET_URL,"_blank");}
+  function exportToFile(html,text,label){const payload={format:"carnet-contenu-externe",version:1,generatedAt:new Date().toISOString(),html,text};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`carnet-${label}-${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+  function saveForLater(){if(!state.results.length)return showToast("Aucun résultat à enregistrer.");const {html,text}=buildCarnetContent();exportToFile(html,text,"resultats-chrono");$("carnetDialog").close();showToast("Fichier enregistré.");}
+  function openCarnetDialog(){if(!state.results.length)return showToast("Enregistre au moins un passage.");$("carnetDialog").showModal();}
+  function newSession(){if((state.runners.length||state.results.length)&&!confirm("Créer une nouvelle séance ? Les données actuelles seront effacées."))return;Object.assign(state,baseState());syncConfigInputs();saveState();renderAll();}
+  function renderAll(){renderConfig();renderTimer();renderRunners();renderResults();renderStats();}
+  function bind(){
+    $("startBtn").addEventListener("click",startTimer);$("pauseBtn").addEventListener("click",pauseTimer);$("resetBtn").addEventListener("click",resetTimer);$("addRunnerBtn").addEventListener("click",addRunner);$("runnerName").addEventListener("keydown",e=>{if(e.key==="Enter")addRunner();});$("clearRunnersBtn").addEventListener("click",clearRunners);$("undoBtn").addEventListener("click",undoLast);$("carnetBtn").addEventListener("click",openCarnetDialog);$("openCarnetBtn").addEventListener("click",openCarnet);$("saveLaterBtn").addEventListener("click",saveForLater);$("newSessionBtn").addEventListener("click",newSession);
+    ["totalDistance","customDistance","splitDistance","customSplit","displayMode","targetTime"].forEach(id=>$(id).addEventListener(id.includes("Distance")||id.includes("Split")?"input":"change",()=>{if(id==="totalDistance")$("customDistanceWrap").classList.toggle("hidden",$(id).value!=="custom");if(id==="splitDistance")$("customSplitWrap").classList.toggle("hidden",$(id).value!=="custom");readConfig();}));
   }
-
-  function formatDateTime(ts) {
-    return new Intl.DateTimeFormat("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    }).format(new Date(ts));
-  }
-
-  function escapeHtml(value) {
-    return String(value ?? "").replace(/[&<>"']/g, (char) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    }[char]));
-  }
-
-  function showToast(message) {
-    const toast = $("toast");
-    toast.textContent = message;
-    toast.hidden = false;
-    clearTimeout(showToast.timer);
-    showToast.timer = setTimeout(() => {
-      toast.hidden = true;
-    }, 2200);
-  }
-
-  function renderTimer() {
-    $("mainTime").textContent = formatTime(elapsedMs());
-    $("startBtn").textContent = state.running ? "En cours…" : (state.started ? "Reprendre" : "Démarrer");
-    $("startBtn").disabled = state.running;
-    $("pauseBtn").disabled = !state.running;
-    const pill = $("statusPill");
-    pill.className = `statusPill ${state.running ? "running" : state.started ? "paused" : "idle"}`;
-    pill.textContent = state.running ? "En cours" : state.started ? "En pause" : "Prêt";
-  }
-
-  function tick() {
-    renderTimer();
-    rafId = requestAnimationFrame(tick);
-  }
-
-  function startTimer() {
-    if (state.running) return;
-    state.started = true;
-    state.running = true;
-    state.startedAt = nowMs();
-    renderTimer();
-  }
-
-  function pauseTimer() {
-    if (!state.running) return;
-    state.accumulatedMs += nowMs() - state.startedAt;
-    state.startedAt = 0;
-    state.running = false;
-    saveState();
-    renderTimer();
-  }
-
-  function resetTimer() {
-    if (state.results.length && !confirm("Remettre le chrono à zéro ? Les passages déjà enregistrés restent conservés.")) return;
-    state.started = false;
-    state.running = false;
-    state.startedAt = 0;
-    state.accumulatedMs = 0;
-    saveState();
-    renderTimer();
-  }
-
-  function renderRunners() {
-    const grid = $("runnersGrid");
-    if (!state.runners.length) {
-      grid.innerHTML = '<div class="empty compact">Ajoute au moins un coureur.</div>';
-      return;
-    }
-    grid.innerHTML = state.runners.map((runner) => {
-      const count = state.results.filter((r) => r.runnerId === runner.id).length;
-      const last = [...state.results].reverse().find((r) => r.runnerId === runner.id);
-      return `
-        <button class="runnerCard" data-runner="${runner.id}">
-          <span class="runnerName">${escapeHtml(runner.name)}</span>
-          <span class="runnerMeta">${count} passage${count > 1 ? "s" : ""}${last ? ` · ${formatTime(last.cumulativeMs)}` : ""}</span>
-          <span class="runnerTap">Enregistrer passage</span>
-        </button>`;
-    }).join("");
-
-    grid.querySelectorAll("[data-runner]").forEach((button) => {
-      button.addEventListener("click", () => recordPassage(button.dataset.runner));
-    });
-  }
-
-  function addRunner() {
-    const input = $("runnerName");
-    const name = input.value.trim();
-    if (!name) return;
-    state.runners.push({ id: uid(), name });
-    input.value = "";
-    saveState();
-    renderRunners();
-  }
-
-  function clearRunners() {
-    if (!state.runners.length) return;
-    if (!confirm("Supprimer tous les coureurs de cette séance ?")) return;
-    state.runners = [];
-    state.results = [];
-    saveState();
-    renderAll();
-  }
-
-  function recordPassage(runnerId) {
-    const runner = state.runners.find((r) => r.id === runnerId);
-    if (!runner) return;
-    if (!state.started) startTimer();
-    const cumulativeMs = elapsedMs();
-    const runnerResults = state.results.filter((r) => r.runnerId === runnerId);
-    const previous = runnerResults.length ? runnerResults[runnerResults.length - 1].cumulativeMs : 0;
-    const lapMs = cumulativeMs - previous;
-    state.results.push({
-      id: uid(),
-      runnerId,
-      runnerName: runner.name,
-      passage: runnerResults.length + 1,
-      cumulativeMs,
-      lapMs,
-      recordedAt: Date.now()
-    });
-    saveState();
-    renderRunners();
-    renderResults();
-    if (navigator.vibrate) navigator.vibrate(18);
-  }
-
-  function undoLast() {
-    if (!state.results.length) return showToast("Aucun passage à annuler.");
-    state.results.pop();
-    saveState();
-    renderRunners();
-    renderResults();
-    showToast("Dernier passage annulé.");
-  }
-
-  function renderResults() {
-    const empty = $("resultsEmpty");
-    const table = $("resultsTable");
-    const body = $("resultsBody");
-    if (!state.results.length) {
-      empty.hidden = false;
-      table.classList.add("hidden");
-      body.innerHTML = "";
-      return;
-    }
-    empty.hidden = true;
-    table.classList.remove("hidden");
-    body.innerHTML = state.results.map((result, index) => `
-      <tr>
-        <td>${index + 1}</td>
-        <td><strong>${escapeHtml(result.runnerName)}</strong></td>
-        <td>${result.passage}</td>
-        <td>${formatTime(result.cumulativeMs)}</td>
-        <td><strong>${formatTime(result.lapMs)}</strong></td>
-      </tr>`).join("");
-  }
-
-  function buildCarnetContent() {
-    const generated = new Date();
-    const groups = state.runners.map((runner) => ({
-      runner,
-      results: state.results.filter((r) => r.runnerId === runner.id)
-    })).filter((group) => group.results.length);
-
-    const title = `Résultats chronométrés · ${generated.toLocaleDateString("fr-FR")}`;
-    const rows = groups.flatMap(({ runner, results }, runnerIndex) => results.map((result, idx) => {
-      const zebra = runnerIndex % 2 === 0 ? "#f8fafc" : "#ffffff";
-      return `<tr style="background-color:${zebra}">
-        <td style="padding:8px 10px;border:1px solid #e2e8f0;text-align:left;font-weight:${idx === 0 ? "bold" : "normal"}">${escapeHtml(runner.name)}</td>
-        <td style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center">${result.passage}</td>
-        <td style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center">${formatTime(result.cumulativeMs)}</td>
-        <td style="padding:8px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:bold;color:#15803d">${formatTime(result.lapMs)}</td>
-      </tr>`;
-    })).join("");
-
-    const html = `
-<h3 style="color:#4338ca;font-size:20px">${escapeHtml(title)}</h3>
-<p><strong style="color:#0f172a">Séance :</strong> ${escapeHtml(state.sessionLabel)}</p>
-<p><strong style="color:#0f172a">Chrono au moment de l’export :</strong> <span style="font-weight:bold;color:#15803d">${formatTime(elapsedMs())}</span></p>
-<hr style="border:1px solid #e2e8f0">
-<table style="border-collapse:collapse;width:100%;max-width:760px">
-  <thead>
-    <tr>
-      <th style="background:linear-gradient(90deg,#4f46e5,#3b82f6);color:#ffffff;padding:8px 10px;text-align:left;border:1px solid #4338ca;font-weight:bold">Élève</th>
-      <th style="background:linear-gradient(90deg,#4f46e5,#3b82f6);color:#ffffff;padding:8px 10px;text-align:center;border:1px solid #4338ca;font-weight:bold">Passage</th>
-      <th style="background:linear-gradient(90deg,#4f46e5,#3b82f6);color:#ffffff;padding:8px 10px;text-align:center;border:1px solid #4338ca;font-weight:bold">Temps cumulé</th>
-      <th style="background:linear-gradient(90deg,#4f46e5,#3b82f6);color:#ffffff;padding:8px 10px;text-align:center;border:1px solid #4338ca;font-weight:bold">Tour</th>
-    </tr>
-  </thead>
-  <tbody>${rows}</tbody>
-</table>
-<p><small style="color:#64748b">Exporté depuis Chrono Carnet EPS le ${escapeHtml(formatDateTime(generated.getTime()))}.</small></p>`.trim();
-
-    const textLines = [
-      title,
-      `Séance : ${state.sessionLabel}`,
-      `Chrono au moment de l’export : ${formatTime(elapsedMs())}`,
-      ""
-    ];
-    groups.forEach(({ runner, results }) => {
-      textLines.push(runner.name);
-      results.forEach((result) => {
-        textLines.push(`Passage ${result.passage} — cumulé ${formatTime(result.cumulativeMs)} — tour ${formatTime(result.lapMs)}`);
-      });
-      textLines.push("");
-    });
-    return { html, text: textLines.join("\n").trim() };
-  }
-
-  function copyToClipboard(html, text) {
-    function handler(event) {
-      event.clipboardData.setData("text/plain", text);
-      event.clipboardData.setData("text/html", `<!--CARNET_RESULTS_V1-->${html}`);
-      event.preventDefault();
-    }
-    document.addEventListener("copy", handler);
-    const ok = document.execCommand("copy");
-    document.removeEventListener("copy", handler);
-    return ok;
-  }
-
-  async function openCarnet() {
-    if (!state.results.length) return showToast("Aucun résultat à copier.");
-    const { html, text } = buildCarnetContent();
-    let ok = copyToClipboard(html, text);
-    if (!ok) {
-      try {
-        await navigator.clipboard.writeText(text);
-        ok = true;
-      } catch {}
-    }
-    $("carnetDialog").close();
-    if (ok) showToast("Résultats copiés. Ouvre un champ du Carnet puis touche Coller.");
-    window.open(CARNET_URL, "_blank");
-  }
-
-  function exportToFile(html, text, label) {
-    const payload = {
-      format: "carnet-contenu-externe",
-      version: 1,
-      generatedAt: new Date().toISOString(),
-      html,
-      text
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const safeLabel = (label || "contenu").replace(/[^a-z0-9-]+/gi, "-");
-    const fileName = `carnet-${safeLabel}-${new Date().toISOString().slice(0, 10)}.json`;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
-  function saveForLater() {
-    if (!state.results.length) return showToast("Aucun résultat à enregistrer.");
-    const { html, text } = buildCarnetContent();
-    exportToFile(html, text, "resultats-chrono");
-    $("carnetDialog").close();
-    showToast("Fichier enregistré. Importe-le plus tard dans le Carnet.");
-  }
-
-  function openCarnetDialog() {
-    if (!state.results.length) return showToast("Enregistre au moins un passage.");
-    $("carnetDialog").showModal();
-  }
-
-  function newSession() {
-    if ((state.runners.length || state.results.length) && !confirm("Créer une nouvelle séance ? Les données actuelles seront effacées.")) return;
-    Object.assign(state, baseState());
-    saveState();
-    renderAll();
-  }
-
-  function renderAll() {
-    renderTimer();
-    renderRunners();
-    renderResults();
-  }
-
-  function bind() {
-    $("startBtn").addEventListener("click", startTimer);
-    $("pauseBtn").addEventListener("click", pauseTimer);
-    $("resetBtn").addEventListener("click", resetTimer);
-    $("addRunnerBtn").addEventListener("click", addRunner);
-    $("runnerName").addEventListener("keydown", (event) => {
-      if (event.key === "Enter") addRunner();
-    });
-    $("clearRunnersBtn").addEventListener("click", clearRunners);
-    $("undoBtn").addEventListener("click", undoLast);
-    $("carnetBtn").addEventListener("click", openCarnetDialog);
-    $("openCarnetBtn").addEventListener("click", openCarnet);
-    $("saveLaterBtn").addEventListener("click", saveForLater);
-    $("newSessionBtn").addEventListener("click", newSession);
-    window.addEventListener("beforeunload", () => {
-      if (state.running) {
-        state.accumulatedMs += nowMs() - state.startedAt;
-        state.startedAt = 0;
-        state.running = false;
-      }
-      saveState();
-    });
-  }
-
-  bind();
-  renderAll();
-  tick();
+  syncConfigInputs();bind();renderAll();tick();window.addEventListener("pagehide",()=>{cancelAnimationFrame(rafId);saveState();});
 })();
