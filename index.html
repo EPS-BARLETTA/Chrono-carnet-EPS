@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/css/app.css?v=1.0.0">
+  <title>Chrono Carnet EPS</title>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">EPS · iPad</p>
+        <h1>Chrono Carnet</h1>
+        <p class="subtitle">Prendre les temps, garder les passages, transférer au Carnet.</p>
+      </div>
+      <button id="newSessionBtn" class="btn ghost">Nouvelle séance</button>
+    </header>
+
+    <main>
+      <section class="timerCard">
+        <div class="timerTop">
+          <div>
+            <span class="label">Chronomètre</span>
+            <div id="mainTime" class="mainTime">00:00.00</div>
+          </div>
+          <div id="statusPill" class="statusPill idle">Prêt</div>
+        </div>
+        <div class="timerActions">
+          <button id="startBtn" class="btn primary big">Démarrer</button>
+          <button id="pauseBtn" class="btn soft big" disabled>Pause</button>
+          <button id="resetBtn" class="btn soft big">Remettre à zéro</button>
+        </div>
+      </section>
+
+      <section class="card setupCard">
+        <div class="sectionHead">
+          <div><h2>Coureurs</h2><p>Ajoute les élèves puis touche leur carte à chaque passage.</p></div>
+          <button id="clearRunnersBtn" class="btn tiny ghost">Vider</button>
+        </div>
+        <div class="addRunner">
+          <input id="runnerName" type="text" inputmode="text" autocomplete="off" placeholder="Prénom / Nom">
+          <button id="addRunnerBtn" class="btn primary">Ajouter</button>
+        </div>
+        <div id="runnersGrid" class="runnersGrid"></div>
+      </section>
+
+      <section class="card resultsCard">
+        <div class="sectionHead">
+          <div><h2>Résultats</h2><p>Chaque appui enregistre un passage avec temps cumulé et temps du tour.</p></div>
+          <button id="undoBtn" class="btn tiny soft">Annuler le dernier</button>
+        </div>
+        <div id="resultsEmpty" class="empty">Aucun passage enregistré.</div>
+        <div class="tableWrap"><table id="resultsTable" class="resultsTable hidden"><thead><tr><th>#</th><th>Élève</th><th>Passage</th><th>Temps cumulé</th><th>Tour</th></tr></thead><tbody id="resultsBody"></tbody></table></div>
+      </section>
+
+      <section class="card exportCard">
+        <div class="sectionHead"><div><h2>Vers le Carnet</h2><p>Le même contenu est utilisé pour le copier-coller et pour l’export JSON.</p></div></div>
+        <button id="carnetBtn" class="btn carnet full">Copier les résultats vers le Carnet</button>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="carnetDialog" class="choiceDialog">
+    <form method="dialog" class="dialogPanel">
+      <h3>Comment récupérer ces résultats ?</h3>
+      <p>Choisis la méthode adaptée à l’élève.</p>
+      <button id="openCarnetBtn" type="button" class="choiceBtn"><strong>📱 J’ai ma tablette</strong><span>Copier les résultats et ouvrir mon carnet</span></button>
+      <button id="saveLaterBtn" type="button" class="choiceBtn"><strong>💾 Je n’ai pas ma tablette</strong><span>Enregistrer un fichier à importer plus tard</span></button>
+      <button value="cancel" class="btn soft full">Annuler</button>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="/js/app.js?v=1.0.0"></script>
+</body>
+</html>
