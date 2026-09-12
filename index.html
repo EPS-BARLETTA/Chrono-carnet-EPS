@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0f172a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="/manifest.webmanifest">
-  <link rel="stylesheet" href="/css/app.css?v=1.0.0">
+  <link rel="stylesheet" href="/css/app.css?v=2.0.0">
   <title>Chrono Carnet EPS</title>
 </head>
 <body>
@@ -15,18 +15,32 @@
       <div>
         <p class="eyebrow">EPS · iPad</p>
         <h1>Chrono Carnet</h1>
-        <p class="subtitle">Prendre les temps, garder les passages, transférer au Carnet.</p>
+        <p class="subtitle">Prise de temps, vitesse, régularité et transfert vers le Carnet.</p>
       </div>
       <button id="newSessionBtn" class="btn ghost">Nouvelle séance</button>
     </header>
 
     <main>
+      <section class="card configCard">
+        <div class="sectionHead">
+          <div><h2>Configuration de course</h2><p>Définis la distance totale et la fréquence des relevés.</p></div>
+          <span id="configState" class="configState">À configurer</span>
+        </div>
+        <div class="configGrid">
+          <label class="field"><span>Distance totale</span><select id="totalDistance"><option value="200">200 m</option><option value="400">400 m</option><option value="600">600 m</option><option value="800">800 m</option><option value="1000" selected>1 000 m</option><option value="1200">1 200 m</option><option value="1500">1 500 m</option><option value="2000">2 000 m</option><option value="3000">3 000 m</option><option value="custom">Personnalisée</option></select></label>
+          <label id="customDistanceWrap" class="field hidden"><span>Distance personnalisée (m)</span><input id="customDistance" type="number" min="50" step="10" value="1000"></label>
+          <label class="field"><span>Relevé tous les</span><select id="splitDistance"><option value="50">50 m</option><option value="100" selected>100 m</option><option value="150">150 m</option><option value="200">200 m</option><option value="250">250 m</option><option value="400">400 m</option><option value="custom">Personnalisé</option></select></label>
+          <label id="customSplitWrap" class="field hidden"><span>Relevé personnalisé (m)</span><input id="customSplit" type="number" min="10" step="10" value="100"></label>
+          <label class="field"><span>Affichage principal</span><select id="displayMode"><option value="both" selected>Tour + cumulé</option><option value="lap">Temps du tour</option><option value="cumulative">Temps cumulé</option></select></label>
+          <label class="field"><span>Temps cible final (optionnel)</span><input id="targetTime" type="text" inputmode="decimal" placeholder="Ex. 4:00.00"></label>
+        </div>
+        <div id="configMessage" class="configMessage"></div>
+        <div class="configSummary"><span id="plannedSplits">10 passages prévus</span><span id="targetSummary">Sans temps cible</span></div>
+      </section>
+
       <section class="timerCard">
         <div class="timerTop">
-          <div>
-            <span class="label">Chronomètre</span>
-            <div id="mainTime" class="mainTime">00:00.00</div>
-          </div>
+          <div><span class="label">Chronomètre</span><div id="mainTime" class="mainTime">00:00.00</div></div>
           <div id="statusPill" class="statusPill idle">Prêt</div>
         </div>
         <div class="timerActions">
@@ -37,44 +51,31 @@
       </section>
 
       <section class="card setupCard">
-        <div class="sectionHead">
-          <div><h2>Coureurs</h2><p>Ajoute les élèves puis touche leur carte à chaque passage.</p></div>
-          <button id="clearRunnersBtn" class="btn tiny ghost">Vider</button>
-        </div>
-        <div class="addRunner">
-          <input id="runnerName" type="text" inputmode="text" autocomplete="off" placeholder="Prénom / Nom">
-          <button id="addRunnerBtn" class="btn primary">Ajouter</button>
-        </div>
+        <div class="sectionHead"><div><h2>Coureurs</h2><p>Touche la carte de l’élève à chaque passage prévu.</p></div><button id="clearRunnersBtn" class="btn tiny ghost">Vider</button></div>
+        <div class="addRunner"><input id="runnerName" type="text" autocomplete="off" placeholder="Prénom / Nom"><button id="addRunnerBtn" class="btn primary">Ajouter</button></div>
         <div id="runnersGrid" class="runnersGrid"></div>
       </section>
 
       <section class="card resultsCard">
-        <div class="sectionHead">
-          <div><h2>Résultats</h2><p>Chaque appui enregistre un passage avec temps cumulé et temps du tour.</p></div>
-          <button id="undoBtn" class="btn tiny soft">Annuler le dernier</button>
-        </div>
+        <div class="sectionHead"><div><h2>Résultats</h2><p>Temps, vitesse instantanée, écarts et progression.</p></div><button id="undoBtn" class="btn tiny soft">Annuler le dernier</button></div>
         <div id="resultsEmpty" class="empty">Aucun passage enregistré.</div>
-        <div class="tableWrap"><table id="resultsTable" class="resultsTable hidden"><thead><tr><th>#</th><th>Élève</th><th>Passage</th><th>Temps cumulé</th><th>Tour</th></tr></thead><tbody id="resultsBody"></tbody></table></div>
+        <div class="tableWrap"><table id="resultsTable" class="resultsTable hidden"><thead><tr><th>#</th><th>Élève</th><th>Distance</th><th>Tour</th><th>Cumul</th><th>Vitesse</th><th>Écart</th><th>Cible</th></tr></thead><tbody id="resultsBody"></tbody></table></div>
+      </section>
+
+      <section class="card statsCard">
+        <div class="sectionHead"><div><h2>Bilan par coureur</h2><p>Vitesse moyenne, meilleur segment et régularité.</p></div></div>
+        <div id="statsGrid" class="statsGrid"></div>
       </section>
 
       <section class="card exportCard">
-        <div class="sectionHead"><div><h2>Vers le Carnet</h2><p>Le même contenu est utilisé pour le copier-coller et pour l’export JSON.</p></div></div>
+        <div class="sectionHead"><div><h2>Vers le Carnet</h2><p>Le même contenu est utilisé pour le presse-papiers et le fichier JSON.</p></div></div>
         <button id="carnetBtn" class="btn carnet full">Copier les résultats vers le Carnet</button>
       </section>
     </main>
   </div>
 
-  <dialog id="carnetDialog" class="choiceDialog">
-    <form method="dialog" class="dialogPanel">
-      <h3>Comment récupérer ces résultats ?</h3>
-      <p>Choisis la méthode adaptée à l’élève.</p>
-      <button id="openCarnetBtn" type="button" class="choiceBtn"><strong>📱 J’ai ma tablette</strong><span>Copier les résultats et ouvrir mon carnet</span></button>
-      <button id="saveLaterBtn" type="button" class="choiceBtn"><strong>💾 Je n’ai pas ma tablette</strong><span>Enregistrer un fichier à importer plus tard</span></button>
-      <button value="cancel" class="btn soft full">Annuler</button>
-    </form>
-  </dialog>
-
+  <dialog id="carnetDialog" class="choiceDialog"><form method="dialog" class="dialogPanel"><h3>Comment récupérer ces résultats ?</h3><p>Choisis la méthode adaptée à l’élève.</p><button id="openCarnetBtn" type="button" class="choiceBtn"><strong>📱 J’ai ma tablette</strong><span>Copier les résultats et ouvrir mon carnet</span></button><button id="saveLaterBtn" type="button" class="choiceBtn"><strong>💾 Je n’ai pas ma tablette</strong><span>Enregistrer un fichier à importer plus tard</span></button><button value="cancel" class="btn soft full">Annuler</button></form></dialog>
   <div id="toast" class="toast" hidden></div>
-  <script src="/js/app.js?v=1.0.0"></script>
+  <script src="/js/app.js?v=2.0.0"></script>
 </body>
 </html>
