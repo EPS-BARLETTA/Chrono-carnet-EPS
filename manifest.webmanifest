@@ -1,0 +1,9 @@
+{
+  "name": "Chrono Carnet EPS",
+  "short_name": "Chrono EPS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#eef3f8",
+  "theme_color": "#0f172a",
+  "icons": []
+}
