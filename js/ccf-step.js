@@ -1,1 +1,85 @@
-(()=>{const K='chronoCarnetEPS_v4';let last='';function read(){try{return JSON.parse(localStorage.getItem(K)||'{}')}catch{return{}}}function check(){const s=read();if(s.mode!=='ccf'||s.view!=='performance')return;const r=(s.runners||[]).find(x=>x.id===s.activeRunnerId);if(!r)return;const rows=(s.results||[]).filter(x=>x.runnerId===r.id&&x.race===s.activeRace);if(rows.length<4)return;const key=r.id+'-'+s.activeRace+'-'+rows[rows.length-1].cumulativeMs;if(key===last)return;last=key;window.dispatchEvent(new CustomEvent('ccf-course-finished',{detail:{runner:r,race:s.activeRace,rows}}))}setInterval(check,500);})();
+(() => {
+  const KEY = 'chronoCarnetEPS_v4';
+
+  const opened = new Set();
+
+  function readState() {
+    try {
+      return JSON.parse(
+        localStorage.getItem(KEY) || '{}'
+      );
+    } catch {
+      return {};
+    }
+  }
+
+  function checkFinishedCourses() {
+    const state = readState();
+
+    if (
+      state.mode !== 'ccf' ||
+      state.view !== 'performance'
+    ) {
+      return;
+    }
+
+    const runners = Array.isArray(state.runners)
+      ? state.runners
+      : [];
+
+    const results = Array.isArray(state.results)
+      ? state.results
+      : [];
+
+    runners.forEach(runner => {
+      [1, 2].forEach(race => {
+        const rows = results.filter(
+          row =>
+            row.runnerId === runner.id &&
+            Number(row.race) === race
+        );
+
+        if (rows.length < 4) {
+          return;
+        }
+
+        const lastRow =
+          rows[rows.length - 1];
+
+        const totalMs =
+          Math.round(
+            Number(
+              lastRow?.cumulativeMs || 0
+            )
+          );
+
+        const key =
+          `${runner.id}-${race}-${totalMs}`;
+
+        if (opened.has(key)) {
+          return;
+        }
+
+        opened.add(key);
+
+        window.dispatchEvent(
+          new CustomEvent(
+            'ccf-course-finished',
+            {
+              detail: {
+                runner,
+                race,
+                rows
+              }
+            }
+          )
+        );
+      });
+    });
+  }
+
+  setInterval(
+    checkFinishedCourses,
+    300
+  );
+})();
