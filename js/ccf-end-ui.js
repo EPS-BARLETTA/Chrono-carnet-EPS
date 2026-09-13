@@ -1,1 +1,81 @@
-(()=>{function make(){if(document.getElementById('ccfEnd'))return;const d=document.createElement('dialog');d.id='ccfEnd';d.innerHTML='<div class="dialogPanel"><h2 id="ccfEndTitle">Course terminée</h2><p id="ccfEndMeta"></p><p><strong>✓ Données sauvegardées sur cet iPad</strong></p><p><strong>QR professeur</strong></p><div id="ccfEndQr"></div><button id="ccfEndNext" class="btn primary full">Passer à la suite</button><button id="ccfEndStay" class="btn soft full">Rester sur cette fiche</button></div>';document.body.appendChild(d);document.getElementById('ccfEndStay').onclick=()=>d.close();document.getElementById('ccfEndNext').onclick=()=>{if(confirm('Passer au coureur suivant ?')&&confirm('Confirmer le passage au coureur suivant ?'))d.close()}}window.addEventListener('ccf-course-finished',e=>{make();const r=e.detail.runner,rows=e.detail.rows||[];document.getElementById('ccfEndTitle').textContent=((r.last||'').toUpperCase()+' '+(r.first||r.name||'')).trim();document.getElementById('ccfEndMeta').textContent=(r.classroom||'')+' · 800 n°'+e.detail.race;const box=document.getElementById('ccfEndQr');box.innerHTML='';if(window.QRCode){const data=JSON.stringify({type:'DF_CCF_RESULT',v:1,studentId:r.externalId||r.id,last:r.last||'',first:r.first||'',classroom:r.classroom||'',race:e.detail.race,totalMs:rows.length?Math.round(rows[rows.length-1].cumulativeMs):0});new QRCode(box,{text:data,width:220,height:220})}else box.textContent='QR indisponible';document.getElementById('ccfEnd').showModal()});document.readyState==='loading'?document.addEventListener('DOMContentLoaded',make):make()})();
+(() => {
+  /*
+   * Chrono Carnet EPS
+   * QR automatique de fin de course CCF
+   *
+   * IMPORTANT :
+   * Ce module ne génère plus aucun QR lui-même.
+   * Il déclenche le QR professeur déjà généré par app.js,
+   * afin d'utiliser exactement le même payload et le même rendu
+   * que le QR du récapitulatif.
+   */
+
+  const opened = new Set();
+
+  function findTeacherQrButton(runnerId, race) {
+    return document.querySelector(
+      `[data-qr-runner="${runnerId}"][data-qr-race="${race}"]`
+    );
+  }
+
+  function openTeacherQr(detail, attempt = 0) {
+    const runner = detail?.runner;
+    const race = Number(detail?.race);
+
+    if (!runner?.id || !race) return;
+
+    const button = findTeacherQrButton(runner.id, race);
+
+    if (button) {
+      button.click();
+      return;
+    }
+
+    /*
+     * renderPerf() peut être en train de reconstruire
+     * les boutons QR au moment où l'événement est reçu.
+     * On attend donc brièvement leur apparition.
+     */
+    if (attempt < 15) {
+      setTimeout(() => {
+        openTeacherQr(detail, attempt + 1);
+      }, 100);
+    } else {
+      console.warn(
+        "CCF : bouton QR professeur introuvable",
+        runner.id,
+        race
+      );
+    }
+  }
+
+  window.addEventListener("ccf-course-finished", event => {
+    const detail = event.detail || {};
+    const runner = detail.runner;
+    const race = Number(detail.race);
+
+    if (!runner?.id || !race) return;
+
+    const rows = detail.rows || [];
+    const totalMs = rows.length
+      ? Math.round(rows[rows.length - 1].cumulativeMs || 0)
+      : 0;
+
+    /*
+     * Empêche la réouverture du QR toutes les 500 ms,
+     * puisque ccf-step.js surveille régulièrement le stockage.
+     */
+    const key = `${runner.id}-${race}-${totalMs}`;
+
+    if (opened.has(key)) return;
+    opened.add(key);
+
+    /*
+     * Laisse app.js terminer renderPerf()
+     * et créer le bouton du QR récapitulatif.
+     */
+    setTimeout(() => {
+      openTeacherQr(detail);
+    }, 100);
+  });
+})();
