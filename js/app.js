@@ -2748,22 +2748,10 @@
         `${distance} m`;
 
 
-      const used =
-        Math.max(
-          1,
-          Math.min(
-            now(),
-            currentTimedDuration()
-          )
-        );
-
-
       $("timerSpeedDisplay").textContent =
-
-        distance
-          ? `${spd(distance,used).toFixed(1)} km/h`
-          : "—";
-
+  running
+    ? "Calcul à la fin"
+    : "—";
 
     } else {
 
