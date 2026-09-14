@@ -62,7 +62,7 @@
       </h1>
 
       <p class="subtitle">
-        Entraînement libre ou CCF demi-fond.
+        Chrono, entraînement, minuteur, VMA ou CCF demi-fond.
       </p>
 
     </div>
@@ -125,7 +125,7 @@
             </strong>
 
             <small>
-              1 ou 2 élèves · distances et intermédiaires libres · résultats pour le Carnet.
+              Chrono libre, performance, minuteur avec tours ou test VMA.
             </small>
 
           </span>
@@ -148,7 +148,7 @@
             </strong>
 
             <small>
-              2 × 800 m · un seul coureur actif · récupération Carnet + QR professeur.
+              2 × 800 m · récupération Carnet + QR professeur.
             </small>
 
           </span>
@@ -168,151 +168,661 @@
         class="configArea"
       >
 
-        <div class="configGrid">
+
+        <!-- =============================================
+             CHOIX OUTIL ENTRAINEMENT
+        ============================================== -->
+
+        <div
+          id="trainingToolSelector"
+          class="trainingToolSelector"
+        >
+
+          <h3 class="trainingToolTitle">
+            Quel outil veux-tu utiliser ?
+          </h3>
 
 
-          <label class="field">
-
-            <span>
-              Distance totale
-            </span>
-
-            <select id="totalDistance">
-
-              <option>100</option>
-              <option>200</option>
-              <option>400</option>
-              <option>600</option>
-              <option>800</option>
-
-              <option selected>
-                1000
-              </option>
-
-              <option>1200</option>
-              <option>1500</option>
-              <option>2000</option>
-              <option>3000</option>
-
-              <option value="custom">
-                Personnalisée
-              </option>
-
-            </select>
-
-          </label>
+          <div class="modeGrid trainingToolsGrid">
 
 
-          <label
-            id="customDistanceWrap"
-            class="field hidden"
-          >
+            <label class="modeCard trainingToolCard">
 
-            <span>
-              Distance personnalisée
-            </span>
-
-            <input
-              id="customDistance"
-              inputmode="numeric"
-              type="number"
-              value="1000"
-            >
-
-          </label>
-
-
-          <label class="field">
-
-            <span>
-              Intermédiaire tous les
-            </span>
-
-            <select id="splitDistance">
-
-              <option>50</option>
-
-              <option selected>
-                100
-              </option>
-
-              <option>150</option>
-              <option>200</option>
-              <option>250</option>
-              <option>400</option>
-
-              <option value="custom">
-                Personnalisé
-              </option>
-
-            </select>
-
-          </label>
-
-
-          <label
-            id="customSplitWrap"
-            class="field hidden"
-          >
-
-            <span>
-              Intermédiaire personnalisé
-            </span>
-
-            <input
-              id="customSplit"
-              inputmode="numeric"
-              type="number"
-              value="100"
-            >
-
-          </label>
-
-
-          <label class="field">
-
-            <span>
-              Affichage
-            </span>
-
-            <select id="displayMode">
-
-              <option value="lap">
-                Temps intermédiaire
-              </option>
-
-              <option value="cumulative">
-                Temps cumulé
-              </option>
-
-              <option
-                value="both"
-                selected
+              <input
+                type="radio"
+                name="trainingTool"
+                value="simple"
+                checked
               >
-                Les deux
-              </option>
 
-            </select>
+              <span>
 
-          </label>
+                <strong>
+                  ⏱️ Chrono simple
+                </strong>
+
+                <small>
+                  Un chrono libre pour mesurer une durée sans paramétrage.
+                </small>
+
+              </span>
+
+            </label>
 
 
-          <label class="field">
+            <label class="modeCard trainingToolCard">
 
-            <span>
-              Temps cible facultatif
-            </span>
+              <input
+                type="radio"
+                name="trainingTool"
+                value="chrono"
+              >
 
-            <input
-              id="targetTime"
-              inputmode="decimal"
-              placeholder="Ex. 4:00"
-            >
+              <span>
 
-          </label>
+                <strong>
+                  🏃 Chrono performance
+                </strong>
 
+                <small>
+                  Distance définie, intermédiaires, vitesse et résultats.
+                </small>
+
+              </span>
+
+            </label>
+
+
+            <label class="modeCard trainingToolCard">
+
+              <input
+                type="radio"
+                name="trainingTool"
+                value="timer"
+              >
+
+              <span>
+
+                <strong>
+                  ⏳ Minuteur / Tours
+                </strong>
+
+                <small>
+                  Course au temps avec comptage des tours et distance parcourue.
+                </small>
+
+              </span>
+
+            </label>
+
+
+            <label class="modeCard trainingToolCard">
+
+              <input
+                type="radio"
+                name="trainingTool"
+                value="vma"
+              >
+
+              <span>
+
+                <strong>
+                  ⚡ Test VMA
+                </strong>
+
+                <small>
+                  Test au temps avec estimation de la vitesse maximale aérobie.
+                </small>
+
+              </span>
+
+            </label>
+
+
+          </div>
 
         </div>
+
+
+        <!-- =============================================
+             CHRONO SIMPLE
+        ============================================== -->
+
+        <div
+          id="trainingSimpleConfig"
+          class="trainingSubConfig"
+        >
+
+          <div class="trainingInfoBox">
+
+            <strong>
+              ⏱️ Chrono simple
+            </strong>
+
+            <span>
+              Aucun coureur ni distance obligatoire. Démarre, arrête et réinitialise librement le chrono.
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <!-- =============================================
+             CHRONO PERFORMANCE
+        ============================================== -->
+
+        <div
+          id="trainingChronoConfig"
+          class="trainingSubConfig hidden"
+        >
+
+          <div class="configGrid">
+
+
+            <label class="field">
+
+              <span>
+                Distance totale
+              </span>
+
+              <select id="totalDistance">
+
+                <option>100</option>
+                <option>200</option>
+                <option>400</option>
+                <option>600</option>
+                <option>800</option>
+
+                <option selected>
+                  1000
+                </option>
+
+                <option>1200</option>
+                <option>1500</option>
+                <option>2000</option>
+                <option>3000</option>
+
+                <option value="custom">
+                  Personnalisée
+                </option>
+
+              </select>
+
+            </label>
+
+
+            <label
+              id="customDistanceWrap"
+              class="field hidden"
+            >
+
+              <span>
+                Distance personnalisée
+              </span>
+
+              <input
+                id="customDistance"
+                inputmode="numeric"
+                type="number"
+                value="1000"
+              >
+
+            </label>
+
+
+            <label class="field">
+
+              <span>
+                Intermédiaire tous les
+              </span>
+
+              <select id="splitDistance">
+
+                <option>50</option>
+
+                <option selected>
+                  100
+                </option>
+
+                <option>150</option>
+                <option>200</option>
+                <option>250</option>
+                <option>400</option>
+
+                <option value="custom">
+                  Personnalisé
+                </option>
+
+              </select>
+
+            </label>
+
+
+            <label
+              id="customSplitWrap"
+              class="field hidden"
+            >
+
+              <span>
+                Intermédiaire personnalisé
+              </span>
+
+              <input
+                id="customSplit"
+                inputmode="numeric"
+                type="number"
+                value="100"
+              >
+
+            </label>
+
+
+            <label class="field">
+
+              <span>
+                Affichage
+              </span>
+
+              <select id="displayMode">
+
+                <option value="lap">
+                  Temps intermédiaire
+                </option>
+
+                <option value="cumulative">
+                  Temps cumulé
+                </option>
+
+                <option
+                  value="both"
+                  selected
+                >
+                  Les deux
+                </option>
+
+              </select>
+
+            </label>
+
+
+            <label class="field">
+
+              <span>
+                Temps cible facultatif
+              </span>
+
+              <input
+                id="targetTime"
+                inputmode="decimal"
+                placeholder="Ex. 4:00"
+              >
+
+            </label>
+
+
+          </div>
+
+        </div>
+
+
+        <!-- =============================================
+             MINUTEUR / TOURS
+        ============================================== -->
+
+        <div
+          id="trainingTimerConfig"
+          class="trainingSubConfig hidden"
+        >
+
+          <div class="trainingInfoBox">
+
+            <strong>
+              ⏳ Course au temps
+            </strong>
+
+            <span>
+              Le chrono décompte le temps. Appuie sur +1 TOUR à chaque passage.
+            </span>
+
+          </div>
+
+
+          <div class="configGrid timerConfigGrid">
+
+
+            <label class="field">
+
+              <span>
+                Durée de course
+              </span>
+
+              <select id="timerDuration">
+
+                <option value="180">
+                  3 minutes
+                </option>
+
+                <option
+                  value="360"
+                  selected
+                >
+                  6 minutes
+                </option>
+
+                <option value="540">
+                  9 minutes
+                </option>
+
+                <option value="720">
+                  12 minutes
+                </option>
+
+                <option value="900">
+                  15 minutes
+                </option>
+
+                <option value="1200">
+                  20 minutes
+                </option>
+
+                <option value="custom">
+                  Personnalisée
+                </option>
+
+              </select>
+
+            </label>
+
+
+            <label
+              id="customTimerDurationWrap"
+              class="field hidden"
+            >
+
+              <span>
+                Durée personnalisée
+              </span>
+
+              <input
+                id="customTimerDuration"
+                type="number"
+                inputmode="numeric"
+                min="1"
+                max="120"
+                value="6"
+                placeholder="Minutes"
+              >
+
+            </label>
+
+
+            <label class="field">
+
+              <span>
+                Longueur de la piste
+              </span>
+
+              <select id="trackDistance">
+
+                <option value="100">
+                  100 m
+                </option>
+
+                <option value="200">
+                  200 m
+                </option>
+
+                <option value="250">
+                  250 m
+                </option>
+
+                <option
+                  value="300"
+                  selected
+                >
+                  300 m
+                </option>
+
+                <option value="400">
+                  400 m
+                </option>
+
+                <option value="custom">
+                  Personnalisée
+                </option>
+
+              </select>
+
+            </label>
+
+
+            <label
+              id="customTrackDistanceWrap"
+              class="field hidden"
+            >
+
+              <span>
+                Longueur personnalisée
+              </span>
+
+              <input
+                id="customTrackDistance"
+                type="number"
+                inputmode="numeric"
+                min="10"
+                max="1000"
+                value="300"
+                placeholder="Distance en mètres"
+              >
+
+            </label>
+
+
+          </div>
+
+
+          <div class="timerPreview">
+
+            <div>
+
+              <span>
+                Durée
+              </span>
+
+              <strong id="timerPreviewDuration">
+                6:00
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>
+                Piste
+              </span>
+
+              <strong id="timerPreviewTrack">
+                300 m
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>
+                Pendant la course
+              </span>
+
+              <strong>
+                +1 TOUR
+              </strong>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- =============================================
+             TEST VMA
+        ============================================== -->
+
+        <div
+          id="trainingVmaConfig"
+          class="trainingSubConfig hidden"
+        >
+
+          <div class="trainingInfoBox vmaInfoBox">
+
+            <strong>
+              ⚡ Estimation VMA
+            </strong>
+
+            <span>
+              L'application calcule la vitesse moyenne et fournit une VMA estimée à partir de la distance et de la durée du test.
+            </span>
+
+          </div>
+
+
+          <div class="configGrid vmaConfigGrid">
+
+
+            <label class="field">
+
+              <span>
+                Protocole
+              </span>
+
+              <select id="vmaProtocol">
+
+                <option
+                  value="6"
+                  selected
+                >
+                  Test 6 minutes
+                </option>
+
+                <option value="custom">
+                  Durée personnalisée
+                </option>
+
+              </select>
+
+            </label>
+
+
+            <label
+              id="vmaCustomDurationWrap"
+              class="field hidden"
+            >
+
+              <span>
+                Durée du test
+              </span>
+
+              <input
+                id="vmaCustomDuration"
+                type="number"
+                inputmode="decimal"
+                min="1"
+                max="60"
+                step="0.5"
+                value="6"
+                placeholder="Minutes"
+              >
+
+            </label>
+
+
+            <label class="field">
+
+              <span>
+                Longueur de la piste
+              </span>
+
+              <select id="vmaTrackDistance">
+
+                <option value="100">
+                  100 m
+                </option>
+
+                <option value="200">
+                  200 m
+                </option>
+
+                <option value="250">
+                  250 m
+                </option>
+
+                <option
+                  value="300"
+                  selected
+                >
+                  300 m
+                </option>
+
+                <option value="400">
+                  400 m
+                </option>
+
+                <option value="custom">
+                  Personnalisée
+                </option>
+
+              </select>
+
+            </label>
+
+
+            <label
+              id="vmaCustomTrackDistanceWrap"
+              class="field hidden"
+            >
+
+              <span>
+                Longueur personnalisée
+              </span>
+
+              <input
+                id="vmaCustomTrackDistance"
+                type="number"
+                inputmode="numeric"
+                min="10"
+                max="1000"
+                value="300"
+                placeholder="Distance en mètres"
+              >
+
+            </label>
+
+
+          </div>
+
+
+          <div class="vmaExplanation">
+
+            <strong>
+              Test de 6 minutes
+            </strong>
+
+            <p>
+              Pendant le test, chaque tour est comptabilisé.
+              À la fin, il sera possible d'ajouter la distance partielle réalisée après le dernier tour complet.
+            </p>
+
+            <p>
+              L'application affichera ensuite la distance totale, la vitesse moyenne et la VMA estimée.
+            </p>
+
+          </div>
+
+        </div>
+
 
       </div>
 
@@ -353,7 +863,10 @@
            COUREURS
       ================================================ -->
 
-      <div class="addRunnerBlock">
+      <div
+        id="runnerSetupBlock"
+        class="addRunnerBlock"
+      >
 
         <h3>
           Coureurs
@@ -553,7 +1066,10 @@
 
           <div>
 
-            <span class="label">
+            <span
+              id="timerLabel"
+              class="label"
+            >
               Chronomètre
             </span>
 
@@ -584,6 +1100,56 @@
         ></div>
 
 
+        <!-- =============================================
+             INFORMATIONS MINUTEUR
+        ============================================== -->
+
+        <div
+          id="timerRunInfo"
+          class="timerRunInfo hidden"
+        >
+
+          <div class="timerMetric">
+
+            <span>
+              Tours
+            </span>
+
+            <strong id="timerLapCount">
+              0
+            </strong>
+
+          </div>
+
+
+          <div class="timerMetric">
+
+            <span>
+              Distance
+            </span>
+
+            <strong id="timerDistanceCount">
+              0 m
+            </strong>
+
+          </div>
+
+
+          <div class="timerMetric">
+
+            <span>
+              Vitesse
+            </span>
+
+            <strong id="timerSpeedDisplay">
+              —
+            </strong>
+
+          </div>
+
+        </div>
+
+
         <div class="roundActions">
 
 
@@ -596,11 +1162,28 @@
 
 
           <button
+            id="stopBtn"
+            class="roundBtn stop hidden"
+          >
+            STOP
+          </button>
+
+
+          <button
             id="lapBtn"
             class="roundBtn lap"
             disabled
           >
             TOUR
+          </button>
+
+
+          <button
+            id="timerLapBtn"
+            class="roundBtn lap timerLapButton hidden"
+            disabled
+          >
+            +1 TOUR
           </button>
 
 
@@ -622,6 +1205,15 @@
 
 
         </div>
+
+
+        <button
+          id="undoTimerLapBtn"
+          class="btn ghost tiny timerUndoButton hidden"
+          disabled
+        >
+          ↶ Annuler le dernier tour
+        </button>
 
 
       </section>
@@ -664,7 +1256,10 @@
            COUREUR ACTIF
       ================================================ -->
 
-      <section class="card performanceCard">
+      <section
+        id="runnerPerformanceBlock"
+        class="card performanceCard"
+      >
 
 
         <div class="sectionHead">
@@ -689,6 +1284,7 @@
             ↶ Annuler
           </button>
 
+
         </div>
 
 
@@ -702,21 +1298,185 @@
 
 
       <!-- ===============================================
-           RESULTATS
+           FIN MINUTEUR / DISTANCE PARTIELLE
       ================================================ -->
 
-      <section class="card resultsCard">
-
+      <section
+        id="timerFinishPanel"
+        class="card timerFinishPanel hidden"
+      >
 
         <div class="sectionHead">
 
           <div>
 
             <h2>
-              Temps intermédiaires
+              Distance finale
             </h2>
 
             <p>
+              Ajoute la distance parcourue après le dernier tour complet.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="partialDistanceControls">
+
+          <label class="field">
+
+            <span>
+              Distance supplémentaire
+            </span>
+
+            <input
+              id="partialDistance"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              step="1"
+              value="0"
+              placeholder="0"
+            >
+
+          </label>
+
+
+          <span class="partialDistanceUnit">
+            mètres
+          </span>
+
+
+          <button
+            id="validatePartialDistanceBtn"
+            class="btn primary"
+          >
+            Valider le résultat
+          </button>
+
+        </div>
+
+      </section>
+
+
+      <!-- ===============================================
+           BILAN VMA / COURSE AU TEMPS
+      ================================================ -->
+
+      <section
+        id="vmaResultPanel"
+        class="card vmaResultPanel hidden"
+      >
+
+        <div class="sectionHead">
+
+          <div>
+
+            <h2>
+              Résultat du test
+            </h2>
+
+            <p>
+              Bilan calculé à partir de la durée et de la distance parcourue.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="vmaResultGrid">
+
+
+          <div class="vmaResultCard">
+
+            <span>
+              Distance totale
+            </span>
+
+            <strong id="vmaResultDistance">
+              —
+            </strong>
+
+          </div>
+
+
+          <div class="vmaResultCard">
+
+            <span>
+              Durée
+            </span>
+
+            <strong id="vmaResultDuration">
+              —
+            </strong>
+
+          </div>
+
+
+          <div class="vmaResultCard">
+
+            <span>
+              Vitesse moyenne
+            </span>
+
+            <strong id="vmaResultSpeed">
+              —
+            </strong>
+
+          </div>
+
+
+          <div class="vmaResultCard vmaMainResult">
+
+            <span>
+              VMA estimée
+            </span>
+
+            <strong id="vmaResultValue">
+              —
+            </strong>
+
+          </div>
+
+
+        </div>
+
+
+        <div
+          id="vmaTrainingSpeeds"
+          class="vmaTrainingSpeeds"
+        ></div>
+
+
+        <p class="vmaDisclaimer">
+          La VMA affichée est une estimation dépendant du protocole utilisé et de l'engagement pendant le test.
+        </p>
+
+      </section>
+
+
+      <!-- ===============================================
+           RESULTATS
+      ================================================ -->
+
+      <section
+        id="resultsSection"
+        class="card resultsCard"
+      >
+
+
+        <div class="sectionHead">
+
+          <div>
+
+            <h2 id="resultsTitle">
+              Temps intermédiaires
+            </h2>
+
+            <p id="resultsHelp">
               Passages, vitesses et écarts s’affichent au fur et à mesure.
             </p>
 
@@ -795,7 +1555,10 @@
            EXPORT CARNET
       ================================================ -->
 
-      <section class="card exportCard">
+      <section
+        id="exportSection"
+        class="card exportCard"
+      >
 
         <button
           id="carnetBtn"
