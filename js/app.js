@@ -1602,7 +1602,6 @@
       isSimple()
     ) {
 
-      elapsedMs = 0;
       startedAt = performance.now();
       running = true;
 
