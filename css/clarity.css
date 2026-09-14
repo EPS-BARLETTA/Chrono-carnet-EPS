@@ -20,6 +20,432 @@
   --student2-dark: #1e3a8a;
   --student2-soft: #dbeafe;
   --student2-pale: #eff6ff;
+
+  --home-ink: #0f172a;
+  --home-muted: #64748b;
+  --home-line: #dbe3ee;
+  --home-panel: #ffffff;
+  --home-soft: #f8fafc;
+  --home-blue: #2563eb;
+  --home-indigo: #4338ca;
+}
+
+
+/* =========================================================
+   PAGE DE GARDE / PARAMETRAGE
+========================================================= */
+
+#setupPanel {
+  padding: 26px;
+  border-radius: 28px;
+  box-shadow:
+    0 22px 55px rgba(15, 23, 42, .09);
+}
+
+
+/* En-tete general plus compact */
+
+.topbar {
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.topbar h1 {
+  font-size: clamp(32px, 4vw, 44px);
+  line-height: 1;
+}
+
+.topbar .subtitle {
+  margin-top: 8px;
+  font-size: 15px;
+}
+
+.topActions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.offlineBadge {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 13px;
+  font-size: 12px;
+  box-shadow:
+    inset 0 0 0 1px rgba(22, 101, 52, .08);
+}
+
+
+/* Titre de l'etape */
+
+#setupPanel > h2 {
+  margin: 0 0 16px;
+  font-size: 26px;
+  line-height: 1.15;
+  letter-spacing: -.025em;
+}
+
+
+/* =========================================================
+   CHOIX DU MODE
+========================================================= */
+
+.modeGrid.twoModes {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0 0 18px;
+}
+
+.modeCard {
+  cursor: pointer;
+}
+
+.modeCard span {
+  position: relative;
+  min-height: 132px;
+  padding: 20px 22px 20px 74px;
+  justify-content: center;
+  border: 2px solid var(--home-line);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow:
+    0 5px 14px rgba(15, 23, 42, .045);
+  transition:
+    transform .16s ease,
+    border-color .16s ease,
+    background .16s ease,
+    box-shadow .16s ease;
+}
+
+.modeCard span::before {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  font-size: 22px;
+  background: #f1f5f9;
+}
+
+.modeCard:first-child span::before {
+  content: "⏱";
+}
+
+.modeCard:last-child span::before {
+  content: "🏁";
+}
+
+.modeCard strong {
+  font-size: 20px;
+  line-height: 1.15;
+  color: var(--home-ink);
+}
+
+.modeCard small {
+  max-width: 520px;
+  margin-top: 2px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.modeCard:hover span {
+  transform: translateY(-1px);
+  border-color: #cbd5e1;
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, .08);
+}
+
+.modeCard input:checked + span {
+  border-color: #7aa2ff;
+  background:
+    linear-gradient(
+      135deg,
+      #f4f8ff 0%,
+      #eef2ff 100%
+    );
+  box-shadow:
+    inset 0 0 0 2px #d8e5ff,
+    0 12px 28px rgba(37, 99, 235, .11);
+}
+
+.modeCard input:checked + span::after {
+  content: "✓";
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--home-blue);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+
+/* =========================================================
+   RESUME CCF
+========================================================= */
+
+.ccfInfo {
+  margin: 4px 0 18px;
+  padding: 16px 18px;
+  border: 1px solid #dbeafe;
+  border-left: 5px solid var(--home-blue);
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      135deg,
+      #f8fbff 0%,
+      #f4f7ff 100%
+    );
+}
+
+.ccfInfo strong {
+  font-size: 16px;
+}
+
+.ccfInfo span {
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   CONFIGURATION ENTRAINEMENT
+========================================================= */
+
+.configArea {
+  margin-top: 4px;
+  padding-top: 20px;
+}
+
+.configGrid {
+  gap: 14px;
+}
+
+.field span {
+  font-size: 12px;
+  letter-spacing: .035em;
+}
+
+.field input,
+.field select,
+.addRunner input,
+.addRunner select {
+  min-height: 52px;
+  border-width: 2px;
+  border-radius: 15px;
+  font-size: 15px;
+  transition:
+    border-color .15s ease,
+    box-shadow .15s ease,
+    background .15s ease;
+}
+
+.field input:focus,
+.field select:focus,
+.addRunner input:focus,
+.addRunner select:focus {
+  outline: none;
+  border-color: #7aa2ff;
+  box-shadow:
+    0 0 0 4px rgba(37, 99, 235, .10);
+}
+
+
+/* =========================================================
+   BLOC COUREURS DE LA PAGE DE GARDE
+========================================================= */
+
+.addRunnerBlock {
+  margin-top: 20px;
+  padding-top: 22px;
+}
+
+.addRunnerBlock h3 {
+  margin: 0 0 14px;
+  font-size: 22px;
+  letter-spacing: -.02em;
+}
+
+.addRunner {
+  grid-template-columns:
+    minmax(150px, 1.1fr)
+    minmax(150px, 1.1fr)
+    minmax(110px, .8fr)
+    minmax(120px, .8fr)
+    minmax(220px, 1fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.addRunner .ccfRunnerField {
+  min-width: 0;
+}
+
+.estimateBox {
+  padding: 12px 12px 10px;
+  border: 1px solid #dbe3ee;
+  border-radius: 16px;
+  background: var(--home-soft);
+}
+
+.estimateBox > span {
+  display: block;
+  margin-bottom: 8px;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .035em;
+}
+
+.estimateInputs {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.estimateInputs input {
+  width: 68px;
+  min-height: 44px;
+  text-align: center;
+  padding: 0 8px;
+  background: #fff;
+}
+
+.estimateInputs b {
+  color: #475569;
+  font-size: 12px;
+}
+
+#addRunnerBtn {
+  min-height: 52px;
+  border-radius: 15px;
+  padding-inline: 20px;
+  font-size: 15px;
+  box-shadow:
+    0 9px 18px rgba(37, 99, 235, .16);
+}
+
+
+/* =========================================================
+   COUREURS AJOUTES
+========================================================= */
+
+.runnerSetupList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0 18px;
+}
+
+.runnerChip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 58px;
+  padding: 12px 44px 12px 15px;
+  border: 2px solid #dbe3ee;
+  border-radius: 17px;
+  background: #fff;
+  color: #1e293b;
+  font-size: 13px;
+  line-height: 1.35;
+  box-shadow:
+    0 5px 14px rgba(15, 23, 42, .05);
+}
+
+.runnerChip:nth-child(1) {
+  border-color: #86efac;
+  background:
+    linear-gradient(
+      135deg,
+      #ffffff 0%,
+      var(--student1-pale) 100%
+    );
+  color: var(--student1-dark);
+}
+
+.runnerChip:nth-child(2) {
+  border-color: #93c5fd;
+  background:
+    linear-gradient(
+      135deg,
+      #ffffff 0%,
+      var(--student2-pale) 100%
+    );
+  color: var(--student2-dark);
+}
+
+.runnerChip:nth-child(1)::before,
+.runnerChip:nth-child(2)::before {
+  margin-right: 10px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
+
+.runnerChip:nth-child(1)::before {
+  content: "ÉLÈVE 1";
+  background: var(--student1);
+}
+
+.runnerChip:nth-child(2)::before {
+  content: "ÉLÈVE 2";
+  background: var(--student2);
+}
+
+.runnerChip button {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .75);
+  color: #64748b;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.runnerChip button:active {
+  transform:
+    translateY(-50%)
+    scale(.92);
+}
+
+
+/* =========================================================
+   BOUTON PRINCIPAL PAGE DE GARDE
+========================================================= */
+
+#launchPerformanceBtn {
+  min-height: 66px;
+  margin-top: 8px;
+  border-radius: 18px;
+  font-size: 18px;
+  font-weight: 950;
+  letter-spacing: -.01em;
+  box-shadow:
+    0 14px 28px rgba(37, 99, 235, .20);
+}
+
+#launchPerformanceBtn:active {
+  transform: scale(.992);
 }
 
 
@@ -31,19 +457,14 @@
   gap: 20px;
 }
 
-
 .runnerCard {
   position: relative;
-
   min-height: 210px;
-
   padding:
     52px
     22px
     22px;
-
   border-width: 4px;
-
   transition:
     transform .16s ease,
     opacity .16s ease,
@@ -67,7 +488,6 @@
   border-color:
     #86efac;
 }
-
 
 .runnerCard.green::before {
   content:
@@ -130,7 +550,6 @@
   border-color:
     #93c5fd;
 }
-
 
 .runnerCard.blue::before {
   content:
@@ -196,7 +615,6 @@
     2;
 }
 
-
 .runnerCard.green.active {
   border-color:
     var(--student1);
@@ -212,7 +630,6 @@
         .18
       );
 }
-
 
 .runnerCard.blue.active {
   border-color:
@@ -267,13 +684,11 @@
     -.025em;
 }
 
-
 .runnerCard.green
 .runnerName {
   color:
     var(--student1-dark);
 }
-
 
 .runnerCard.blue
 .runnerName {
@@ -297,7 +712,6 @@
     800;
 }
 
-
 .runnerSubMetric {
   margin-top:
     auto;
@@ -311,7 +725,6 @@
   font-weight:
     850;
 }
-
 
 .runnerMainMetric {
   margin-top:
@@ -364,7 +777,6 @@
     );
 }
 
-
 .activeRunnerBanner strong {
   font-size:
     34px;
@@ -375,7 +787,6 @@
   font-weight:
     950;
 }
-
 
 .activeRunnerBanner span {
   margin-top:
@@ -403,7 +814,6 @@
   border-color:
     var(--student1);
 }
-
 
 .activeRunnerBanner.green::before {
   content:
@@ -461,7 +871,6 @@
   border-color:
     var(--student2);
 }
-
 
 .activeRunnerBanner.blue::before {
   content:
@@ -523,7 +932,6 @@
     );
 }
 
-
 .mainTime {
   margin-top:
     5px;
@@ -555,7 +963,6 @@
     30px;
 }
 
-
 .roundBtn {
   width:
     124px;
@@ -570,7 +977,6 @@
     6px;
 }
 
-
 .roundBtn.start {
   background:
     linear-gradient(
@@ -580,7 +986,6 @@
     );
 }
 
-
 .roundBtn.lap {
   background:
     linear-gradient(
@@ -589,7 +994,6 @@
       #1d4ed8
     );
 }
-
 
 .roundBtn.reset {
   width:
@@ -612,7 +1016,6 @@
     18px 0;
 }
 
-
 .raceTabs button {
   min-height:
     46px;
@@ -626,7 +1029,6 @@
   border-width:
     2px;
 }
-
 
 .raceTabs button.active {
   background:
@@ -665,7 +1067,6 @@
     var(--student1-pale);
 }
 
-
 .statsGrid
 .statCard:nth-child(2) {
 
@@ -693,7 +1094,6 @@
     var(--student1-pale);
 }
 
-
 .scoreGrid
 .scoreCard:nth-child(2) {
 
@@ -705,7 +1105,6 @@
     var(--student2-pale);
 }
 
-
 .scoreGrid
 .scoreCard:nth-child(1)
 strong {
@@ -713,7 +1112,6 @@ strong {
   color:
     var(--student1-dark);
 }
-
 
 .scoreGrid
 .scoreCard:nth-child(2)
@@ -741,7 +1139,6 @@ strong {
   font-weight:
     950;
 }
-
 
 .resultsTable td:first-child {
   position:
@@ -789,25 +1186,122 @@ strong {
 
 
 /* =========================================================
-   IPAD / MOBILE
+   IPAD PAYSAGE / TABLETTE
 ========================================================= */
 
-@media (
-  max-width:
-  760px
-) {
+@media (max-width: 980px) {
+
+  #setupPanel {
+    padding: 22px;
+  }
+
+  .modeGrid.twoModes {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .modeCard span {
+    min-height: 122px;
+    padding-left: 66px;
+  }
+
+  .modeCard span::before {
+    left: 16px;
+  }
+
+  .addRunner {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .addRunner #addRunnerBtn {
+    grid-column: span 2;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE / PETIT IPAD
+========================================================= */
+
+@media (max-width: 760px) {
+
+  .topbar {
+    align-items: flex-start;
+  }
+
+  .topActions {
+    justify-content: flex-start;
+  }
+
+  #setupPanel {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  #setupPanel > h2 {
+    font-size: 23px;
+  }
+
+  .modeGrid.twoModes {
+    grid-template-columns: 1fr;
+  }
+
+  .modeCard span {
+    min-height: 106px;
+    padding:
+      16px
+      50px
+      16px
+      62px;
+  }
+
+  .modeCard span::before {
+    left: 14px;
+    width: 36px;
+    height: 36px;
+    font-size: 19px;
+  }
+
+  .modeCard strong {
+    font-size: 18px;
+  }
+
+  .modeCard small {
+    font-size: 13px;
+  }
+
+  .addRunner {
+    grid-template-columns: 1fr;
+  }
+
+  .addRunner #addRunnerBtn {
+    grid-column: auto;
+  }
+
+  .runnerSetupList {
+    grid-template-columns: 1fr;
+  }
+
+  .runnerChip {
+    min-height: 62px;
+  }
+
+  #launchPerformanceBtn {
+    min-height: 62px;
+    font-size: 17px;
+  }
 
   .runnerCard {
     min-height:
       190px;
   }
 
-
   .runnerName {
     font-size:
       26px;
   }
-
 
   .activeRunnerBanner {
     min-height:
@@ -817,24 +1311,20 @@ strong {
       42px 16px 16px;
   }
 
-
   .activeRunnerBanner strong {
     font-size:
       28px;
   }
-
 
   .mainTime {
     font-size:
       64px;
   }
 
-
   .roundActions {
     gap:
       12px;
   }
-
 
   .roundBtn {
     width:
@@ -843,7 +1333,6 @@ strong {
     height:
       96px;
   }
-
 
   .roundBtn.reset {
     width:
