@@ -271,7 +271,7 @@
                 </strong>
 
                 <small>
-                  Test au temps avec estimation de la vitesse maximale aérobie.
+                  Demi-Cooper, Cooper ou test personnalisé avec estimation de la VMA.
                 </small>
 
               </span>
@@ -365,6 +365,7 @@
                 id="customDistance"
                 inputmode="numeric"
                 type="number"
+                min="1"
                 value="1000"
               >
 
@@ -412,6 +413,7 @@
                 id="customSplit"
                 inputmode="numeric"
                 type="number"
+                min="1"
                 value="100"
               >
 
@@ -482,7 +484,7 @@
             </strong>
 
             <span>
-              Le chrono décompte le temps. Appuie sur +1 TOUR à chaque passage.
+              Choisis une durée et la longueur de la piste. Appuie sur +1 TOUR à chaque passage.
             </span>
 
           </div>
@@ -547,9 +549,10 @@
               <input
                 id="customTimerDuration"
                 type="number"
-                inputmode="numeric"
-                min="1"
+                inputmode="decimal"
+                min="0.5"
                 max="120"
+                step="0.5"
                 value="6"
                 placeholder="Minutes"
               >
@@ -612,6 +615,7 @@
                 inputmode="numeric"
                 min="10"
                 max="1000"
+                step="1"
                 value="300"
                 placeholder="Distance en mètres"
               >
@@ -679,11 +683,11 @@
           <div class="trainingInfoBox vmaInfoBox">
 
             <strong>
-              ⚡ Estimation VMA
+              ⚡ Test VMA
             </strong>
 
             <span>
-              L'application calcule la vitesse moyenne et fournit une VMA estimée à partir de la distance et de la durée du test.
+              Choisis le protocole, la longueur de la piste et compte les tours. L'application calcule ensuite la vitesse moyenne et la VMA estimée.
             </span>
 
           </div>
@@ -704,7 +708,11 @@
                   value="6"
                   selected
                 >
-                  Test 6 minutes
+                  Demi-Cooper · 6 minutes
+                </option>
+
+                <option value="12">
+                  Cooper · 12 minutes
                 </option>
 
                 <option value="custom">
@@ -722,14 +730,14 @@
             >
 
               <span>
-                Durée du test
+                Durée personnalisée
               </span>
 
               <input
                 id="vmaCustomDuration"
                 type="number"
                 inputmode="decimal"
-                min="1"
+                min="0.5"
                 max="60"
                 step="0.5"
                 value="6"
@@ -794,6 +802,7 @@
                 inputmode="numeric"
                 min="10"
                 max="1000"
+                step="1"
                 value="300"
                 placeholder="Distance en mètres"
               >
@@ -807,16 +816,23 @@
           <div class="vmaExplanation">
 
             <strong>
-              Test de 6 minutes
+              Protocoles disponibles
             </strong>
 
             <p>
-              Pendant le test, chaque tour est comptabilisé.
-              À la fin, il sera possible d'ajouter la distance partielle réalisée après le dernier tour complet.
+              <b>Demi-Cooper :</b> course maximale de 6 minutes.
             </p>
 
             <p>
-              L'application affichera ensuite la distance totale, la vitesse moyenne et la VMA estimée.
+              <b>Cooper :</b> course maximale de 12 minutes.
+            </p>
+
+            <p>
+              À chaque tour, appuie sur +1 TOUR. À la fin du test, ajoute la distance parcourue après le dernier tour complet.
+            </p>
+
+            <p>
+              L'application affichera la distance totale, la vitesse moyenne et une estimation de la VMA.
             </p>
 
           </div>
@@ -1099,10 +1115,6 @@
           class="activeRunnerBanner"
         ></div>
 
-
-        <!-- =============================================
-             INFORMATIONS MINUTEUR
-        ============================================== -->
 
         <div
           id="timerRunInfo"
