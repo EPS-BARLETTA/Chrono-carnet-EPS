@@ -3374,48 +3374,74 @@ return null;
 
 
     if (
-      state.trainingTool === "vma"
-    ) {
+  state.trainingTool === "vma"
+) {
 
-      if (main) {
-        main.classList.remove("hidden");
-      }
-
-
-      $("vmaResultValue").textContent =
-        `${tr.vma.toFixed(1)} km/h`;
+  if (main) {
+    main.classList.remove("hidden");
+  }
 
 
-      const v =
-        tr.vma;
+  const v =
+    tr.vma;
 
 
-      $("vmaTrainingSpeeds").innerHTML =
+  if (
+    v == null
+  ) {
 
-        `<div class="statRow">` +
-        `<span>Protocole</span>` +
-        `<strong>${esc(tr.protocolName || "Test VMA")}</strong>` +
-        `</div>` +
+    $("vmaResultValue").textContent =
+      "VMA non calculée";
 
-        `<div class="statRow">` +
-        `<span>80 % VMA</span>` +
-        `<strong>${(v * .80).toFixed(1)} km/h</strong>` +
-        `</div>` +
 
-        `<div class="statRow">` +
-        `<span>90 % VMA</span>` +
-        `<strong>${(v * .90).toFixed(1)} km/h</strong>` +
-        `</div>` +
+    $("vmaTrainingSpeeds").innerHTML =
 
-        `<div class="statRow">` +
-        `<span>100 % VMA</span>` +
-        `<strong>${v.toFixed(1)} km/h</strong>` +
-        `</div>` +
+      `<div class="statRow">` +
+      `<span>Protocole</span>` +
+      `<strong>${esc(tr.protocolName || "Test personnalisé")}</strong>` +
+      `</div>` +
 
-        `<div class="statRow">` +
-        `<span>105 % VMA</span>` +
-        `<strong>${(v * 1.05).toFixed(1)} km/h</strong>` +
-        `</div>`;
+      `<div class="statRow">` +
+      `<span>Information</span>` +
+      `<strong>Aucun calcul VMA standard pour ce protocole</strong>` +
+      `</div>`;
+
+  } else {
+
+    $("vmaResultValue").textContent =
+      tr.protocol === "12"
+        ? `VMA estimée · ${v.toFixed(1)} km/h`
+        : `${v.toFixed(1)} km/h`;
+
+
+    $("vmaTrainingSpeeds").innerHTML =
+
+      `<div class="statRow">` +
+      `<span>Protocole</span>` +
+      `<strong>${esc(tr.protocolName || "Test VMA")}</strong>` +
+      `</div>` +
+
+      `<div class="statRow">` +
+      `<span>80 % VMA</span>` +
+      `<strong>${(v * .80).toFixed(1)} km/h</strong>` +
+      `</div>` +
+
+      `<div class="statRow">` +
+      `<span>90 % VMA</span>` +
+      `<strong>${(v * .90).toFixed(1)} km/h</strong>` +
+      `</div>` +
+
+      `<div class="statRow">` +
+      `<span>100 % VMA</span>` +
+      `<strong>${v.toFixed(1)} km/h</strong>` +
+      `</div>` +
+
+      `<div class="statRow">` +
+      `<span>105 % VMA</span>` +
+      `<strong>${(v * 1.05).toFixed(1)} km/h</strong>` +
+      `</div>`;
+
+  }
 
 
     } else {
