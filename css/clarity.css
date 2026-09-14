@@ -1,1 +1,856 @@
+/* =========================================================
+   CHRONO CARNET EPS
+   SURCOUCHE "CLARTE TERRAIN"
+   Eleve 1 = VERT
+   Eleve 2 = BLEU
+========================================================= */
 
+
+/* =========================
+   COULEURS DE REFERENCE
+========================= */
+
+:root {
+  --student1: #16a34a;
+  --student1-dark: #14532d;
+  --student1-soft: #dcfce7;
+  --student1-pale: #f0fdf4;
+
+  --student2: #2563eb;
+  --student2-dark: #1e3a8a;
+  --student2-soft: #dbeafe;
+  --student2-pale: #eff6ff;
+}
+
+
+/* =========================================================
+   CARTES DES DEUX ELEVES
+========================================================= */
+
+.runnersGrid {
+  gap: 20px;
+}
+
+
+.runnerCard {
+  position: relative;
+
+  min-height: 210px;
+
+  padding:
+    52px
+    22px
+    22px;
+
+  border-width: 4px;
+
+  transition:
+    transform .16s ease,
+    opacity .16s ease,
+    box-shadow .16s ease,
+    filter .16s ease;
+}
+
+
+/* =========================
+   ELEVE 1
+========================= */
+
+.runnerCard.green {
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      var(--student1-pale) 100%
+    );
+
+  border-color:
+    #86efac;
+}
+
+
+.runnerCard.green::before {
+  content:
+    "ÉLÈVE 1";
+
+  position:
+    absolute;
+
+  top:
+    14px;
+
+  left:
+    14px;
+
+  padding:
+    7px
+    13px;
+
+  border-radius:
+    999px;
+
+  background:
+    var(--student1);
+
+  color:
+    #ffffff;
+
+  font-size:
+    12px;
+
+  font-weight:
+    950;
+
+  letter-spacing:
+    .08em;
+
+  box-shadow:
+    0 4px 12px
+    rgba(
+      22,
+      163,
+      74,
+      .28
+    );
+}
+
+
+/* =========================
+   ELEVE 2
+========================= */
+
+.runnerCard.blue {
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      var(--student2-pale) 100%
+    );
+
+  border-color:
+    #93c5fd;
+}
+
+
+.runnerCard.blue::before {
+  content:
+    "ÉLÈVE 2";
+
+  position:
+    absolute;
+
+  top:
+    14px;
+
+  left:
+    14px;
+
+  padding:
+    7px
+    13px;
+
+  border-radius:
+    999px;
+
+  background:
+    var(--student2);
+
+  color:
+    #ffffff;
+
+  font-size:
+    12px;
+
+  font-weight:
+    950;
+
+  letter-spacing:
+    .08em;
+
+  box-shadow:
+    0 4px 12px
+    rgba(
+      37,
+      99,
+      235,
+      .28
+    );
+}
+
+
+/* =========================================================
+   ELEVE ACTIF
+========================================================= */
+
+.runnerCard.active {
+  transform:
+    scale(1.035);
+
+  opacity:
+    1;
+
+  filter:
+    none;
+
+  z-index:
+    2;
+}
+
+
+.runnerCard.green.active {
+  border-color:
+    var(--student1);
+
+  box-shadow:
+    0 0 0 6px
+      var(--student1-soft),
+    0 18px 36px
+      rgba(
+        22,
+        163,
+        74,
+        .18
+      );
+}
+
+
+.runnerCard.blue.active {
+  border-color:
+    var(--student2);
+
+  box-shadow:
+    0 0 0 6px
+      var(--student2-soft),
+    0 18px 36px
+      rgba(
+        37,
+        99,
+        235,
+        .18
+      );
+}
+
+
+/* =========================================================
+   ELEVE NON ACTIF
+========================================================= */
+
+.runnersGrid
+.runnerCard:not(.active) {
+
+  opacity:
+    .55;
+
+  filter:
+    saturate(.65);
+
+  transform:
+    scale(.975);
+}
+
+
+/* =========================================================
+   NOM DU COUREUR
+========================================================= */
+
+.runnerName {
+  font-size:
+    30px;
+
+  line-height:
+    1.08;
+
+  font-weight:
+    950;
+
+  letter-spacing:
+    -.025em;
+}
+
+
+.runnerCard.green
+.runnerName {
+  color:
+    var(--student1-dark);
+}
+
+
+.runnerCard.blue
+.runnerName {
+  color:
+    var(--student2-dark);
+}
+
+
+/* =========================================================
+   INFOS COUREUR
+========================================================= */
+
+.runnerMeta {
+  font-size:
+    15px;
+
+  line-height:
+    1.4;
+
+  font-weight:
+    800;
+}
+
+
+.runnerSubMetric {
+  margin-top:
+    auto;
+
+  padding-top:
+    10px;
+
+  font-size:
+    14px;
+
+  font-weight:
+    850;
+}
+
+
+.runnerMainMetric {
+  margin-top:
+    4px;
+
+  font-size:
+    38px;
+
+  line-height:
+    1;
+
+  font-weight:
+    950;
+}
+
+
+/* =========================================================
+   BANDEAU ELEVE ACTIF SOUS LE CHRONO
+========================================================= */
+
+.activeRunnerBanner {
+  position:
+    relative;
+
+  max-width:
+    720px;
+
+  min-height:
+    116px;
+
+  margin:
+    20px auto 8px;
+
+  padding:
+    44px 24px 18px;
+
+  border:
+    4px solid transparent;
+
+  border-radius:
+    24px;
+
+  box-shadow:
+    0 14px 30px
+    rgba(
+      0,
+      0,
+      0,
+      .18
+    );
+}
+
+
+.activeRunnerBanner strong {
+  font-size:
+    34px;
+
+  line-height:
+    1.05;
+
+  font-weight:
+    950;
+}
+
+
+.activeRunnerBanner span {
+  margin-top:
+    5px;
+
+  font-size:
+    16px;
+
+  font-weight:
+    850;
+}
+
+
+/* =========================
+   BANDEAU ELEVE 1
+========================= */
+
+.activeRunnerBanner.green {
+  background:
+    var(--student1-soft);
+
+  color:
+    var(--student1-dark);
+
+  border-color:
+    var(--student1);
+}
+
+
+.activeRunnerBanner.green::before {
+  content:
+    "●  ÉLÈVE 1 ACTIF";
+
+  position:
+    absolute;
+
+  top:
+    11px;
+
+  left:
+    50%;
+
+  transform:
+    translateX(-50%);
+
+  padding:
+    6px 14px;
+
+  border-radius:
+    999px;
+
+  background:
+    var(--student1);
+
+  color:
+    #ffffff;
+
+  font-size:
+    12px;
+
+  font-weight:
+    950;
+
+  letter-spacing:
+    .08em;
+
+  white-space:
+    nowrap;
+}
+
+
+/* =========================
+   BANDEAU ELEVE 2
+========================= */
+
+.activeRunnerBanner.blue {
+  background:
+    var(--student2-soft);
+
+  color:
+    var(--student2-dark);
+
+  border-color:
+    var(--student2);
+}
+
+
+.activeRunnerBanner.blue::before {
+  content:
+    "●  ÉLÈVE 2 ACTIF";
+
+  position:
+    absolute;
+
+  top:
+    11px;
+
+  left:
+    50%;
+
+  transform:
+    translateX(-50%);
+
+  padding:
+    6px 14px;
+
+  border-radius:
+    999px;
+
+  background:
+    var(--student2);
+
+  color:
+    #ffffff;
+
+  font-size:
+    12px;
+
+  font-weight:
+    950;
+
+  letter-spacing:
+    .08em;
+
+  white-space:
+    nowrap;
+}
+
+
+/* =========================================================
+   CHRONOMETRE
+========================================================= */
+
+.timerCard {
+  border-radius:
+    28px;
+
+  box-shadow:
+    0 18px 44px
+    rgba(
+      15,
+      23,
+      42,
+      .20
+    );
+}
+
+
+.mainTime {
+  margin-top:
+    5px;
+
+  font-size:
+    clamp(
+      72px,
+      9vw,
+      108px
+    );
+
+  line-height:
+    .95;
+
+  letter-spacing:
+    -.055em;
+}
+
+
+/* =========================================================
+   BOUTONS CHRONO
+========================================================= */
+
+.roundActions {
+  margin-top:
+    26px;
+
+  gap:
+    30px;
+}
+
+
+.roundBtn {
+  width:
+    124px;
+
+  height:
+    124px;
+
+  font-size:
+    16px;
+
+  border-width:
+    6px;
+}
+
+
+.roundBtn.start {
+  background:
+    linear-gradient(
+      145deg,
+      #22c55e,
+      #15803d
+    );
+}
+
+
+.roundBtn.lap {
+  background:
+    linear-gradient(
+      145deg,
+      #3b82f6,
+      #1d4ed8
+    );
+}
+
+
+.roundBtn.reset {
+  width:
+    96px;
+
+  height:
+    96px;
+
+  background:
+    #475569;
+}
+
+
+/* =========================================================
+   COURSE 1 / COURSE 2
+========================================================= */
+
+.raceTabs {
+  margin:
+    18px 0;
+}
+
+
+.raceTabs button {
+  min-height:
+    46px;
+
+  padding:
+    10px 18px;
+
+  font-size:
+    14px;
+
+  border-width:
+    2px;
+}
+
+
+.raceTabs button.active {
+  background:
+    #0f172a;
+
+  color:
+    #ffffff;
+
+  border-color:
+    #0f172a;
+
+  box-shadow:
+    0 5px 14px
+    rgba(
+      15,
+      23,
+      42,
+      .18
+    );
+}
+
+
+/* =========================================================
+   STATISTIQUES
+   ordre = eleve 1 puis eleve 2
+========================================================= */
+
+.statsGrid
+.statCard:nth-child(1) {
+
+  border:
+    3px solid
+    var(--student1);
+
+  background:
+    var(--student1-pale);
+}
+
+
+.statsGrid
+.statCard:nth-child(2) {
+
+  border:
+    3px solid
+    var(--student2);
+
+  background:
+    var(--student2-pale);
+}
+
+
+/* =========================================================
+   CARTES AFL1
+========================================================= */
+
+.scoreGrid
+.scoreCard:nth-child(1) {
+
+  border:
+    3px solid
+    var(--student1);
+
+  background:
+    var(--student1-pale);
+}
+
+
+.scoreGrid
+.scoreCard:nth-child(2) {
+
+  border:
+    3px solid
+    var(--student2);
+
+  background:
+    var(--student2-pale);
+}
+
+
+.scoreGrid
+.scoreCard:nth-child(1)
+strong {
+
+  color:
+    var(--student1-dark);
+}
+
+
+.scoreGrid
+.scoreCard:nth-child(2)
+strong {
+
+  color:
+    var(--student2-dark);
+}
+
+
+/* =========================================================
+   TABLEAU
+========================================================= */
+
+.resultsTable th {
+  position:
+    sticky;
+
+  top:
+    0;
+
+  z-index:
+    2;
+
+  font-weight:
+    950;
+}
+
+
+.resultsTable td:first-child {
+  position:
+    sticky;
+
+  left:
+    0;
+
+  z-index:
+    1;
+
+  background:
+    #ffffff;
+
+  font-size:
+    14px;
+
+  font-weight:
+    900;
+
+  box-shadow:
+    5px 0 8px
+    rgba(
+      15,
+      23,
+      42,
+      .04
+    );
+}
+
+
+/* =========================================================
+   TITRES
+========================================================= */
+
+.performanceCard h2,
+.resultsCard h2 {
+
+  font-size:
+    24px;
+
+  letter-spacing:
+    -.02em;
+}
+
+
+/* =========================================================
+   IPAD / MOBILE
+========================================================= */
+
+@media (
+  max-width:
+  760px
+) {
+
+  .runnerCard {
+    min-height:
+      190px;
+  }
+
+
+  .runnerName {
+    font-size:
+      26px;
+  }
+
+
+  .activeRunnerBanner {
+    min-height:
+      104px;
+
+    padding:
+      42px 16px 16px;
+  }
+
+
+  .activeRunnerBanner strong {
+    font-size:
+      28px;
+  }
+
+
+  .mainTime {
+    font-size:
+      64px;
+  }
+
+
+  .roundActions {
+    gap:
+      12px;
+  }
+
+
+  .roundBtn {
+    width:
+      96px;
+
+    height:
+      96px;
+  }
+
+
+  .roundBtn.reset {
+    width:
+      80px;
+
+    height:
+      80px;
+  }
+
+}
