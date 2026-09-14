@@ -1558,13 +1558,18 @@
 
 
     if (
-      $("partialDistance")
-    ) {
+  $("partialDistance")
+) {
 
-      $("partialDistance").value =
-        0;
+  $("partialDistance").value = 0;
+  $("partialDistance").min = 0;
+  $("partialDistance").max =
+    Math.max(
+      0,
+      currentTrackDistance() - 1
+    );
 
-    }
+}
 
   }
 
