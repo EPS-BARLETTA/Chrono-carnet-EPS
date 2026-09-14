@@ -1,9 +1,15 @@
 "use strict";
 
 (() => {
+
   const KEY = "chronoCarnetEPS_v4";
   const CARNET_URL = "https://carnetentrainementv2.vercel.app/";
   const $ = id => document.getElementById(id);
+
+
+  /* =========================================================
+     BAREMES CCF EXISTANTS — NE PAS MODIFIER
+  ========================================================= */
 
   const PERF_F = [
     [306,.25],[299,.5],[292,.75],[285,1],
@@ -23,36 +29,38 @@
     [156,5.25],[153,5.5],[150,5.75],[147,6]
   ];
 
+
+  /* =========================================================
+     ETAT
+  ========================================================= */
+
   const base = () => ({
     mode: "training",
-
     trainingTool: "simple",
-
     view: "setup",
 
     totalDistance: 1000,
     splitDistance: 100,
-
     displayMode: "both",
-
     targetMs: null,
 
+    timerDurationChoice: "360",
     timerDurationMs: 360000,
 
+    trackDistanceChoice: "300",
     trackDistance: 300,
 
+    vmaProtocol: "6",
     vmaDurationMs: 360000,
 
+    vmaTrackDistanceChoice: "300",
     vmaTrackDistance: 300,
 
     runners: [],
-
     results: [],
-
     timedRuns: [],
 
     activeRace: 1,
-
     activeRunnerId: null,
 
     recoveryStartedAt: null
@@ -65,7 +73,6 @@
 
     state = {
       ...base(),
-
       ...JSON.parse(
         localStorage.getItem(KEY) || "{}"
       )
@@ -78,66 +85,67 @@
   }
 
 
-  if (
-    ![
-      "training",
-      "ccf"
-    ].includes(
-      state.mode
-    )
-  ) {
+  /* Compatibilité avec les anciennes données */
 
-    state.mode =
-      "training";
-
+  if (!["training","ccf"].includes(state.mode)) {
+    state.mode = "training";
   }
 
-
-  if (
-    ![
-      "simple",
-      "chrono",
-      "timer",
-      "vma"
-    ].includes(
-      state.trainingTool
-    )
-  ) {
-
-    state.trainingTool =
-      "simple";
-
+  if (!["simple","chrono","timer","vma"].includes(state.trainingTool)) {
+    state.trainingTool = "simple";
   }
 
-
-  if (
-    !Array.isArray(
-      state.timedRuns
-    )
-  ) {
-
+  if (!Array.isArray(state.timedRuns)) {
     state.timedRuns = [];
+  }
 
+  if (!state.timerDurationChoice) {
+    state.timerDurationChoice =
+      [180000,360000,540000,720000,900000,1200000]
+        .includes(state.timerDurationMs)
+        ? String(state.timerDurationMs / 1000)
+        : "custom";
+  }
+
+  if (!state.trackDistanceChoice) {
+    state.trackDistanceChoice =
+      [100,200,250,300,400].includes(state.trackDistance)
+        ? String(state.trackDistance)
+        : "custom";
+  }
+
+  if (!state.vmaProtocol) {
+    state.vmaProtocol =
+      state.vmaDurationMs === 720000
+        ? "12"
+        : state.vmaDurationMs === 360000
+          ? "6"
+          : "custom";
+  }
+
+  if (!state.vmaTrackDistanceChoice) {
+    state.vmaTrackDistanceChoice =
+      [100,200,250,300,400].includes(state.vmaTrackDistance)
+        ? String(state.vmaTrackDistance)
+        : "custom";
   }
 
 
   let running = false;
-
   let startedAt = 0;
-
   let elapsedMs = 0;
 
   let recoveryTimer = null;
-
   let exportRunnerId = null;
 
   let timedLapCount = 0;
-
   let timedFinished = false;
-
   let timedActualDurationMs = 0;
 
 
+  /* =========================================================
+     UTILITAIRES
+  ========================================================= */
 
   const save = () =>
     localStorage.setItem(
@@ -175,19 +183,13 @@
     );
 
     const cs =
-      Math.floor(
-        ms % 1000 / 10
-      );
+      Math.floor(ms % 1000 / 10);
 
     const s =
-      Math.floor(
-        ms / 1000
-      ) % 60;
+      Math.floor(ms / 1000) % 60;
 
     const m =
-      Math.floor(
-        ms / 60000
-      );
+      Math.floor(ms / 60000);
 
     return (
       `${String(m).padStart(2,"0")}:` +
@@ -206,14 +208,10 @@
     );
 
     const s =
-      Math.floor(
-        ms / 1000
-      ) % 60;
+      Math.floor(ms / 1000) % 60;
 
     const m =
-      Math.floor(
-        ms / 60000
-      );
+      Math.floor(ms / 60000);
 
     return (
       `${String(m).padStart(2,"0")}:` +
@@ -225,8 +223,7 @@
 
   const short = ms =>
     `${(
-      Math.abs(ms || 0) /
-      1000
+      Math.abs(ms || 0) / 1000
     ).toFixed(2)} s`;
 
 
@@ -234,17 +231,14 @@
     elapsedMs +
     (
       running
-        ? performance.now() -
-          startedAt
+        ? performance.now() - startedAt
         : 0
     );
 
 
-  const spd = (d,t) =>
-    t
-      ? d /
-        (t / 1000) *
-        3.6
+  const spd = (distanceM, timeMs) =>
+    timeMs
+      ? distanceM / (timeMs / 1000) * 3.6
       : 0;
 
 
@@ -266,13 +260,23 @@
 
   const isTimed = () =>
     state.mode === "training" &&
-    [
-      "timer",
-      "vma"
-    ].includes(
+    ["timer","vma"].includes(
       state.trainingTool
     );
 
+
+  function setVisible(id, visible) {
+
+    const el = $(id);
+
+    if (el) {
+      el.classList.toggle(
+        "hidden",
+        !visible
+      );
+    }
+
+  }
 
 
   function parseTime(v) {
@@ -284,11 +288,7 @@
     v =
       String(v)
         .trim()
-        .toLowerCase()
-        .replace(
-          /,/g,
-          "."
-        );
+        .replace(/,/g,".");
 
     let m =
       v.match(
@@ -316,20 +316,14 @@
   }
 
 
-
-  function stableStudentId(
-    last,
-    first,
-    cls
-  ) {
+  function stableStudentId(last,first,cls) {
 
     const s =
       `${String(last).trim().toUpperCase()}|` +
       `${String(first).trim().toUpperCase()}|` +
       `${String(cls).trim().toUpperCase()}`;
 
-    let h =
-      2166136261;
+    let h = 2166136261;
 
     for (
       let i = 0;
@@ -337,8 +331,7 @@
       i++
     ) {
 
-      h ^=
-        s.charCodeAt(i);
+      h ^= s.charCodeAt(i);
 
       h =
         Math.imul(
@@ -359,30 +352,26 @@
   }
 
 
-
   function toast(t) {
 
-    $("toast").textContent =
-      t;
+    $("toast").textContent = t;
+    $("toast").hidden = false;
 
-    $("toast").hidden =
-      false;
-
-    clearTimeout(
-      toast.t
-    );
+    clearTimeout(toast.t);
 
     toast.t =
       setTimeout(
         () =>
-          $("toast").hidden =
-            true,
+          $("toast").hidden = true,
         2200
       );
 
   }
 
 
+  /* =========================================================
+     RESULTATS CLASSIQUES / CCF
+  ========================================================= */
 
   const rr = (
     id,
@@ -405,8 +394,7 @@
   const activeRunner = () =>
     state.runners.find(
       r =>
-        r.id ===
-        state.activeRunnerId
+        r.id === state.activeRunnerId
     ) || null;
 
 
@@ -414,10 +402,7 @@
     id,
     race = state.activeRace
   ) =>
-    rr(
-      id,
-      race
-    ).length >=
+    rr(id,race).length >=
     requiredSplits();
 
 
@@ -425,10 +410,7 @@
     state.runners.length > 0 &&
     state.runners.every(
       r =>
-        done(
-          r.id,
-          race
-        )
+        done(r.id,race)
     );
 
 
@@ -443,11 +425,11 @@
     ) || null;
 
 
+  /* =========================================================
+     CCF
+  ========================================================= */
 
-  function perfPoints(
-    sex,
-    ms
-  ) {
+  function perfPoints(sex,ms) {
 
     if (!ms) {
       return 0;
@@ -466,12 +448,9 @@
     ) {
 
       if (
-        ms / 1000 <=
-        limit
+        ms / 1000 <= limit
       ) {
-
         p = pts;
-
       }
 
     }
@@ -481,40 +460,24 @@
   }
 
 
-
   function regularityPoints(ms) {
 
-    if (ms == null) {
-      return 0;
-    }
+    if (ms == null) return 0;
 
-    const s =
-      ms / 1000;
+    const s = ms / 1000;
 
     if (s > 21) return 0;
-
     if (s >= 20) return .5;
-
     if (s >= 18) return 1;
-
     if (s >= 16) return 1.5;
-
     if (s >= 14) return 2;
-
     if (s >= 12) return 2.5;
-
     if (s >= 10) return 3;
-
     if (s >= 9) return 3.5;
-
     if (s >= 8) return 4;
-
     if (s >= 7) return 4.5;
-
     if (s >= 6) return 5;
-
     if (s >= 5) return 5.5;
-
     if (s < 4) return 6;
 
     return 5.5;
@@ -522,31 +485,19 @@
   }
 
 
-
   function ccfSummary(r) {
 
-    const a1 =
-      rr(
-        r.id,
-        1
-      );
-
-    const a2 =
-      rr(
-        r.id,
-        2
-      );
+    const a1 = rr(r.id,1);
+    const a2 = rr(r.id,2);
 
     const t1 =
       a1.length === 4
-        ? a1.at(-1)
-            .cumulativeMs
+        ? a1.at(-1).cumulativeMs
         : null;
 
     const t2 =
       a2.length === 4
-        ? a2.at(-1)
-            .cumulativeMs
+        ? a2.at(-1).cumulativeMs
         : null;
 
     const laps = [
@@ -557,15 +508,10 @@
     );
 
     const best =
-      [
-        t1,
-        t2
-      ]
+      [t1,t2]
         .filter(Boolean)
-        .sort(
-          (a,b) =>
-            a - b
-        )[0] || null;
+        .sort((a,b) => a-b)[0] ||
+      null;
 
     const spread =
       laps.length === 8
@@ -591,10 +537,7 @@
       spread,
       perf,
       reg,
-
-      total:
-        perf + reg,
-
+      total: perf + reg,
       complete:
         !!(
           t1 &&
@@ -606,28 +549,9 @@
   }
 
 
-
-  function selectedValue(
-    selectId,
-    customId
-  ) {
-
-    const el =
-      $(selectId);
-
-    if (!el) {
-      return 0;
-    }
-
-    return (
-      el.value === "custom"
-        ? +$(customId).value
-        : +el.value
-    );
-
-  }
-
-
+  /* =========================================================
+     CONFIGURATION
+  ========================================================= */
 
   function readConfig() {
 
@@ -635,14 +559,9 @@
       state.mode === "ccf"
     ) {
 
-      state.totalDistance =
-        800;
-
-      state.splitDistance =
-        200;
-
-      state.displayMode =
-        "cumulative";
+      state.totalDistance = 800;
+      state.splitDistance = 200;
+      state.displayMode = "cumulative";
 
       return;
 
@@ -650,24 +569,30 @@
 
 
     if (
-      state.trainingTool ===
-      "chrono"
+      state.trainingTool === "chrono"
     ) {
 
       state.totalDistance =
-        selectedValue(
-          "totalDistance",
-          "customDistance"
-        );
+        $("totalDistance").value === "custom"
+          ? Math.max(
+              1,
+              +$("customDistance").value || 1
+            )
+          : +$("totalDistance").value;
+
 
       state.splitDistance =
-        selectedValue(
-          "splitDistance",
-          "customSplit"
-        );
+        $("splitDistance").value === "custom"
+          ? Math.max(
+              1,
+              +$("customSplit").value || 1
+            )
+          : +$("splitDistance").value;
+
 
       state.displayMode =
         $("displayMode").value;
+
 
       state.targetMs =
         parseTime(
@@ -678,86 +603,125 @@
 
 
     if (
-      state.trainingTool ===
-      "timer"
+      state.trainingTool === "timer"
     ) {
 
-      state.timerDurationMs =
-        $("timerDuration").value ===
+      state.timerDurationChoice =
+        $("timerDuration").value;
+
+
+      if (
+        state.timerDurationChoice ===
         "custom"
+      ) {
 
-          ? Math.max(
-              1,
-              +$("customTimerDuration")
-                .value || 6
-            ) * 60000
+        state.timerDurationMs =
+          Math.max(
+            .5,
+            +$("customTimerDuration").value ||
+            6
+          ) * 60000;
 
-          : +$("timerDuration")
-              .value *
-            1000;
+      } else {
+
+        state.timerDurationMs =
+          +state.timerDurationChoice *
+          1000;
+
+      }
 
 
-      state.trackDistance =
-        selectedValue(
-          "trackDistance",
-          "customTrackDistance"
-        );
+      state.trackDistanceChoice =
+        $("trackDistance").value;
+
+
+      if (
+        state.trackDistanceChoice ===
+        "custom"
+      ) {
+
+        state.trackDistance =
+          Math.max(
+            10,
+            +$("customTrackDistance").value ||
+            300
+          );
+
+      } else {
+
+        state.trackDistance =
+          +state.trackDistanceChoice;
+
+      }
 
     }
 
 
     if (
-      state.trainingTool ===
-      "vma"
+      state.trainingTool === "vma"
     ) {
 
-      state.vmaDurationMs =
-        $("vmaProtocol").value ===
+      state.vmaProtocol =
+        $("vmaProtocol").value;
+
+
+      if (
+        state.vmaProtocol === "6"
+      ) {
+
+        state.vmaDurationMs =
+          360000;
+
+      } else if (
+        state.vmaProtocol === "12"
+      ) {
+
+        state.vmaDurationMs =
+          720000;
+
+      } else {
+
+        state.vmaDurationMs =
+          Math.max(
+            .5,
+            +$("vmaCustomDuration").value ||
+            6
+          ) * 60000;
+
+      }
+
+
+      state.vmaTrackDistanceChoice =
+        $("vmaTrackDistance").value;
+
+
+      if (
+        state.vmaTrackDistanceChoice ===
         "custom"
+      ) {
 
-          ? Math.max(
-              .5,
-              +$("vmaCustomDuration")
-                .value || 6
-            ) * 60000
+        state.vmaTrackDistance =
+          Math.max(
+            10,
+            +$("vmaCustomTrackDistance").value ||
+            300
+          );
 
-          : +$("vmaProtocol")
-              .value *
-            60000;
+      } else {
 
+        state.vmaTrackDistance =
+          +state.vmaTrackDistanceChoice;
 
-      state.vmaTrackDistance =
-        selectedValue(
-          "vmaTrackDistance",
-          "vmaCustomTrackDistance"
-        );
+      }
 
     }
 
   }
 
 
-
-  function setVisible(
-    id,
-    visible
-  ) {
-
-    const el =
-      $(id);
-
-    if (el) {
-
-      el.classList.toggle(
-        "hidden",
-        !visible
-      );
-
-    }
-
-  }
-
-
+  /* =========================================================
+     PAGE PARAMETRAGE
+  ========================================================= */
 
   function renderSetup() {
 
@@ -768,8 +732,7 @@
       .forEach(
         x =>
           x.checked =
-            x.value ===
-            state.mode
+            x.value === state.mode
       );
 
 
@@ -780,14 +743,12 @@
       .forEach(
         x =>
           x.checked =
-            x.value ===
-            state.trainingTool
+            x.value === state.trainingTool
       );
 
 
     const ccf =
-      state.mode ===
-      "ccf";
+      state.mode === "ccf";
 
 
     setVisible(
@@ -808,90 +769,68 @@
       )
       .forEach(
         x =>
-          x.classList
-            .toggle(
-              "hidden",
-              !ccf
-            )
+          x.classList.toggle(
+            "hidden",
+            !ccf
+          )
       );
 
 
     setVisible(
       "trainingSimpleConfig",
       !ccf &&
-      state.trainingTool ===
-      "simple"
+      state.trainingTool === "simple"
     );
 
 
     setVisible(
       "trainingChronoConfig",
       !ccf &&
-      state.trainingTool ===
-      "chrono"
+      state.trainingTool === "chrono"
     );
 
 
     setVisible(
       "trainingTimerConfig",
       !ccf &&
-      state.trainingTool ===
-      "timer"
+      state.trainingTool === "timer"
     );
 
 
     setVisible(
       "trainingVmaConfig",
       !ccf &&
-      state.trainingTool ===
-      "vma"
+      state.trainingTool === "vma"
     );
 
 
     setVisible(
       "runnerSetupBlock",
       ccf ||
-      state.trainingTool !==
-      "simple"
+      state.trainingTool !== "simple"
     );
 
 
+    /* Chrono performance */
+
     $("totalDistance").value =
       [
-        100,
-        200,
-        400,
-        600,
-        800,
-        1000,
-        1200,
-        1500,
-        2000,
-        3000
-      ].includes(
-        state.totalDistance
-      )
-        ? state.totalDistance
-        : "custom";
-
-
-    $("splitDistance").value =
-      [
-        50,
-        100,
-        150,
-        200,
-        250,
-        400
-      ].includes(
-        state.splitDistance
-      )
-        ? state.splitDistance
+        100,200,400,600,800,
+        1000,1200,1500,2000,3000
+      ].includes(state.totalDistance)
+        ? String(state.totalDistance)
         : "custom";
 
 
     $("customDistance").value =
       state.totalDistance;
+
+
+    $("splitDistance").value =
+      [50,100,150,200,250,400]
+        .includes(state.splitDistance)
+        ? String(state.splitDistance)
+        : "custom";
 
 
     $("customSplit").value =
@@ -904,138 +843,55 @@
 
     $("targetTime").value =
       state.targetMs
-        ? fmt(
-            state.targetMs
-          )
+        ? fmt(state.targetMs)
         : "";
-
-
-    $("timerDuration").value =
-      [
-        180000,
-        360000,
-        540000,
-        720000,
-        900000,
-        1200000
-      ].includes(
-        state.timerDurationMs
-      )
-
-        ? String(
-            state.timerDurationMs /
-            1000
-          )
-
-        : "custom";
-
-
-    $("customTimerDuration")
-      .value =
-        Math.max(
-          1,
-          state.timerDurationMs /
-          60000
-        );
-
-
-    $("trackDistance").value =
-      [
-        100,
-        200,
-        250,
-        300,
-        400
-      ].includes(
-        state.trackDistance
-      )
-        ? String(
-            state.trackDistance
-          )
-        : "custom";
-
-
-    $("customTrackDistance")
-      .value =
-        state.trackDistance;
-
-
-    $("vmaProtocol").value =
-      state.vmaDurationMs ===
-      360000
-        ? "6"
-        : "custom";
-
-
-    $("vmaCustomDuration")
-      .value =
-        Math.max(
-          .5,
-          state.vmaDurationMs /
-          60000
-        );
-
-
-    $("vmaTrackDistance").value =
-      [
-        100,
-        200,
-        250,
-        300,
-        400
-      ].includes(
-        state.vmaTrackDistance
-      )
-        ? String(
-            state.vmaTrackDistance
-          )
-        : "custom";
-
-
-    $("vmaCustomTrackDistance")
-      .value =
-        state.vmaTrackDistance;
 
 
     setVisible(
       "customDistanceWrap",
-      $("totalDistance")
-        .value === "custom"
+      $("totalDistance").value === "custom"
     );
 
 
     setVisible(
       "customSplitWrap",
-      $("splitDistance")
-        .value === "custom"
+      $("splitDistance").value === "custom"
     );
+
+
+    /* Minuteur */
+
+    $("timerDuration").value =
+      state.timerDurationChoice;
+
+
+    $("customTimerDuration").value =
+      Math.max(
+        .5,
+        state.timerDurationMs /
+        60000
+      );
+
+
+    $("trackDistance").value =
+      state.trackDistanceChoice;
+
+
+    $("customTrackDistance").value =
+      state.trackDistance;
 
 
     setVisible(
       "customTimerDurationWrap",
-      $("timerDuration")
-        .value === "custom"
+      state.timerDurationChoice ===
+      "custom"
     );
 
 
     setVisible(
       "customTrackDistanceWrap",
-      $("trackDistance")
-        .value === "custom"
-    );
-
-
-    setVisible(
-      "vmaCustomDurationWrap",
-      $("vmaProtocol")
-        .value === "custom"
-    );
-
-
-    setVisible(
-      "vmaCustomTrackDistanceWrap",
-      $("vmaTrackDistance")
-        .value === "custom"
+      state.trackDistanceChoice ===
+      "custom"
     );
 
 
@@ -1051,6 +907,44 @@
         `${state.trackDistance} m`;
 
 
+    /* VMA */
+
+    $("vmaProtocol").value =
+      state.vmaProtocol;
+
+
+    $("vmaCustomDuration").value =
+      Math.max(
+        .5,
+        state.vmaDurationMs /
+        60000
+      );
+
+
+    $("vmaTrackDistance").value =
+      state.vmaTrackDistanceChoice;
+
+
+    $("vmaCustomTrackDistance").value =
+      state.vmaTrackDistance;
+
+
+    setVisible(
+      "vmaCustomDurationWrap",
+      state.vmaProtocol ===
+      "custom"
+    );
+
+
+    setVisible(
+      "vmaCustomTrackDistanceWrap",
+      state.vmaTrackDistanceChoice ===
+      "custom"
+    );
+
+
+    /* Résumé */
+
     const recap = [];
 
 
@@ -1063,8 +957,7 @@
       );
 
     } else if (
-      state.trainingTool ===
-      "simple"
+      state.trainingTool === "simple"
     ) {
 
       recap.push(
@@ -1073,8 +966,7 @@
       );
 
     } else if (
-      state.trainingTool ===
-      "chrono"
+      state.trainingTool === "chrono"
     ) {
 
       recap.push(
@@ -1084,8 +976,7 @@
       );
 
     } else if (
-      state.trainingTool ===
-      "timer"
+      state.trainingTool === "timer"
     ) {
 
       recap.push(
@@ -1098,8 +989,16 @@
 
     } else {
 
+      const protocolName =
+        state.vmaProtocol === "6"
+          ? "Demi-Cooper"
+          : state.vmaProtocol === "12"
+            ? "Cooper"
+            : "Test personnalisé";
+
+
       recap.push(
-        "Test VMA",
+        protocolName,
         fmtClock(
           state.vmaDurationMs
         ),
@@ -1124,17 +1023,20 @@
       ccf
         ? "Passer à la prise de performance"
 
-        : state.trainingTool ===
-          "simple"
+        : state.trainingTool === "simple"
           ? "Ouvrir le chrono"
 
-        : state.trainingTool ===
-          "chrono"
+        : state.trainingTool === "chrono"
           ? "Démarrer la prise de performance"
 
-        : state.trainingTool ===
-          "timer"
+        : state.trainingTool === "timer"
           ? "Démarrer le minuteur"
+
+        : state.vmaProtocol === "6"
+          ? "Démarrer le Demi-Cooper"
+
+        : state.vmaProtocol === "12"
+          ? "Démarrer le Cooper"
 
         : "Démarrer le test VMA";
 
@@ -1144,6 +1046,9 @@
   }
 
 
+  /* =========================================================
+     COUREURS
+  ========================================================= */
 
   function renderRunnerSetup() {
 
@@ -1159,47 +1064,49 @@
       state.runners.length
 
         ? state.runners
-            .map(
-              r =>
-                `<span class="runnerChip">` +
+          .map(
+            r =>
 
-                `<strong>${
-                  esc(
-                    r.last
-                      ? r.last.toUpperCase() +
-                        " " +
-                        r.first
-                      : r.name
-                  )
-                }</strong>` +
+              `<span class="runnerChip">` +
 
-                `${
-                  r.classroom
-                    ? ` · ${esc(r.classroom)}`
-                    : ""
-                }` +
+              `<strong>${
+                esc(
+                  r.last
+                    ? r.last.toUpperCase() +
+                      " " +
+                      r.first
+                    : r.name
+                )
+              }</strong>` +
 
-                `${
-                  state.mode === "ccf"
-                    ? ` · ${r.sex}` +
-                      ` · P1 ${
-                        r.project1Ms
-                          ? fmt(r.project1Ms)
-                          : "—"
-                      }` +
-                      ` · P2 ${
-                        r.project2Ms
-                          ? fmt(r.project2Ms)
-                          : "—"
-                      }`
-                    : ""
-                }` +
+              `${
+                r.classroom
+                  ? ` · ${esc(r.classroom)}`
+                  : ""
+              }` +
 
-                `<button data-del="${r.id}">×</button>` +
+              `${
+                state.mode === "ccf"
+                  ? ` · ${r.sex}` +
+                    ` · P1 ${
+                      r.project1Ms
+                        ? fmt(r.project1Ms)
+                        : "—"
+                    }` +
+                    ` · P2 ${
+                      r.project2Ms
+                        ? fmt(r.project2Ms)
+                        : "—"
+                    }`
+                  : ""
+              }` +
 
-                `</span>`
-            )
-            .join("")
+              `<button data-del="${r.id}">×</button>` +
+
+              `</span>`
+
+          )
+          .join("")
 
         : "Aucun coureur ajouté.";
 
@@ -1270,21 +1177,13 @@
   }
 
 
-
-  function estimateMs(
-    prefix
-  ) {
+  function estimateMs(prefix) {
 
     const m =
-      $(
-        `${prefix}Min`
-      )?.value;
-
+      $(`${prefix}Min`)?.value;
 
     const s =
-      $(
-        `${prefix}Sec`
-      )?.value;
+      $(`${prefix}Sec`)?.value;
 
 
     if (
@@ -1320,7 +1219,6 @@
   }
 
 
-
   function addRunner() {
 
     const last =
@@ -1354,8 +1252,8 @@
         last.toUpperCase(),
         first
       ]
-      .filter(Boolean)
-      .join(" ");
+        .filter(Boolean)
+        .join(" ");
 
 
     if (
@@ -1396,17 +1294,13 @@
 
     const p1 =
       state.mode === "ccf"
-        ? estimateMs(
-            "project1"
-          )
+        ? estimateMs("project1")
         : null;
 
 
     const p2 =
       state.mode === "ccf"
-        ? estimateMs(
-            "project2"
-          )
+        ? estimateMs("project2")
         : null;
 
 
@@ -1494,10 +1388,7 @@
       id => {
 
         if ($(id)) {
-
-          $(id).value =
-            "";
-
+          $(id).value = "";
         }
 
       }
@@ -1511,6 +1402,9 @@
   }
 
 
+  /* =========================================================
+     LANCEMENT
+  ========================================================= */
 
   function launch() {
 
@@ -1554,15 +1448,10 @@
     ) {
 
       const duration =
-        state.trainingTool === "timer"
-          ? state.timerDurationMs
-          : state.vmaDurationMs;
-
+        currentTimedDuration();
 
       const track =
-        state.trainingTool === "timer"
-          ? state.trackDistance
-          : state.vmaTrackDistance;
+        currentTrackDistance();
 
 
       if (
@@ -1617,9 +1506,7 @@
         state.activeRunnerId =
           state.runners.find(
             r =>
-              !timedRunFor(
-                r.id
-              )
+              !timedRunFor(r.id)
           )?.id ||
           state.runners[0]?.id ||
           null;
@@ -1629,10 +1516,7 @@
         state.activeRunnerId =
           state.runners.find(
             r =>
-              !done(
-                r.id,
-                1
-              )
+              !done(r.id,1)
           )?.id ||
           state.runners[0]?.id ||
           null;
@@ -1653,76 +1537,58 @@
   }
 
 
+  /* =========================================================
+     CHRONO
+  ========================================================= */
 
   function resetClock() {
 
-    running =
-      false;
-
-    startedAt =
-      0;
-
-    elapsedMs =
-      0;
+    running = false;
+    startedAt = 0;
+    elapsedMs = 0;
 
   }
 
 
-
   function resetTimedRuntime() {
 
-    timedLapCount =
-      0;
-
-    timedFinished =
-      false;
-
-    timedActualDurationMs =
-      0;
+    timedLapCount = 0;
+    timedFinished = false;
+    timedActualDurationMs = 0;
 
 
     if (
       $("partialDistance")
     ) {
 
-      $("partialDistance")
-        .value =
-          0;
+      $("partialDistance").value =
+        0;
 
     }
 
   }
 
 
-
   function currentTimedDuration() {
 
     return (
-      state.trainingTool ===
-      "vma"
-
+      state.trainingTool === "vma"
         ? state.vmaDurationMs
-
         : state.timerDurationMs
     );
 
   }
 
 
-
   function currentTrackDistance() {
 
     return (
-      state.trainingTool ===
-      "vma"
-
+      state.trainingTool === "vma"
         ? state.vmaTrackDistance
-
         : state.trackDistance
     );
 
   }
-
 
 
   function start() {
@@ -1736,14 +1602,9 @@
       isSimple()
     ) {
 
-      elapsedMs =
-        0;
-
-      startedAt =
-        performance.now();
-
-      running =
-        true;
+      elapsedMs = 0;
+      startedAt = performance.now();
+      running = true;
 
       renderTimer();
 
@@ -1770,9 +1631,7 @@
     ) {
 
       if (
-        timedRunFor(
-          r.id
-        )
+        timedRunFor(r.id)
       ) {
 
         return toast(
@@ -1784,18 +1643,12 @@
 
       resetTimedRuntime();
 
-
-      elapsedMs =
-        0;
-
+      elapsedMs = 0;
 
       startedAt =
         performance.now();
 
-
-      running =
-        true;
-
+      running = true;
 
       renderTimer();
 
@@ -1805,9 +1658,7 @@
 
 
     if (
-      done(
-        r.id
-      )
+      done(r.id)
     ) {
 
       return toast(
@@ -1817,29 +1668,21 @@
     }
 
 
-    elapsedMs =
-      0;
-
+    elapsedMs = 0;
 
     startedAt =
       performance.now();
 
-
-    running =
-      true;
-
+    running = true;
 
     renderTimer();
 
   }
 
 
-
   function stopClock() {
 
-    if (
-      running
-    ) {
+    if (running) {
 
       elapsedMs =
         now();
@@ -1858,15 +1701,10 @@
   }
 
 
-
   function stopAction() {
 
-    if (
-      !running
-    ) {
-
+    if (!running) {
       return;
-
     }
 
 
@@ -1885,15 +1723,16 @@
       isTimed()
     ) {
 
-      finishTimedRun(
-        false
-      );
+      finishTimedRun(false);
 
     }
 
   }
 
 
+  /* =========================================================
+     CHRONO PERFORMANCE / CCF
+  ========================================================= */
 
   function nextRunnerSameRace(
     currentId
@@ -1914,7 +1753,6 @@
   }
 
 
-
   function recordLap() {
 
     const r =
@@ -1930,9 +1768,7 @@
     }
 
 
-    if (
-      !running
-    ) {
+    if (!running) {
 
       return toast(
         "Appuie d’abord sur DÉPART."
@@ -1942,9 +1778,7 @@
 
 
     const a =
-      rr(
-        r.id
-      );
+      rr(r.id);
 
 
     const cum =
@@ -1953,19 +1787,16 @@
 
     const prev =
       a.length
-        ? a.at(-1)
-            .cumulativeMs
+        ? a.at(-1).cumulativeMs
         : 0;
 
 
     const lap =
-      cum -
-      prev;
+      cum - prev;
 
 
     const pass =
-      a.length +
-      1;
+      a.length + 1;
 
 
     const dist =
@@ -1982,9 +1813,7 @@
 
     const target =
       state.mode === "training"
-
         ? state.targetMs
-
         : (
             state.activeRace === 1
               ? r.project1Ms
@@ -2040,9 +1869,7 @@
     });
 
 
-    navigator.vibrate?.(
-      25
-    );
+    navigator.vibrate?.(25);
 
 
     if (
@@ -2108,15 +1935,16 @@
   }
 
 
+  /* =========================================================
+     MINUTEUR / VMA
+  ========================================================= */
 
   function addTimedLap() {
 
     if (
       !isTimed()
     ) {
-
       return;
-
     }
 
 
@@ -2131,19 +1959,13 @@
     }
 
 
-    timedLapCount +=
-      1;
+    timedLapCount += 1;
 
-
-    navigator.vibrate?.(
-      25
-    );
-
+    navigator.vibrate?.(25);
 
     renderTimer();
 
   }
-
 
 
   function undoTimedLap() {
@@ -2159,14 +1981,11 @@
     }
 
 
-    timedLapCount -=
-      1;
-
+    timedLapCount -= 1;
 
     renderTimer();
 
   }
-
 
 
   function finishTimedRun(
@@ -2199,14 +2018,11 @@
     elapsedMs =
       timedActualDurationMs;
 
-
     running =
       false;
 
-
     startedAt =
       0;
-
 
     timedFinished =
       true;
@@ -2231,6 +2047,86 @@
 
   }
 
+
+  /* =========================================================
+     CALCUL VMA
+  ========================================================= */
+
+  function calculateVma(
+    distanceM,
+    durationMs,
+    protocol
+  ) {
+
+    const averageSpeed =
+      spd(
+        distanceM,
+        durationMs
+      );
+
+
+    /*
+      Demi-Cooper :
+      sur 6 minutes, la vitesse moyenne
+      correspond directement à distance / 100.
+    */
+
+    if (
+      protocol === "6"
+    ) {
+
+      return averageSpeed;
+
+    }
+
+
+    /*
+      Cooper 12 minutes :
+      estimation VO2max classique de Cooper,
+      puis conversion indicative en VMA
+      avec VMA ≈ VO2max / 3,5.
+    */
+
+    if (
+      protocol === "12"
+    ) {
+
+      const vo2max =
+        (
+          distanceM -
+          504.9
+        ) /
+        44.73;
+
+
+      if (
+        !Number.isFinite(vo2max) ||
+        vo2max <= 0
+      ) {
+
+        return averageSpeed;
+
+      }
+
+
+      return (
+        vo2max /
+        3.5
+      );
+
+    }
+
+
+    /*
+      Durée personnalisée :
+      pas de protocole VMA standard.
+      On utilise donc la vitesse moyenne
+      comme estimation indicative.
+    */
+
+    return averageSpeed;
+
+  }
 
 
   function validateTimedResult() {
@@ -2271,8 +2167,7 @@
 
 
     if (
-      partial >=
-      track
+      partial >= track
     ) {
 
       return toast(
@@ -2293,11 +2188,40 @@
       partial;
 
 
+    if (
+      totalDistance <= 0
+    ) {
+
+      return toast(
+        "Aucune distance enregistrée."
+      );
+
+    }
+
+
     const speed =
       spd(
         totalDistance,
         durationMs
       );
+
+
+    const vma =
+      state.trainingTool === "vma"
+        ? calculateVma(
+            totalDistance,
+            durationMs,
+            state.vmaProtocol
+          )
+        : null;
+
+
+    const protocolName =
+      state.vmaProtocol === "6"
+        ? "Demi-Cooper"
+        : state.vmaProtocol === "12"
+          ? "Cooper"
+          : "Test personnalisé";
 
 
     state.timedRuns =
@@ -2325,6 +2249,16 @@
       tool:
         state.trainingTool,
 
+      protocol:
+        state.trainingTool === "vma"
+          ? state.vmaProtocol
+          : null,
+
+      protocolName:
+        state.trainingTool === "vma"
+          ? protocolName
+          : null,
+
       durationMs,
 
       trackDistance:
@@ -2340,15 +2274,10 @@
 
       speed,
 
-      vma:
-        state.trainingTool ===
-        "vma"
-          ? speed
-          : null,
+      vma,
 
       createdAt:
-        new Date()
-          .toISOString()
+        new Date().toISOString()
 
     });
 
@@ -2371,9 +2300,7 @@
       state.runners.find(
         x =>
           x.id !== r.id &&
-          !timedRunFor(
-            x.id
-          )
+          !timedRunFor(x.id)
       );
 
 
@@ -2387,6 +2314,7 @@
       resetTimedRuntime();
 
       save();
+
 
       toast(
         `${r.name} enregistré · au tour de ${next.name}`
@@ -2406,6 +2334,9 @@
   }
 
 
+  /* =========================================================
+     RESET / SELECTION
+  ========================================================= */
 
   function resetCurrent() {
 
@@ -2436,9 +2367,7 @@
     ) {
 
       const existing =
-        timedRunFor(
-          r.id
-        );
+        timedRunFor(r.id);
 
 
       if (
@@ -2461,16 +2390,13 @@
         state.timedRuns.filter(
           x =>
             !(
-              x.runnerId ===
-              r.id &&
-              x.tool ===
-              state.trainingTool
+              x.runnerId === r.id &&
+              x.tool === state.trainingTool
             )
         );
 
 
       resetClock();
-
       resetTimedRuntime();
 
       save();
@@ -2483,9 +2409,7 @@
 
 
     if (
-      rr(
-        r.id
-      ).length &&
+      rr(r.id).length &&
       !confirm(
         `Effacer les temps de ${r.name} pour cette course ?`
       )
@@ -2500,10 +2424,8 @@
       state.results.filter(
         x =>
           !(
-            x.runnerId ===
-            r.id &&
-            x.race ===
-            state.activeRace
+            x.runnerId === r.id &&
+            x.race === state.activeRace
           )
       );
 
@@ -2517,10 +2439,7 @@
   }
 
 
-
-  function setActive(
-    id
-  ) {
+  function setActive(id) {
 
     if (
       running
@@ -2556,10 +2475,7 @@
   }
 
 
-
-  function setRace(
-    race
-  ) {
+  function setRace(race) {
 
     if (
       running
@@ -2610,6 +2526,9 @@
   }
 
 
+  /* =========================================================
+     AFFICHAGE CHRONO
+  ========================================================= */
 
   function renderTimer() {
 
@@ -2633,9 +2552,8 @@
         );
 
 
-      $("mainTime")
-        .textContent =
-          fmtClock(left);
+      $("mainTime").textContent =
+        fmtClock(left);
 
 
       if (
@@ -2644,19 +2562,18 @@
         !timedFinished
       ) {
 
-        finishTimedRun(
-          true
-        );
+        finishTimedRun(true);
+
+        return;
 
       }
 
     } else {
 
-      $("mainTime")
-        .textContent =
-          fmt(
-            now()
-          );
+      $("mainTime").textContent =
+        fmt(
+          now()
+        );
 
     }
 
@@ -2665,9 +2582,8 @@
       isSimple()
     ) {
 
-      $("timerLabel")
-        .textContent =
-          "Chrono simple";
+      $("timerLabel").textContent =
+        "Chrono simple";
 
 
       setVisible(
@@ -2712,21 +2628,27 @@
       );
 
 
-      $("startBtn")
-        .disabled =
-          running;
+      $("startBtn").disabled =
+        running;
 
 
     } else if (
       isTimed()
     ) {
 
-      $("timerLabel")
-        .textContent =
-          state.trainingTool ===
-          "vma"
-            ? "Test VMA"
-            : "Minuteur";
+      $("timerLabel").textContent =
+
+        state.trainingTool === "vma"
+
+          ? state.vmaProtocol === "6"
+            ? "Demi-Cooper · 6 min"
+
+            : state.vmaProtocol === "12"
+              ? "Cooper · 12 min"
+
+              : "Test VMA personnalisé"
+
+          : "Minuteur";
 
 
       setVisible(
@@ -2766,15 +2688,13 @@
       );
 
 
-      $("timerLapBtn")
-        .disabled =
-          !running;
+      $("timerLapBtn").disabled =
+        !running;
 
 
-      $("undoTimerLapBtn")
-        .disabled =
-          timedLapCount <= 0 ||
-          timedFinished;
+      $("undoTimerLapBtn").disabled =
+        timedLapCount <= 0 ||
+        timedFinished;
 
 
       setVisible(
@@ -2783,11 +2703,10 @@
       );
 
 
-      $("timerLapCount")
-        .textContent =
-          String(
-            timedLapCount
-          );
+      $("timerLapCount").textContent =
+        String(
+          timedLapCount
+        );
 
 
       const distance =
@@ -2795,9 +2714,8 @@
         currentTrackDistance();
 
 
-      $("timerDistanceCount")
-        .textContent =
-          `${distance} m`;
+      $("timerDistanceCount").textContent =
+        `${distance} m`;
 
 
       const used =
@@ -2810,8 +2728,7 @@
         );
 
 
-      $("timerSpeedDisplay")
-        .textContent =
+      $("timerSpeedDisplay").textContent =
 
         distance
           ? `${spd(distance,used).toFixed(1)} km/h`
@@ -2820,9 +2737,8 @@
 
     } else {
 
-      $("timerLabel")
-        .textContent =
-          "Chronomètre";
+      $("timerLabel").textContent =
+        "Chronomètre";
 
 
       setVisible(
@@ -2867,26 +2783,21 @@
       );
 
 
-      $("startBtn")
-        .textContent =
-          running
-            ? "EN COURS"
-            : "DÉPART";
+      $("startBtn").textContent =
+        running
+          ? "EN COURS"
+          : "DÉPART";
 
 
-      $("startBtn")
-        .disabled =
-          running ||
-          !r ||
-          done(
-            r.id
-          );
+      $("startBtn").disabled =
+        running ||
+        !r ||
+        done(r.id);
 
 
-      $("lapBtn")
-        .disabled =
-          !running ||
-          !r;
+      $("lapBtn").disabled =
+        !running ||
+        !r;
 
     }
 
@@ -2925,8 +2836,7 @@
 
 
       if (
-        state.mode ===
-        "ccf"
+        state.mode === "ccf"
       ) {
 
         proj =
@@ -2947,13 +2857,8 @@
           state.targetMs;
 
 
-        activity =
-          "Course";
-
-
       } else if (
-        state.trainingTool ===
-        "timer"
+        state.trainingTool === "timer"
       ) {
 
         activity =
@@ -2961,26 +2866,29 @@
 
 
       } else if (
-        state.trainingTool ===
-        "vma"
+        state.trainingTool === "vma"
       ) {
 
         activity =
-          `Test VMA · piste ${state.vmaTrackDistance} m`;
+          `${
+            state.vmaProtocol === "6"
+              ? "Demi-Cooper"
+              : state.vmaProtocol === "12"
+                ? "Cooper"
+                : "Test VMA"
+          } · piste ${state.vmaTrackDistance} m`;
 
       }
 
 
-      $("activeRunnerBanner")
-        .className =
-          `activeRunnerBanner ${
-            r.tone ||
-            "green"
-          }`;
+      $("activeRunnerBanner").className =
+        `activeRunnerBanner ${
+          r.tone ||
+          "green"
+        }`;
 
 
-      $("activeRunnerBanner")
-        .innerHTML =
+      $("activeRunnerBanner").innerHTML =
 
         `<strong>${
           esc(
@@ -3011,20 +2919,14 @@
 
         `</span>`;
 
-
-    } else if (
-      !isSimple()
-    ) {
-
-      $("activeRunnerBanner")
-        .innerHTML =
-          "";
-
     }
 
   }
 
 
+  /* =========================================================
+     CARTES COUREURS
+  ========================================================= */
 
   function renderRunners() {
 
@@ -3043,8 +2945,7 @@
           (r,i) => {
 
             const isActive =
-              r.id ===
-              state.activeRunnerId;
+              r.id === state.activeRunnerId;
 
 
             let metric =
@@ -3068,9 +2969,7 @@
             ) {
 
               const tr =
-                timedRunFor(
-                  r.id
-                );
+                timedRunFor(r.id);
 
 
               isDone =
@@ -3078,9 +2977,16 @@
 
 
               meta =
-                state.trainingTool ===
-                "vma"
-                  ? "Test VMA"
+                state.trainingTool === "vma"
+
+                  ? state.vmaProtocol === "6"
+                    ? "Demi-Cooper"
+
+                    : state.vmaProtocol === "12"
+                      ? "Cooper"
+
+                      : "Test VMA"
+
                   : "Minuteur / Tours";
 
 
@@ -3092,6 +2998,7 @@
 
                 sub =
                   `${tr.speed.toFixed(1)} km/h` +
+
                   `${
                     tr.vma != null
                       ? ` · VMA ${tr.vma.toFixed(1)}`
@@ -3114,9 +3021,7 @@
             } else {
 
               const a =
-                rr(
-                  r.id
-                );
+                rr(r.id);
 
 
               const last =
@@ -3124,17 +3029,12 @@
 
 
               isDone =
-                done(
-                  r.id
-                );
+                done(r.id);
 
 
               const proj =
-                state.mode ===
-                "training"
-
+                state.mode === "training"
                   ? state.targetMs
-
                   : (
                       state.activeRace === 1
                         ? r.project1Ms
@@ -3143,8 +3043,7 @@
 
 
               meta =
-                state.mode ===
-                "ccf"
+                state.mode === "ccf"
                   ? `800 n°${state.activeRace}`
                   : "Course";
 
@@ -3159,17 +3058,13 @@
 
               metric =
                 last
-                  ? fmt(
-                      last.cumulativeMs
-                    )
+                  ? fmt(last.cumulativeMs)
                   : "Prêt";
 
 
               sub =
                 isDone
-
                   ? "Course terminée"
-
                   : `${a.length}/${requiredSplits()} passages enregistrés`;
 
             }
@@ -3252,6 +3147,9 @@
   }
 
 
+  /* =========================================================
+     RESULTATS CHRONO CLASSIQUE
+  ========================================================= */
 
   function renderResults() {
 
@@ -3271,8 +3169,7 @@
       );
 
 
-    $("resultsBody")
-      .innerHTML =
+    $("resultsBody").innerHTML =
 
       a
         .map(
@@ -3312,7 +3209,6 @@
   }
 
 
-
   function renderStats() {
 
     const h =
@@ -3328,19 +3224,14 @@
               );
 
 
-            if (
-              !a.length
-            ) {
-
+            if (!a.length) {
               return "";
-
             }
 
 
             const laps =
               a.map(
-                x =>
-                  x.lapMs
+                x => x.lapMs
               );
 
 
@@ -3388,13 +3279,15 @@
         .join("");
 
 
-    $("statsGrid")
-      .innerHTML =
-        h;
+    $("statsGrid").innerHTML =
+      h;
 
   }
 
 
+  /* =========================================================
+     RESULTAT VMA / MINUTEUR
+  ========================================================= */
 
   function showTimedResult(
     runnerId =
@@ -3439,21 +3332,18 @@
     );
 
 
-    $("vmaResultDistance")
-      .textContent =
-        `${tr.totalDistance} m`;
+    $("vmaResultDistance").textContent =
+      `${tr.totalDistance} m`;
 
 
-    $("vmaResultDuration")
-      .textContent =
-        fmtClock(
-          tr.durationMs
-        );
+    $("vmaResultDuration").textContent =
+      fmtClock(
+        tr.durationMs
+      );
 
 
-    $("vmaResultSpeed")
-      .textContent =
-        `${tr.speed.toFixed(1)} km/h`;
+    $("vmaResultSpeed").textContent =
+      `${tr.speed.toFixed(1)} km/h`;
 
 
     const main =
@@ -3464,31 +3354,28 @@
 
 
     if (
-      state.trainingTool ===
-      "vma"
+      state.trainingTool === "vma"
     ) {
 
       if (main) {
-
-        main.classList
-          .remove(
-            "hidden"
-          );
-
+        main.classList.remove("hidden");
       }
 
 
-      $("vmaResultValue")
-        .textContent =
-          `${tr.vma.toFixed(1)} km/h`;
+      $("vmaResultValue").textContent =
+        `${tr.vma.toFixed(1)} km/h`;
 
 
       const v =
         tr.vma;
 
 
-      $("vmaTrainingSpeeds")
-        .innerHTML =
+      $("vmaTrainingSpeeds").innerHTML =
+
+        `<div class="statRow">` +
+        `<span>Protocole</span>` +
+        `<strong>${esc(tr.protocolName || "Test VMA")}</strong>` +
+        `</div>` +
 
         `<div class="statRow">` +
         `<span>80 % VMA</span>` +
@@ -3514,17 +3401,11 @@
     } else {
 
       if (main) {
-
-        main.classList
-          .add(
-            "hidden"
-          );
-
+        main.classList.add("hidden");
       }
 
 
-      $("vmaTrainingSpeeds")
-        .innerHTML =
+      $("vmaTrainingSpeeds").innerHTML =
 
         `<div class="statRow">` +
         `<span>Tours complets</span>` +
@@ -3541,11 +3422,11 @@
   }
 
 
+  /* =========================================================
+     QR CCF
+  ========================================================= */
 
-  function qrPayload(
-    r,
-    race
-  ) {
+  function qrPayload(r,race) {
 
     const a =
       rr(
@@ -3608,18 +3489,15 @@
 
       totalMs:
         Math.round(
-          a.at(-1)
-            .cumulativeMs
+          a.at(-1).cumulativeMs
         ),
 
       createdAt:
-        new Date()
-          .toISOString()
+        new Date().toISOString()
 
     };
 
   }
-
 
 
   function ensureQrDialog() {
@@ -3627,9 +3505,7 @@
     if (
       $("teacherQrDialog")
     ) {
-
       return;
-
     }
 
 
@@ -3658,17 +3534,14 @@
       '</div>';
 
 
-    document.body
-      .appendChild(d);
+    document.body.appendChild(d);
 
 
-    $("teacherQrClose")
-      .onclick =
-        () =>
-          d.close();
+    $("teacherQrClose").onclick =
+      () =>
+        d.close();
 
   }
-
 
 
   function showTeacherQR(
@@ -3679,8 +3552,7 @@
     const r =
       state.runners.find(
         x =>
-          x.id ===
-          rid
+          x.id === rid
       );
 
 
@@ -3692,9 +3564,7 @@
       );
 
 
-    if (
-      !payload
-    ) {
+    if (!payload) {
 
       return toast(
         "Course non terminée."
@@ -3706,9 +3576,8 @@
     ensureQrDialog();
 
 
-    $("teacherQrTitle")
-      .textContent =
-        `${r.last.toUpperCase()} ${r.first} · 800 n°${race}`;
+    $("teacherQrTitle").textContent =
+      `${r.last.toUpperCase()} ${r.first} · 800 n°${race}`;
 
 
     const box =
@@ -3752,11 +3621,9 @@
     }
 
 
-    $("teacherQrDialog")
-      .showModal();
+    $("teacherQrDialog").showModal();
 
   }
-
 
 
   function renderTeacherQrActions() {
@@ -3771,8 +3638,7 @@
 
 
     if (
-      state.mode !==
-      "ccf"
+      state.mode !== "ccf"
     ) {
 
       host.innerHTML =
@@ -3789,35 +3655,30 @@
           r => {
 
             const buttons =
-              [
-                1,
-                2
-              ]
-              .filter(
-                race =>
-                  done(
-                    r.id,
-                    race
-                  )
-              )
-              .map(
-                race =>
+              [1,2]
+                .filter(
+                  race =>
+                    done(
+                      r.id,
+                      race
+                    )
+                )
+                .map(
+                  race =>
 
-                  `<button ` +
-                  `class="btn primary" ` +
-                  `data-qr-runner="${r.id}" ` +
-                  `data-qr-race="${race}">` +
-                  `QR prof · ${esc(r.last.toUpperCase())} · 800 n°${race}` +
-                  `</button>`
+                    `<button ` +
+                    `class="btn primary" ` +
+                    `data-qr-runner="${r.id}" ` +
+                    `data-qr-race="${race}">` +
+                    `QR prof · ${esc(r.last.toUpperCase())} · 800 n°${race}` +
+                    `</button>`
 
-              )
-              .join(" ");
+                )
+                .join(" ");
 
 
             return buttons
-
               ? `<div style="margin-top:10px">${buttons}</div>`
-
               : "";
 
           }
@@ -3830,20 +3691,18 @@
         "[data-qr-runner]"
       )
       .forEach(
-        b => {
+        b =>
 
           b.onclick =
             () =>
               showTeacherQR(
                 b.dataset.qrRunner,
                 +b.dataset.qrRace
-              );
+              )
 
-        }
       );
 
   }
-
 
 
   function renderCCF() {
@@ -3853,15 +3712,10 @@
 
 
     if (
-      state.mode !==
-      "ccf"
+      state.mode !== "ccf"
     ) {
 
-      box.classList
-        .add(
-          "hidden"
-        );
-
+      box.classList.add("hidden");
 
       renderTeacherQrActions();
 
@@ -3915,17 +3769,12 @@
       `<div class="scoreGrid">${cards}</div>`;
 
 
-    box.classList
-      .remove(
-        "hidden"
-      );
+    box.classList.remove("hidden");
 
 
     $("teacherRevealBtn")
       .classList
-      .add(
-        "hidden"
-      );
+      .add("hidden");
 
 
     renderTeacherQrActions();
@@ -3933,35 +3782,46 @@
   }
 
 
+  /* =========================================================
+     ECRAN PERFORMANCE
+  ========================================================= */
 
   function renderPerf() {
 
     const ccf =
-      state.mode ===
-      "ccf";
+      state.mode === "ccf";
 
 
     if (
       isSimple()
     ) {
 
-      $("perfRecap")
-        .innerHTML =
-          `<span>Chrono simple</span>`;
+      $("perfRecap").innerHTML =
+        `<span>Chrono simple</span>`;
 
 
     } else if (
       isTimed()
     ) {
 
-      $("perfRecap")
-        .innerHTML =
+      const toolLabel =
 
-        `<span>${
-          state.trainingTool === "vma"
-            ? "Test VMA"
-            : "Minuteur / Tours"
-        }</span>` +
+        state.trainingTool === "vma"
+
+          ? state.vmaProtocol === "6"
+            ? "Demi-Cooper"
+
+            : state.vmaProtocol === "12"
+              ? "Cooper"
+
+              : "Test VMA personnalisé"
+
+          : "Minuteur / Tours";
+
+
+      $("perfRecap").innerHTML =
+
+        `<span>${toolLabel}</span>` +
 
         `<span>${fmtClock(currentTimedDuration())}</span>` +
 
@@ -3970,8 +3830,7 @@
 
     } else {
 
-      $("perfRecap")
-        .innerHTML =
+      $("perfRecap").innerHTML =
 
         `<span>${state.totalDistance} m</span>` +
 
@@ -3998,12 +3857,11 @@
       )
       .forEach(
         x =>
-          x.classList
-            .toggle(
-              "active",
-              +x.dataset.race ===
-              state.activeRace
-            )
+          x.classList.toggle(
+            "active",
+            +x.dataset.race ===
+            state.activeRace
+          )
       );
 
 
@@ -4084,9 +3942,7 @@
 
       $("ccfScores")
         .classList
-        .add(
-          "hidden"
-        );
+        .add("hidden");
 
 
       renderTeacherQrActions();
@@ -4096,15 +3952,13 @@
   }
 
 
-
   function render() {
 
     $("setupPanel")
       .classList
       .toggle(
         "hidden",
-        state.view !==
-        "setup"
+        state.view !== "setup"
       );
 
 
@@ -4112,40 +3966,33 @@
       .classList
       .toggle(
         "hidden",
-        state.view !==
-        "performance"
+        state.view !== "performance"
       );
 
 
-    state.view ===
-    "setup"
-
+    state.view === "setup"
       ? renderSetup()
-
       : renderPerf();
 
   }
 
 
+  /* =========================================================
+     EXPORT
+  ========================================================= */
 
   function selectedExportRunner() {
 
     return (
-
       state.runners.find(
         r =>
-          r.id ===
-          exportRunnerId
+          r.id === exportRunnerId
       ) ||
-
       activeRunner() ||
-
       state.runners[0]
-
     );
 
   }
-
 
 
   function resultTextFor(r) {
@@ -4183,9 +4030,7 @@
 
 
       if (!tr) {
-
         return head;
-
       }
 
 
@@ -4197,7 +4042,8 @@
 
         `${
           tr.tool === "vma"
-            ? "Test VMA"
+            ? tr.protocolName ||
+              "Test VMA"
             : "Minuteur / Tours"
         }\n` +
 
@@ -4229,8 +4075,7 @@
       state.results
         .filter(
           x =>
-            x.runnerId ===
-            r.id
+            x.runnerId === r.id
         )
         .map(
           x =>
@@ -4255,7 +4100,6 @@
   }
 
 
-
   function prepareExportDialog() {
 
     const panel =
@@ -4270,15 +4114,12 @@
 
 
     if (old) {
-
       old.remove();
-
     }
 
 
     if (
-      state.runners.length >
-      1
+      state.runners.length > 1
     ) {
 
       const d =
@@ -4346,11 +4187,10 @@
               )
               .forEach(
                 x =>
-                  x.classList
-                    .toggle(
-                      "active",
-                      x === b
-                    )
+                  x.classList.toggle(
+                    "active",
+                    x === b
+                  )
               );
 
             };
@@ -4368,7 +4208,6 @@
     }
 
   }
-
 
 
   async function openCarnet() {
@@ -4407,7 +4246,6 @@
   }
 
 
-
   function buildSheet() {
 
     const r =
@@ -4438,8 +4276,7 @@
       }
 
 
-      $("captureSheet")
-        .innerHTML =
+      $("captureSheet").innerHTML =
 
         `<div class="captureTitle">` +
 
@@ -4462,6 +4299,15 @@
         `<table class="captureTable">` +
 
         `<tbody>` +
+
+        `${
+          tr.protocolName
+            ? `<tr>` +
+              `<th>Protocole</th>` +
+              `<td>${esc(tr.protocolName)}</td>` +
+              `</tr>`
+            : ""
+        }` +
 
         `<tr>` +
         `<th>Durée</th>` +
@@ -4501,8 +4347,7 @@
 
     } else {
 
-      $("captureSheet")
-        .innerHTML =
+      $("captureSheet").innerHTML =
 
         `<div class="captureTitle">` +
 
@@ -4547,8 +4392,7 @@
         state.results
           .filter(
             x =>
-              x.runnerId ===
-              r.id
+              x.runnerId === r.id
           )
           .map(
             x =>
@@ -4583,16 +4427,16 @@
     }
 
 
-    $("carnetDialog")
-      .close();
+    $("carnetDialog").close();
 
-
-    $("sheetDialog")
-      .showModal();
+    $("sheetDialog").showModal();
 
   }
 
 
+  /* =========================================================
+     RECUPERATION CCF
+  ========================================================= */
 
   function updateRecovery() {
 
@@ -4600,9 +4444,8 @@
       !state.recoveryStartedAt
     ) {
 
-      $("recoveryDisplay")
-        .textContent =
-          "";
+      $("recoveryDisplay").textContent =
+        "";
 
       return;
 
@@ -4612,7 +4455,6 @@
     const left =
       Math.max(
         0,
-
         720000 -
         (
           Date.now() -
@@ -4621,9 +4463,8 @@
       );
 
 
-    $("recoveryDisplay")
-      .textContent =
-        `Récupération : ${fmt(left)}`;
+    $("recoveryDisplay").textContent =
+      `Récupération : ${fmt(left)}`;
 
 
     clearTimeout(
@@ -4644,264 +4485,226 @@
   }
 
 
+  /* =========================================================
+     EVENEMENTS
+  ========================================================= */
 
-  $("addRunnerBtn")
-    .onclick =
-      addRunner;
+  $("addRunnerBtn").onclick =
+    addRunner;
 
 
+  $("launchPerformanceBtn").onclick =
+    launch;
 
-  $("launchPerformanceBtn")
-    .onclick =
-      launch;
 
+  $("backSetupBtn").onclick =
+    () => {
 
+      if (running) {
 
-  $("backSetupBtn")
-    .onclick =
-      () => {
+        return toast(
+          "Termine la course avant de revenir."
+        );
 
-        if (
-          running
-        ) {
+      }
 
-          return toast(
-            "Termine la course avant de revenir."
-          );
 
-        }
+      state.view =
+        "setup";
 
 
-        state.view =
-          "setup";
+      resetClock();
 
+      resetTimedRuntime();
 
-        resetClock();
+      save();
 
-        resetTimedRuntime();
+      render();
 
-        save();
+    };
 
-        render();
 
-      };
+  $("startBtn").onclick =
+    start;
 
 
+  $("stopBtn").onclick =
+    stopAction;
 
-  $("startBtn")
-    .onclick =
-      start;
 
+  $("lapBtn").onclick =
+    recordLap;
 
 
-  $("stopBtn")
-    .onclick =
-      stopAction;
+  $("timerLapBtn").onclick =
+    addTimedLap;
 
 
+  $("undoTimerLapBtn").onclick =
+    undoTimedLap;
 
-  $("lapBtn")
-    .onclick =
-      recordLap;
 
+  $("validatePartialDistanceBtn").onclick =
+    validateTimedResult;
 
 
-  $("timerLapBtn")
-    .onclick =
-      addTimedLap;
+  $("resetBtn").onclick =
+    resetCurrent;
 
 
+  $("newSessionBtn").onclick =
+    () => {
 
-  $("undoTimerLapBtn")
-    .onclick =
-      undoTimedLap;
+      if (
+        !confirm(
+          "Nouvelle séance ?"
+        )
+      ) {
 
+        return;
 
+      }
 
-  $("validatePartialDistanceBtn")
-    .onclick =
-      validateTimedResult;
 
+      state =
+        base();
 
 
-  $("resetBtn")
-    .onclick =
-      resetCurrent;
+      resetClock();
 
+      resetTimedRuntime();
 
+      save();
 
-  $("newSessionBtn")
-    .onclick =
-      () => {
+      render();
 
-        if (
-          !confirm(
-            "Nouvelle séance ?"
-          )
-        ) {
+    };
 
-          return;
 
-        }
+  $("undoBtn").onclick =
+    () => {
 
+      if (
+        isTimed()
+      ) {
 
-        state =
-          base();
+        return undoTimedLap();
 
+      }
 
-        resetClock();
 
-        resetTimedRuntime();
+      const r =
+        activeRunner();
 
-        save();
 
-        render();
+      const a =
+        r
+          ? rr(r.id)
+          : [];
 
-      };
 
+      if (
+        !a.length
+      ) {
 
+        return;
 
-  $("undoBtn")
-    .onclick =
-      () => {
+      }
 
-        if (
-          isTimed()
-        ) {
 
-          return undoTimedLap();
+      const id =
+        a.at(-1).id;
 
-        }
 
+      state.results =
+        state.results.filter(
+          x =>
+            x.id !== id
+        );
 
-        const r =
-          activeRunner();
 
+      save();
 
-        const a =
-          r
-            ? rr(
-                r.id
-              )
-            : [];
+      renderPerf();
 
+    };
 
-        if (
-          !a.length
-        ) {
 
-          return;
+  $("carnetBtn").onclick =
+    () => {
 
-        }
+      prepareExportDialog();
 
+      $("carnetDialog").showModal();
 
-        const id =
-          a.at(-1).id;
+    };
 
 
-        state.results =
-          state.results.filter(
-            x =>
-              x.id !==
-              id
-          );
+  $("openCarnetBtn").onclick =
+    openCarnet;
 
 
-        save();
+  $("saveLaterBtn").onclick =
+    buildSheet;
 
-        renderPerf();
 
-      };
+  $("closeSheetBtn").onclick =
+    () =>
+      $("sheetDialog").close();
 
 
+  $("shareSheetBtn").onclick =
+    async () => {
 
-  $("carnetBtn")
-    .onclick =
-      () => {
+      const r =
+        selectedExportRunner();
 
-        prepareExportDialog();
 
-        $("carnetDialog")
-          .showModal();
+      try {
 
-      };
+        await navigator
+          .share({
 
+            title:
+              "Chrono EPS",
 
+            text:
+              resultTextFor(r)
 
-  $("openCarnetBtn")
-    .onclick =
-      openCarnet;
+          });
 
+      } catch {}
 
+    };
 
-  $("saveLaterBtn")
-    .onclick =
-      buildSheet;
 
+  $("startRecoveryBtn").onclick =
+    () => {
 
+      if (
+        state.mode === "ccf" &&
+        !allDone(1)
+      ) {
 
-  $("closeSheetBtn")
-    .onclick =
-      () =>
-        $("sheetDialog")
-          .close();
+        return toast(
+          "Termine d’abord le premier 800 des deux coureurs."
+        );
 
+      }
 
 
-  $("shareSheetBtn")
-    .onclick =
-      async () => {
+      state.recoveryStartedAt =
+        Date.now();
 
-        const r =
-          selectedExportRunner();
 
+      save();
 
-        try {
+      updateRecovery();
 
-          await navigator
-            .share({
+    };
 
-              title:
-                "Chrono EPS",
 
-              text:
-                resultTextFor(r)
-
-            });
-
-        } catch {}
-
-      };
-
-
-
-  $("startRecoveryBtn")
-    .onclick =
-      () => {
-
-        if (
-          state.mode === "ccf" &&
-          !allDone(1)
-        ) {
-
-          return toast(
-            "Termine d’abord le premier 800 des deux coureurs."
-          );
-
-        }
-
-
-        state.recoveryStartedAt =
-          Date.now();
-
-
-        save();
-
-        updateRecovery();
-
-      };
-
-
+  /* Mode principal */
 
   document
     .querySelectorAll(
@@ -4913,12 +4716,8 @@
         x.onchange =
           () => {
 
-            if (
-              !x.checked
-            ) {
-
+            if (!x.checked) {
               return;
-
             }
 
 
@@ -4930,14 +4729,9 @@
               state.mode === "ccf"
             ) {
 
-              state.totalDistance =
-                800;
-
-              state.splitDistance =
-                200;
-
-              state.displayMode =
-                "cumulative";
+              state.totalDistance = 800;
+              state.splitDistance = 200;
+              state.displayMode = "cumulative";
 
             }
 
@@ -4952,6 +4746,7 @@
     );
 
 
+  /* Outil entraînement */
 
   document
     .querySelectorAll(
@@ -4963,12 +4758,8 @@
         x.onchange =
           () => {
 
-            if (
-              !x.checked
-            ) {
-
+            if (!x.checked) {
               return;
-
             }
 
 
@@ -4980,8 +4771,6 @@
 
             resetTimedRuntime();
 
-            readConfig();
-
             save();
 
             renderSetup();
@@ -4992,16 +4781,37 @@
     );
 
 
+  /* Chrono performance */
+
+  $("totalDistance").onchange =
+    () => {
+
+      readConfig();
+
+      save();
+
+      renderSetup();
+
+    };
+
+
+  $("splitDistance").onchange =
+    () => {
+
+      readConfig();
+
+      save();
+
+      renderSetup();
+
+    };
+
 
   [
     "displayMode",
     "targetTime",
     "customDistance",
-    "customSplit",
-    "customTimerDuration",
-    "customTrackDistance",
-    "vmaCustomDuration",
-    "vmaCustomTrackDistance"
+    "customSplit"
   ]
   .forEach(
     id => {
@@ -5021,90 +4831,208 @@
   );
 
 
+  /* Minuteur */
 
-  $("totalDistance")
-    .onchange =
-      () => {
+  $("timerDuration").onchange =
+    () => {
 
-        readConfig();
-
-        save();
-
-        renderSetup();
-
-      };
+      state.timerDurationChoice =
+        $("timerDuration").value;
 
 
+      if (
+        state.timerDurationChoice !==
+        "custom"
+      ) {
 
-  $("splitDistance")
-    .onchange =
-      () => {
+        state.timerDurationMs =
+          +state.timerDurationChoice *
+          1000;
 
-        readConfig();
-
-        save();
-
-        renderSetup();
-
-      };
+      }
 
 
+      save();
 
-  $("timerDuration")
-    .onchange =
-      () => {
+      renderSetup();
 
-        readConfig();
-
-        save();
-
-        renderSetup();
-
-      };
+    };
 
 
+  $("customTimerDuration").onchange =
+    () => {
 
-  $("trackDistance")
-    .onchange =
-      () => {
-
-        readConfig();
-
-        save();
-
-        renderSetup();
-
-      };
+      state.timerDurationChoice =
+        "custom";
 
 
-
-  $("vmaProtocol")
-    .onchange =
-      () => {
-
-        readConfig();
-
-        save();
-
-        renderSetup();
-
-      };
+      state.timerDurationMs =
+        Math.max(
+          .5,
+          +$("customTimerDuration").value ||
+          6
+        ) *
+        60000;
 
 
+      save();
 
-  $("vmaTrackDistance")
-    .onchange =
-      () => {
+      renderSetup();
 
-        readConfig();
-
-        save();
-
-        renderSetup();
-
-      };
+    };
 
 
+  $("trackDistance").onchange =
+    () => {
+
+      state.trackDistanceChoice =
+        $("trackDistance").value;
+
+
+      if (
+        state.trackDistanceChoice !==
+        "custom"
+      ) {
+
+        state.trackDistance =
+          +state.trackDistanceChoice;
+
+      }
+
+
+      save();
+
+      renderSetup();
+
+    };
+
+
+  $("customTrackDistance").onchange =
+    () => {
+
+      state.trackDistanceChoice =
+        "custom";
+
+
+      state.trackDistance =
+        Math.max(
+          10,
+          +$("customTrackDistance").value ||
+          300
+        );
+
+
+      save();
+
+      renderSetup();
+
+    };
+
+
+  /* VMA */
+
+  $("vmaProtocol").onchange =
+    () => {
+
+      state.vmaProtocol =
+        $("vmaProtocol").value;
+
+
+      if (
+        state.vmaProtocol === "6"
+      ) {
+
+        state.vmaDurationMs =
+          360000;
+
+      } else if (
+        state.vmaProtocol === "12"
+      ) {
+
+        state.vmaDurationMs =
+          720000;
+
+      }
+
+
+      save();
+
+      renderSetup();
+
+    };
+
+
+  $("vmaCustomDuration").onchange =
+    () => {
+
+      state.vmaProtocol =
+        "custom";
+
+
+      state.vmaDurationMs =
+        Math.max(
+          .5,
+          +$("vmaCustomDuration").value ||
+          6
+        ) *
+        60000;
+
+
+      save();
+
+      renderSetup();
+
+    };
+
+
+  $("vmaTrackDistance").onchange =
+    () => {
+
+      state.vmaTrackDistanceChoice =
+        $("vmaTrackDistance").value;
+
+
+      if (
+        state.vmaTrackDistanceChoice !==
+        "custom"
+      ) {
+
+        state.vmaTrackDistance =
+          +state.vmaTrackDistanceChoice;
+
+      }
+
+
+      save();
+
+      renderSetup();
+
+    };
+
+
+  $("vmaCustomTrackDistance").onchange =
+    () => {
+
+      state.vmaTrackDistanceChoice =
+        "custom";
+
+
+      state.vmaTrackDistance =
+        Math.max(
+          10,
+          +$("vmaCustomTrackDistance").value ||
+          300
+        );
+
+
+      save();
+
+      renderSetup();
+
+    };
+
+
+  /* Courses CCF */
 
   document
     .querySelectorAll(
@@ -5122,32 +5050,28 @@
     );
 
 
+  /* Réseau */
 
   window.addEventListener(
     "online",
-
     () =>
-      $("offlineBadge")
-        .textContent =
-          "En ligne"
+      $("offlineBadge").textContent =
+        "En ligne"
   );
-
 
 
   window.addEventListener(
     "offline",
-
     () =>
-      $("offlineBadge")
-        .textContent =
-          "Hors ligne prêt"
+      $("offlineBadge").textContent =
+        "Hors ligne prêt"
   );
 
 
+  /* Service worker */
 
   if (
-    "serviceWorker" in
-    navigator
+    "serviceWorker" in navigator
   ) {
 
     navigator
@@ -5159,6 +5083,7 @@
   }
 
 
+  /* Boucle chrono */
 
   function tick() {
 
@@ -5177,7 +5102,6 @@
     );
 
   }
-
 
 
   render();
