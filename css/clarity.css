@@ -1,14 +1,7 @@
 /* =========================================================
    CHRONO CARNET EPS
-   SURCOUCHE "CLARTE TERRAIN"
-   Eleve 1 = VERT
-   Eleve 2 = BLEU
+   CLARTE TERRAIN + OUTILS ENTRAINEMENT
 ========================================================= */
-
-
-/* =========================
-   COULEURS DE REFERENCE
-========================= */
 
 :root {
   --student1: #16a34a;
@@ -26,13 +19,23 @@
   --home-line: #dbe3ee;
   --home-panel: #ffffff;
   --home-soft: #f8fafc;
-  --home-blue: #2563eb;
-  --home-indigo: #4338ca;
+
+  --blue: #2563eb;
+  --blue-dark: #1d4ed8;
+  --indigo: #4338ca;
+
+  --orange: #ea580c;
+  --orange-soft: #fff7ed;
+
+  --purple: #7c3aed;
+  --purple-soft: #f5f3ff;
+
+  --red: #dc2626;
 }
 
 
 /* =========================================================
-   PAGE DE GARDE / PARAMETRAGE
+   PAGE GENERALE
 ========================================================= */
 
 #setupPanel {
@@ -41,9 +44,6 @@
   box-shadow:
     0 22px 55px rgba(15, 23, 42, .09);
 }
-
-
-/* En-tete general plus compact */
 
 .topbar {
   align-items: center;
@@ -71,12 +71,7 @@
   align-items: center;
   padding: 8px 13px;
   font-size: 12px;
-  box-shadow:
-    inset 0 0 0 1px rgba(22, 101, 52, .08);
 }
-
-
-/* Titre de l'etape */
 
 #setupPanel > h2 {
   margin: 0 0 16px;
@@ -87,7 +82,7 @@
 
 
 /* =========================================================
-   CHOIX DU MODE
+   CHOIX PRINCIPAL : ENTRAINEMENT / CCF
 ========================================================= */
 
 .modeGrid.twoModes {
@@ -97,243 +92,784 @@
 }
 
 .modeCard {
+  position: relative;
   cursor: pointer;
 }
 
-.modeCard span {
-  position: relative;
-  min-height: 132px;
-  padding: 20px 22px 20px 74px;
-  justify-content: center;
-  border: 2px solid var(--home-line);
-  border-radius: 22px;
-  background: #fff;
-  box-shadow:
-    0 5px 14px rgba(15, 23, 42, .045);
-  transition:
-    transform .16s ease,
-    border-color .16s ease,
-    background .16s ease,
-    box-shadow .16s ease;
-}
-
-.modeCard span::before {
+.modeCard input {
   position: absolute;
-  left: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-  font-size: 22px;
-  background: #f1f5f9;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.modeCard:first-child span::before {
-  content: "⏱";
+.modeCard > span {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  min-height: 126px;
+
+  padding:
+    20px
+    58px
+    20px
+    22px;
+
+  border:
+    2px solid var(--home-line);
+
+  border-radius:
+    22px;
+
+  background:
+    #ffffff;
+
+  box-shadow:
+    0 6px 16px
+    rgba(15, 23, 42, .05);
+
+  transition:
+    transform .15s ease,
+    border-color .15s ease,
+    background .15s ease,
+    box-shadow .15s ease;
 }
 
-.modeCard:last-child span::before {
-  content: "🏁";
+.modeCard > span:hover {
+  transform:
+    translateY(-2px);
+
+  border-color:
+    #cbd5e1;
+
+  box-shadow:
+    0 12px 25px
+    rgba(15, 23, 42, .08);
 }
 
 .modeCard strong {
-  font-size: 20px;
-  line-height: 1.15;
-  color: var(--home-ink);
+  font-size:
+    20px;
+
+  line-height:
+    1.2;
+
+  color:
+    var(--home-ink);
 }
 
 .modeCard small {
-  max-width: 520px;
-  margin-top: 2px;
-  font-size: 14px;
-  line-height: 1.45;
-}
+  margin-top:
+    6px;
 
-.modeCard:hover span {
-  transform: translateY(-1px);
-  border-color: #cbd5e1;
-  box-shadow:
-    0 10px 24px rgba(15, 23, 42, .08);
+  color:
+    var(--home-muted);
+
+  font-size:
+    14px;
+
+  line-height:
+    1.4;
 }
 
 .modeCard input:checked + span {
-  border-color: #7aa2ff;
+  border-color:
+    #7aa2ff;
+
   background:
     linear-gradient(
       135deg,
-      #f4f8ff 0%,
-      #eef2ff 100%
+      #f8fbff,
+      #eef2ff
     );
+
   box-shadow:
-    inset 0 0 0 2px #d8e5ff,
+    inset 0 0 0 2px #dbeafe,
     0 12px 28px rgba(37, 99, 235, .11);
 }
 
 .modeCard input:checked + span::after {
-  content: "✓";
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 29px;
-  height: 29px;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  background: var(--home-blue);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 950;
-}
+  content:
+    "✓";
 
+  position:
+    absolute;
 
-/* =========================================================
-   RESUME CCF
-========================================================= */
+  top:
+    14px;
 
-.ccfInfo {
-  margin: 4px 0 18px;
-  padding: 16px 18px;
-  border: 1px solid #dbeafe;
-  border-left: 5px solid var(--home-blue);
-  border-radius: 18px;
+  right:
+    14px;
+
+  width:
+    30px;
+
+  height:
+    30px;
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  border-radius:
+    999px;
+
   background:
-    linear-gradient(
-      135deg,
-      #f8fbff 0%,
-      #f4f7ff 100%
-    );
-}
+    var(--blue);
 
-.ccfInfo strong {
-  font-size: 16px;
-}
+  color:
+    #ffffff;
 
-.ccfInfo span {
-  color: #475569;
-  font-size: 14px;
-  line-height: 1.45;
+  font-size:
+    15px;
+
+  font-weight:
+    950;
 }
 
 
 /* =========================================================
-   CONFIGURATION ENTRAINEMENT
+   ZONE ENTRAINEMENT
 ========================================================= */
 
 .configArea {
-  margin-top: 4px;
-  padding-top: 20px;
+  margin-top:
+    8px;
+
+  padding-top:
+    22px;
+
+  border-top:
+    1px solid var(--home-line);
 }
+
+.trainingToolSelector {
+  margin-bottom:
+    20px;
+}
+
+.trainingToolTitle {
+  margin:
+    0 0 14px;
+
+  font-size:
+    21px;
+
+  letter-spacing:
+    -.02em;
+}
+
+
+/* =========================================================
+   4 OUTILS ENTRAINEMENT
+========================================================= */
+
+.trainingToolsGrid {
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap:
+    12px;
+
+  margin:
+    0;
+}
+
+.trainingToolCard > span {
+  min-height:
+    158px;
+
+  padding:
+    18px 42px 17px 18px;
+
+  justify-content:
+    flex-start;
+}
+
+.trainingToolCard strong {
+  font-size:
+    17px;
+
+  line-height:
+    1.2;
+}
+
+.trainingToolCard small {
+  font-size:
+    13px;
+
+  line-height:
+    1.45;
+}
+
+
+/* Chrono simple */
+
+.trainingToolCard:nth-child(1)
+input:checked + span {
+  border-color:
+    #38bdf8;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f0f9ff
+    );
+
+  box-shadow:
+    inset 0 0 0 2px #e0f2fe,
+    0 12px 25px rgba(14, 165, 233, .12);
+}
+
+
+/* Chrono performance */
+
+.trainingToolCard:nth-child(2)
+input:checked + span {
+  border-color:
+    #22c55e;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f0fdf4
+    );
+
+  box-shadow:
+    inset 0 0 0 2px #dcfce7,
+    0 12px 25px rgba(22, 163, 74, .12);
+}
+
+
+/* Minuteur */
+
+.trainingToolCard:nth-child(3)
+input:checked + span {
+  border-color:
+    #f97316;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #fff7ed
+    );
+
+  box-shadow:
+    inset 0 0 0 2px #ffedd5,
+    0 12px 25px rgba(234, 88, 12, .12);
+}
+
+
+/* VMA */
+
+.trainingToolCard:nth-child(4)
+input:checked + span {
+  border-color:
+    #8b5cf6;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f5f3ff
+    );
+
+  box-shadow:
+    inset 0 0 0 2px #ede9fe,
+    0 12px 25px rgba(124, 58, 237, .12);
+}
+
+
+/* =========================================================
+   SOUS-CONFIGURATIONS
+========================================================= */
+
+.trainingSubConfig {
+  margin-top:
+    18px;
+
+  padding:
+    18px;
+
+  border:
+    1px solid var(--home-line);
+
+  border-radius:
+    20px;
+
+  background:
+    #ffffff;
+
+  box-shadow:
+    0 6px 18px rgba(15, 23, 42, .045);
+}
+
+
+/* =========================================================
+   BLOCS D'INFORMATION
+========================================================= */
+
+.trainingInfoBox {
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    6px;
+
+  padding:
+    17px 18px;
+
+  border:
+    1px solid #bae6fd;
+
+  border-left:
+    5px solid #0ea5e9;
+
+  border-radius:
+    16px;
+
+  background:
+    #f0f9ff;
+}
+
+.trainingInfoBox strong {
+  font-size:
+    17px;
+}
+
+.trainingInfoBox span {
+  color:
+    #475569;
+
+  font-size:
+    14px;
+
+  line-height:
+    1.45;
+}
+
+
+/* Minuteur */
+
+#trainingTimerConfig
+.trainingInfoBox {
+  border-color:
+    #fed7aa;
+
+  border-left-color:
+    var(--orange);
+
+  background:
+    var(--orange-soft);
+}
+
+
+/* VMA */
+
+.vmaInfoBox {
+  border-color:
+    #ddd6fe;
+
+  border-left-color:
+    var(--purple);
+
+  background:
+    var(--purple-soft);
+}
+
+
+/* =========================================================
+   GRILLES CONFIG
+========================================================= */
 
 .configGrid {
-  gap: 14px;
+  gap:
+    14px;
 }
 
-.field span {
-  font-size: 12px;
-  letter-spacing: .035em;
+.trainingSubConfig
+.configGrid {
+  margin-top:
+    16px;
+}
+
+.field {
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    7px;
+}
+
+.field > span {
+  font-size:
+    11px;
+
+  font-weight:
+    900;
+
+  color:
+    #475569;
+
+  text-transform:
+    uppercase;
+
+  letter-spacing:
+    .045em;
 }
 
 .field input,
 .field select,
 .addRunner input,
 .addRunner select {
-  min-height: 52px;
-  border-width: 2px;
-  border-radius: 15px;
-  font-size: 15px;
-  transition:
-    border-color .15s ease,
-    box-shadow .15s ease,
-    background .15s ease;
+  min-height:
+    52px;
+
+  border:
+    2px solid var(--home-line);
+
+  border-radius:
+    15px;
+
+  padding:
+    0 12px;
+
+  background:
+    #ffffff;
+
+  color:
+    var(--home-ink);
+
+  font-size:
+    15px;
 }
 
 .field input:focus,
 .field select:focus,
 .addRunner input:focus,
 .addRunner select:focus {
-  outline: none;
-  border-color: #7aa2ff;
+  outline:
+    none;
+
+  border-color:
+    #7aa2ff;
+
   box-shadow:
-    0 0 0 4px rgba(37, 99, 235, .10);
+    0 0 0 4px
+    rgba(37, 99, 235, .10);
 }
 
 
 /* =========================================================
-   BLOC COUREURS DE LA PAGE DE GARDE
+   MINUTEUR : APERCU CONFIGURATION
+========================================================= */
+
+.timerPreview {
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap:
+    10px;
+
+  margin-top:
+    16px;
+}
+
+.timerPreview > div {
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  min-height:
+    88px;
+
+  padding:
+    12px;
+
+  border:
+    1px solid #fed7aa;
+
+  border-radius:
+    16px;
+
+  background:
+    #fffaf5;
+
+  text-align:
+    center;
+}
+
+.timerPreview span {
+  margin-bottom:
+    5px;
+
+  color:
+    #9a3412;
+
+  font-size:
+    11px;
+
+  font-weight:
+    900;
+
+  text-transform:
+    uppercase;
+}
+
+.timerPreview strong {
+  color:
+    #7c2d12;
+
+  font-size:
+    20px;
+}
+
+
+/* =========================================================
+   VMA : EXPLICATION
+========================================================= */
+
+.vmaExplanation {
+  margin-top:
+    16px;
+
+  padding:
+    16px 18px;
+
+  border:
+    1px solid #ddd6fe;
+
+  border-radius:
+    16px;
+
+  background:
+    #faf8ff;
+}
+
+.vmaExplanation strong {
+  color:
+    #5b21b6;
+
+  font-size:
+    16px;
+}
+
+.vmaExplanation p {
+  margin:
+    8px 0 0;
+
+  color:
+    #475569;
+
+  font-size:
+    13px;
+
+  line-height:
+    1.5;
+}
+
+
+/* =========================================================
+   INFO CCF
+========================================================= */
+
+.ccfInfo {
+  margin:
+    6px 0 18px;
+
+  padding:
+    16px 18px;
+
+  border:
+    1px solid #dbeafe;
+
+  border-left:
+    5px solid var(--blue);
+
+  border-radius:
+    18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f8fbff,
+      #f4f7ff
+    );
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    6px;
+}
+
+.ccfInfo strong {
+  font-size:
+    16px;
+}
+
+.ccfInfo span {
+  color:
+    #475569;
+
+  font-size:
+    14px;
+
+  line-height:
+    1.45;
+}
+
+
+/* =========================================================
+   AJOUT COUREURS
 ========================================================= */
 
 .addRunnerBlock {
-  margin-top: 20px;
-  padding-top: 22px;
+  margin-top:
+    20px;
+
+  padding-top:
+    22px;
+
+  border-top:
+    1px solid var(--home-line);
 }
 
 .addRunnerBlock h3 {
-  margin: 0 0 14px;
-  font-size: 22px;
-  letter-spacing: -.02em;
+  margin:
+    0 0 14px;
+
+  font-size:
+    22px;
+
+  letter-spacing:
+    -.02em;
 }
 
 .addRunner {
   grid-template-columns:
-    minmax(150px, 1.1fr)
-    minmax(150px, 1.1fr)
+    minmax(140px, 1fr)
+    minmax(140px, 1fr)
+    minmax(100px, .8fr)
     minmax(110px, .8fr)
-    minmax(120px, .8fr)
-    minmax(220px, 1fr);
-  gap: 10px;
-  align-items: end;
-}
+    auto;
 
-.addRunner .ccfRunnerField {
-  min-width: 0;
+  gap:
+    10px;
+
+  align-items:
+    end;
 }
 
 .estimateBox {
-  padding: 12px 12px 10px;
-  border: 1px solid #dbe3ee;
-  border-radius: 16px;
-  background: var(--home-soft);
+  padding:
+    12px;
+
+  border:
+    1px solid var(--home-line);
+
+  border-radius:
+    16px;
+
+  background:
+    var(--home-soft);
 }
 
 .estimateBox > span {
-  display: block;
-  margin-bottom: 8px;
-  color: #475569;
-  font-size: 11px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: .035em;
+  display:
+    block;
+
+  margin-bottom:
+    8px;
+
+  color:
+    #475569;
+
+  font-size:
+    11px;
+
+  font-weight:
+    900;
+
+  text-transform:
+    uppercase;
 }
 
 .estimateInputs {
-  display: flex;
-  align-items: center;
-  gap: 7px;
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    6px;
 }
 
 .estimateInputs input {
-  width: 68px;
-  min-height: 44px;
-  text-align: center;
-  padding: 0 8px;
-  background: #fff;
+  width:
+    68px;
+
+  min-height:
+    44px;
+
+  padding:
+    0 6px;
+
+  text-align:
+    center;
 }
 
 .estimateInputs b {
-  color: #475569;
-  font-size: 12px;
+  font-size:
+    12px;
+
+  color:
+    #64748b;
 }
 
 #addRunnerBtn {
-  min-height: 52px;
-  border-radius: 15px;
-  padding-inline: 20px;
-  font-size: 15px;
+  min-height:
+    52px;
+
+  border-radius:
+    15px;
+
+  padding:
+    0 20px;
+
   box-shadow:
-    0 9px 18px rgba(37, 99, 235, .16);
+    0 8px 18px rgba(37, 99, 235, .17);
 }
 
 
@@ -342,580 +878,141 @@
 ========================================================= */
 
 .runnerSetupList {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin: 16px 0 18px;
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap:
+    12px;
+
+  margin:
+    16px 0 18px;
 }
 
 .runnerChip {
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-height: 58px;
-  padding: 12px 44px 12px 15px;
-  border: 2px solid #dbe3ee;
-  border-radius: 17px;
-  background: #fff;
-  color: #1e293b;
-  font-size: 13px;
-  line-height: 1.35;
-  box-shadow:
-    0 5px 14px rgba(15, 23, 42, .05);
+  position:
+    relative;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  min-height:
+    60px;
+
+  padding:
+    12px 44px 12px 15px;
+
+  border:
+    2px solid var(--home-line);
+
+  border-radius:
+    17px;
+
+  background:
+    #ffffff;
+
+  color:
+    #1e293b;
+
+  font-size:
+    13px;
+
+  line-height:
+    1.35;
 }
 
 .runnerChip:nth-child(1) {
-  border-color: #86efac;
+  border-color:
+    #86efac;
+
   background:
-    linear-gradient(
-      135deg,
-      #ffffff 0%,
-      var(--student1-pale) 100%
-    );
-  color: var(--student1-dark);
+    var(--student1-pale);
+
+  color:
+    var(--student1-dark);
 }
 
 .runnerChip:nth-child(2) {
-  border-color: #93c5fd;
+  border-color:
+    #93c5fd;
+
   background:
-    linear-gradient(
-      135deg,
-      #ffffff 0%,
-      var(--student2-pale) 100%
-    );
-  color: var(--student2-dark);
+    var(--student2-pale);
+
+  color:
+    var(--student2-dark);
 }
 
 .runnerChip:nth-child(1)::before,
 .runnerChip:nth-child(2)::before {
-  margin-right: 10px;
-  padding: 5px 8px;
-  border-radius: 999px;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 950;
-  letter-spacing: .05em;
-  white-space: nowrap;
+  margin-right:
+    10px;
+
+  padding:
+    5px 8px;
+
+  border-radius:
+    999px;
+
+  color:
+    white;
+
+  font-size:
+    10px;
+
+  font-weight:
+    950;
 }
 
 .runnerChip:nth-child(1)::before {
-  content: "ÉLÈVE 1";
-  background: var(--student1);
+  content:
+    "ÉLÈVE 1";
+
+  background:
+    var(--student1);
 }
 
 .runnerChip:nth-child(2)::before {
-  content: "ÉLÈVE 2";
-  background: var(--student2);
-}
+  content:
+    "ÉLÈVE 2";
 
-.runnerChip button {
-  position: absolute;
-  right: 11px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, .75);
-  color: #64748b;
-  font-size: 17px;
-  font-weight: 900;
-}
-
-.runnerChip button:active {
-  transform:
-    translateY(-50%)
-    scale(.92);
+  background:
+    var(--student2);
 }
 
 
 /* =========================================================
-   BOUTON PRINCIPAL PAGE DE GARDE
+   BOUTON LANCEMENT
 ========================================================= */
 
 #launchPerformanceBtn {
-  min-height: 66px;
-  margin-top: 8px;
-  border-radius: 18px;
-  font-size: 18px;
-  font-weight: 950;
-  letter-spacing: -.01em;
+  min-height:
+    66px;
+
+  margin-top:
+    8px;
+
+  border-radius:
+    18px;
+
+  font-size:
+    18px;
+
+  font-weight:
+    950;
+
   box-shadow:
     0 14px 28px rgba(37, 99, 235, .20);
 }
 
-#launchPerformanceBtn:active {
-  transform: scale(.992);
-}
-
 
 /* =========================================================
-   CARTES DES DEUX ELEVES
-========================================================= */
-
-.runnersGrid {
-  gap: 20px;
-}
-
-.runnerCard {
-  position: relative;
-  min-height: 210px;
-  padding:
-    52px
-    22px
-    22px;
-  border-width: 4px;
-  transition:
-    transform .16s ease,
-    opacity .16s ease,
-    box-shadow .16s ease,
-    filter .16s ease;
-}
-
-
-/* =========================
-   ELEVE 1
-========================= */
-
-.runnerCard.green {
-  background:
-    linear-gradient(
-      180deg,
-      #ffffff 0%,
-      var(--student1-pale) 100%
-    );
-
-  border-color:
-    #86efac;
-}
-
-.runnerCard.green::before {
-  content:
-    "ÉLÈVE 1";
-
-  position:
-    absolute;
-
-  top:
-    14px;
-
-  left:
-    14px;
-
-  padding:
-    7px
-    13px;
-
-  border-radius:
-    999px;
-
-  background:
-    var(--student1);
-
-  color:
-    #ffffff;
-
-  font-size:
-    12px;
-
-  font-weight:
-    950;
-
-  letter-spacing:
-    .08em;
-
-  box-shadow:
-    0 4px 12px
-    rgba(
-      22,
-      163,
-      74,
-      .28
-    );
-}
-
-
-/* =========================
-   ELEVE 2
-========================= */
-
-.runnerCard.blue {
-  background:
-    linear-gradient(
-      180deg,
-      #ffffff 0%,
-      var(--student2-pale) 100%
-    );
-
-  border-color:
-    #93c5fd;
-}
-
-.runnerCard.blue::before {
-  content:
-    "ÉLÈVE 2";
-
-  position:
-    absolute;
-
-  top:
-    14px;
-
-  left:
-    14px;
-
-  padding:
-    7px
-    13px;
-
-  border-radius:
-    999px;
-
-  background:
-    var(--student2);
-
-  color:
-    #ffffff;
-
-  font-size:
-    12px;
-
-  font-weight:
-    950;
-
-  letter-spacing:
-    .08em;
-
-  box-shadow:
-    0 4px 12px
-    rgba(
-      37,
-      99,
-      235,
-      .28
-    );
-}
-
-
-/* =========================================================
-   ELEVE ACTIF
-========================================================= */
-
-.runnerCard.active {
-  transform:
-    scale(1.035);
-
-  opacity:
-    1;
-
-  filter:
-    none;
-
-  z-index:
-    2;
-}
-
-.runnerCard.green.active {
-  border-color:
-    var(--student1);
-
-  box-shadow:
-    0 0 0 6px
-      var(--student1-soft),
-    0 18px 36px
-      rgba(
-        22,
-        163,
-        74,
-        .18
-      );
-}
-
-.runnerCard.blue.active {
-  border-color:
-    var(--student2);
-
-  box-shadow:
-    0 0 0 6px
-      var(--student2-soft),
-    0 18px 36px
-      rgba(
-        37,
-        99,
-        235,
-        .18
-      );
-}
-
-
-/* =========================================================
-   ELEVE NON ACTIF
-========================================================= */
-
-.runnersGrid
-.runnerCard:not(.active) {
-
-  opacity:
-    .55;
-
-  filter:
-    saturate(.65);
-
-  transform:
-    scale(.975);
-}
-
-
-/* =========================================================
-   NOM DU COUREUR
-========================================================= */
-
-.runnerName {
-  font-size:
-    30px;
-
-  line-height:
-    1.08;
-
-  font-weight:
-    950;
-
-  letter-spacing:
-    -.025em;
-}
-
-.runnerCard.green
-.runnerName {
-  color:
-    var(--student1-dark);
-}
-
-.runnerCard.blue
-.runnerName {
-  color:
-    var(--student2-dark);
-}
-
-
-/* =========================================================
-   INFOS COUREUR
-========================================================= */
-
-.runnerMeta {
-  font-size:
-    15px;
-
-  line-height:
-    1.4;
-
-  font-weight:
-    800;
-}
-
-.runnerSubMetric {
-  margin-top:
-    auto;
-
-  padding-top:
-    10px;
-
-  font-size:
-    14px;
-
-  font-weight:
-    850;
-}
-
-.runnerMainMetric {
-  margin-top:
-    4px;
-
-  font-size:
-    38px;
-
-  line-height:
-    1;
-
-  font-weight:
-    950;
-}
-
-
-/* =========================================================
-   BANDEAU ELEVE ACTIF SOUS LE CHRONO
-========================================================= */
-
-.activeRunnerBanner {
-  position:
-    relative;
-
-  max-width:
-    720px;
-
-  min-height:
-    116px;
-
-  margin:
-    20px auto 8px;
-
-  padding:
-    44px 24px 18px;
-
-  border:
-    4px solid transparent;
-
-  border-radius:
-    24px;
-
-  box-shadow:
-    0 14px 30px
-    rgba(
-      0,
-      0,
-      0,
-      .18
-    );
-}
-
-.activeRunnerBanner strong {
-  font-size:
-    34px;
-
-  line-height:
-    1.05;
-
-  font-weight:
-    950;
-}
-
-.activeRunnerBanner span {
-  margin-top:
-    5px;
-
-  font-size:
-    16px;
-
-  font-weight:
-    850;
-}
-
-
-/* =========================
-   BANDEAU ELEVE 1
-========================= */
-
-.activeRunnerBanner.green {
-  background:
-    var(--student1-soft);
-
-  color:
-    var(--student1-dark);
-
-  border-color:
-    var(--student1);
-}
-
-.activeRunnerBanner.green::before {
-  content:
-    "●  ÉLÈVE 1 ACTIF";
-
-  position:
-    absolute;
-
-  top:
-    11px;
-
-  left:
-    50%;
-
-  transform:
-    translateX(-50%);
-
-  padding:
-    6px 14px;
-
-  border-radius:
-    999px;
-
-  background:
-    var(--student1);
-
-  color:
-    #ffffff;
-
-  font-size:
-    12px;
-
-  font-weight:
-    950;
-
-  letter-spacing:
-    .08em;
-
-  white-space:
-    nowrap;
-}
-
-
-/* =========================
-   BANDEAU ELEVE 2
-========================= */
-
-.activeRunnerBanner.blue {
-  background:
-    var(--student2-soft);
-
-  color:
-    var(--student2-dark);
-
-  border-color:
-    var(--student2);
-}
-
-.activeRunnerBanner.blue::before {
-  content:
-    "●  ÉLÈVE 2 ACTIF";
-
-  position:
-    absolute;
-
-  top:
-    11px;
-
-  left:
-    50%;
-
-  transform:
-    translateX(-50%);
-
-  padding:
-    6px 14px;
-
-  border-radius:
-    999px;
-
-  background:
-    var(--student2);
-
-  color:
-    #ffffff;
-
-  font-size:
-    12px;
-
-  font-weight:
-    950;
-
-  letter-spacing:
-    .08em;
-
-  white-space:
-    nowrap;
-}
-
-
-/* =========================================================
-   CHRONOMETRE
+   CHRONOMETRE PRINCIPAL
 ========================================================= */
 
 .timerCard {
@@ -924,12 +1021,7 @@
 
   box-shadow:
     0 18px 44px
-    rgba(
-      15,
-      23,
-      42,
-      .20
-    );
+    rgba(15, 23, 42, .20);
 }
 
 .mainTime {
@@ -937,30 +1029,41 @@
     5px;
 
   font-size:
-    clamp(
-      72px,
-      9vw,
-      108px
-    );
+    clamp(72px, 9vw, 108px);
 
   line-height:
     .95;
 
   letter-spacing:
     -.055em;
+
+  font-variant-numeric:
+    tabular-nums;
 }
 
 
 /* =========================================================
-   BOUTONS CHRONO
+   BOUTONS DU CHRONO
 ========================================================= */
 
 .roundActions {
+  display:
+    flex;
+
+  justify-content:
+    center;
+
+  align-items:
+    center;
+
+  flex-wrap:
+    wrap;
+
   margin-top:
     26px;
 
   gap:
-    30px;
+    24px;
 }
 
 .roundBtn {
@@ -970,11 +1073,14 @@
   height:
     124px;
 
+  border-width:
+    6px;
+
   font-size:
     16px;
 
-  border-width:
-    6px;
+  font-weight:
+    950;
 }
 
 .roundBtn.start {
@@ -1006,6 +1112,615 @@
     #475569;
 }
 
+.roundBtn.stop {
+  background:
+    linear-gradient(
+      145deg,
+      #ef4444,
+      #b91c1c
+    );
+}
+
+.timerLapButton {
+  width:
+    140px;
+
+  height:
+    140px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #fb923c,
+      #ea580c
+    ) !important;
+
+  font-size:
+    17px;
+}
+
+
+/* =========================================================
+   INFORMATIONS PENDANT LE MINUTEUR
+========================================================= */
+
+.timerRunInfo {
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap:
+    12px;
+
+  max-width:
+    720px;
+
+  margin:
+    20px auto 4px;
+}
+
+.timerMetric {
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  min-height:
+    94px;
+
+  padding:
+    12px;
+
+  border:
+    2px solid rgba(255,255,255,.16);
+
+  border-radius:
+    18px;
+
+  background:
+    rgba(255,255,255,.08);
+}
+
+.timerMetric span {
+  color:
+    #cbd5e1;
+
+  font-size:
+    11px;
+
+  font-weight:
+    900;
+
+  text-transform:
+    uppercase;
+}
+
+.timerMetric strong {
+  margin-top:
+    4px;
+
+  color:
+    #ffffff;
+
+  font-size:
+    27px;
+
+  font-weight:
+    950;
+
+  font-variant-numeric:
+    tabular-nums;
+}
+
+.timerUndoButton {
+  margin-top:
+    16px;
+
+  color:
+    #ffffff;
+
+  border-color:
+    rgba(255,255,255,.25);
+
+  background:
+    rgba(255,255,255,.10);
+}
+
+
+/* =========================================================
+   BANDEAU ELEVE ACTIF
+========================================================= */
+
+.activeRunnerBanner {
+  position:
+    relative;
+
+  max-width:
+    720px;
+
+  min-height:
+    116px;
+
+  margin:
+    20px auto 8px;
+
+  padding:
+    44px 24px 18px;
+
+  border:
+    4px solid transparent;
+
+  border-radius:
+    24px;
+}
+
+.activeRunnerBanner strong {
+  font-size:
+    34px;
+
+  line-height:
+    1.05;
+
+  font-weight:
+    950;
+}
+
+.activeRunnerBanner span {
+  margin-top:
+    5px;
+
+  font-size:
+    16px;
+
+  font-weight:
+    850;
+}
+
+.activeRunnerBanner.green {
+  background:
+    var(--student1-soft);
+
+  color:
+    var(--student1-dark);
+
+  border-color:
+    var(--student1);
+}
+
+.activeRunnerBanner.blue {
+  background:
+    var(--student2-soft);
+
+  color:
+    var(--student2-dark);
+
+  border-color:
+    var(--student2);
+}
+
+.activeRunnerBanner.green::before,
+.activeRunnerBanner.blue::before {
+  position:
+    absolute;
+
+  top:
+    11px;
+
+  left:
+    50%;
+
+  transform:
+    translateX(-50%);
+
+  padding:
+    6px 14px;
+
+  border-radius:
+    999px;
+
+  color:
+    white;
+
+  font-size:
+    12px;
+
+  font-weight:
+    950;
+
+  letter-spacing:
+    .07em;
+
+  white-space:
+    nowrap;
+}
+
+.activeRunnerBanner.green::before {
+  content:
+    "● ÉLÈVE 1 ACTIF";
+
+  background:
+    var(--student1);
+}
+
+.activeRunnerBanner.blue::before {
+  content:
+    "● ÉLÈVE 2 ACTIF";
+
+  background:
+    var(--student2);
+}
+
+
+/* =========================================================
+   CARTES COUREURS
+========================================================= */
+
+.runnersGrid {
+  gap:
+    20px;
+}
+
+.runnerCard {
+  position:
+    relative;
+
+  min-height:
+    210px;
+
+  padding:
+    52px 22px 22px;
+
+  border-width:
+    4px;
+
+  transition:
+    transform .16s ease,
+    opacity .16s ease,
+    box-shadow .16s ease;
+}
+
+.runnerCard.green {
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff,
+      var(--student1-pale)
+    );
+
+  border-color:
+    #86efac;
+}
+
+.runnerCard.blue {
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff,
+      var(--student2-pale)
+    );
+
+  border-color:
+    #93c5fd;
+}
+
+.runnerCard.green::before,
+.runnerCard.blue::before {
+  position:
+    absolute;
+
+  top:
+    14px;
+
+  left:
+    14px;
+
+  padding:
+    7px 13px;
+
+  border-radius:
+    999px;
+
+  color:
+    white;
+
+  font-size:
+    12px;
+
+  font-weight:
+    950;
+}
+
+.runnerCard.green::before {
+  content:
+    "ÉLÈVE 1";
+
+  background:
+    var(--student1);
+}
+
+.runnerCard.blue::before {
+  content:
+    "ÉLÈVE 2";
+
+  background:
+    var(--student2);
+}
+
+.runnerCard.green.active {
+  border-color:
+    var(--student1);
+
+  box-shadow:
+    0 0 0 6px var(--student1-soft),
+    0 18px 36px rgba(22,163,74,.18);
+}
+
+.runnerCard.blue.active {
+  border-color:
+    var(--student2);
+
+  box-shadow:
+    0 0 0 6px var(--student2-soft),
+    0 18px 36px rgba(37,99,235,.18);
+}
+
+.runnerCard.active {
+  transform:
+    scale(1.03);
+
+  opacity:
+    1;
+}
+
+.runnersGrid
+.runnerCard:not(.active) {
+  opacity:
+    .55;
+
+  transform:
+    scale(.975);
+}
+
+.runnerName {
+  font-size:
+    30px;
+
+  line-height:
+    1.08;
+
+  font-weight:
+    950;
+}
+
+.runnerCard.green .runnerName {
+  color:
+    var(--student1-dark);
+}
+
+.runnerCard.blue .runnerName {
+  color:
+    var(--student2-dark);
+}
+
+.runnerMeta {
+  font-size:
+    15px;
+
+  font-weight:
+    800;
+}
+
+.runnerSubMetric {
+  margin-top:
+    auto;
+
+  padding-top:
+    10px;
+
+  font-size:
+    14px;
+
+  font-weight:
+    850;
+}
+
+.runnerMainMetric {
+  margin-top:
+    4px;
+
+  font-size:
+    38px;
+
+  font-weight:
+    950;
+}
+
+
+/* =========================================================
+   FIN DU MINUTEUR
+========================================================= */
+
+.timerFinishPanel {
+  border:
+    2px solid #fed7aa;
+
+  background:
+    #fffaf5;
+}
+
+.partialDistanceControls {
+  display:
+    flex;
+
+  align-items:
+    flex-end;
+
+  gap:
+    12px;
+
+  flex-wrap:
+    wrap;
+}
+
+.partialDistanceControls .field {
+  min-width:
+    220px;
+}
+
+.partialDistanceUnit {
+  padding-bottom:
+    16px;
+
+  color:
+    #64748b;
+
+  font-weight:
+    850;
+}
+
+#validatePartialDistanceBtn {
+  min-height:
+    52px;
+}
+
+
+/* =========================================================
+   RESULTATS VMA
+========================================================= */
+
+.vmaResultPanel {
+  border:
+    2px solid #ddd6fe;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #faf8ff
+    );
+}
+
+.vmaResultGrid {
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(4, 1fr);
+
+  gap:
+    12px;
+
+  margin-top:
+    16px;
+}
+
+.vmaResultCard {
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  min-height:
+    112px;
+
+  padding:
+    14px;
+
+  border:
+    1px solid #ddd6fe;
+
+  border-radius:
+    18px;
+
+  background:
+    #ffffff;
+
+  text-align:
+    center;
+}
+
+.vmaResultCard span {
+  color:
+    #64748b;
+
+  font-size:
+    11px;
+
+  font-weight:
+    900;
+
+  text-transform:
+    uppercase;
+}
+
+.vmaResultCard strong {
+  margin-top:
+    7px;
+
+  color:
+    #312e81;
+
+  font-size:
+    25px;
+
+  font-weight:
+    950;
+}
+
+.vmaMainResult {
+  border-color:
+    #8b5cf6;
+
+  background:
+    #f5f3ff;
+}
+
+.vmaMainResult strong {
+  color:
+    #6d28d9;
+
+  font-size:
+    31px;
+}
+
+.vmaTrainingSpeeds {
+  margin-top:
+    16px;
+}
+
+.vmaDisclaimer {
+  margin:
+    16px 0 0;
+
+  color:
+    #64748b;
+
+  font-size:
+    12px;
+
+  line-height:
+    1.45;
+
+  text-align:
+    center;
+}
+
 
 /* =========================================================
    COURSE 1 / COURSE 2
@@ -1023,11 +1738,11 @@
   padding:
     10px 18px;
 
-  font-size:
-    14px;
-
   border-width:
     2px;
+
+  font-size:
+    14px;
 }
 
 .raceTabs button.active {
@@ -1039,29 +1754,17 @@
 
   border-color:
     #0f172a;
-
-  box-shadow:
-    0 5px 14px
-    rgba(
-      15,
-      23,
-      42,
-      .18
-    );
 }
 
 
 /* =========================================================
    STATISTIQUES
-   ordre = eleve 1 puis eleve 2
 ========================================================= */
 
 .statsGrid
 .statCard:nth-child(1) {
-
   border:
-    3px solid
-    var(--student1);
+    3px solid var(--student1);
 
   background:
     var(--student1-pale);
@@ -1069,10 +1772,8 @@
 
 .statsGrid
 .statCard:nth-child(2) {
-
   border:
-    3px solid
-    var(--student2);
+    3px solid var(--student2);
 
   background:
     var(--student2-pale);
@@ -1080,15 +1781,13 @@
 
 
 /* =========================================================
-   CARTES AFL1
+   AFL1
 ========================================================= */
 
 .scoreGrid
 .scoreCard:nth-child(1) {
-
   border:
-    3px solid
-    var(--student1);
+    3px solid var(--student1);
 
   background:
     var(--student1-pale);
@@ -1096,34 +1795,16 @@
 
 .scoreGrid
 .scoreCard:nth-child(2) {
-
   border:
-    3px solid
-    var(--student2);
+    3px solid var(--student2);
 
   background:
     var(--student2-pale);
 }
 
-.scoreGrid
-.scoreCard:nth-child(1)
-strong {
-
-  color:
-    var(--student1-dark);
-}
-
-.scoreGrid
-.scoreCard:nth-child(2)
-strong {
-
-  color:
-    var(--student2-dark);
-}
-
 
 /* =========================================================
-   TABLEAU
+   TABLEAU RESULTATS
 ========================================================= */
 
 .resultsTable th {
@@ -1158,25 +1839,10 @@ strong {
 
   font-weight:
     900;
-
-  box-shadow:
-    5px 0 8px
-    rgba(
-      15,
-      23,
-      42,
-      .04
-    );
 }
-
-
-/* =========================================================
-   TITRES
-========================================================= */
 
 .performanceCard h2,
 .resultsCard h2 {
-
   font-size:
     24px;
 
@@ -1186,27 +1852,19 @@ strong {
 
 
 /* =========================================================
-   IPAD PAYSAGE / TABLETTE
+   IPAD
 ========================================================= */
 
-@media (max-width: 980px) {
+@media (max-width: 1050px) {
 
-  #setupPanel {
-    padding: 22px;
-  }
-
-  .modeGrid.twoModes {
+  .trainingToolsGrid {
     grid-template-columns:
       repeat(2, minmax(0, 1fr));
   }
 
-  .modeCard span {
-    min-height: 122px;
-    padding-left: 66px;
-  }
-
-  .modeCard span::before {
-    left: 16px;
+  .trainingToolCard > span {
+    min-height:
+      130px;
   }
 
   .addRunner {
@@ -1214,106 +1872,107 @@ strong {
       repeat(2, minmax(0, 1fr));
   }
 
-  .addRunner #addRunnerBtn {
-    grid-column: span 2;
+  #addRunnerBtn {
+    grid-column:
+      span 2;
+  }
+
+  .vmaResultGrid {
+    grid-template-columns:
+      repeat(2, 1fr);
   }
 
 }
 
 
 /* =========================================================
-   MOBILE / PETIT IPAD
+   PETIT IPAD / MOBILE
 ========================================================= */
 
 @media (max-width: 760px) {
 
+  #setupPanel {
+    padding:
+      18px;
+
+    border-radius:
+      22px;
+  }
+
   .topbar {
-    align-items: flex-start;
+    align-items:
+      flex-start;
   }
 
   .topActions {
-    justify-content: flex-start;
-  }
-
-  #setupPanel {
-    padding: 18px;
-    border-radius: 22px;
+    justify-content:
+      flex-start;
   }
 
   #setupPanel > h2 {
-    font-size: 23px;
+    font-size:
+      23px;
   }
 
   .modeGrid.twoModes {
-    grid-template-columns: 1fr;
+    grid-template-columns:
+      1fr;
   }
 
-  .modeCard span {
-    min-height: 106px;
-    padding:
-      16px
-      50px
-      16px
-      62px;
+  .trainingToolsGrid {
+    grid-template-columns:
+      1fr;
   }
 
-  .modeCard span::before {
-    left: 14px;
-    width: 36px;
-    height: 36px;
-    font-size: 19px;
-  }
-
-  .modeCard strong {
-    font-size: 18px;
-  }
-
-  .modeCard small {
-    font-size: 13px;
-  }
-
-  .addRunner {
-    grid-template-columns: 1fr;
-  }
-
-  .addRunner #addRunnerBtn {
-    grid-column: auto;
-  }
-
-  .runnerSetupList {
-    grid-template-columns: 1fr;
-  }
-
-  .runnerChip {
-    min-height: 62px;
-  }
-
-  #launchPerformanceBtn {
-    min-height: 62px;
-    font-size: 17px;
-  }
-
-  .runnerCard {
-    min-height:
-      190px;
-  }
-
-  .runnerName {
-    font-size:
-      26px;
-  }
-
-  .activeRunnerBanner {
+  .trainingToolCard > span {
     min-height:
       104px;
 
     padding:
-      42px 16px 16px;
+      16px 48px 16px 16px;
   }
 
-  .activeRunnerBanner strong {
+  .trainingToolCard strong {
     font-size:
-      28px;
+      17px;
+  }
+
+  .trainingSubConfig {
+    padding:
+      14px;
+  }
+
+  .configGrid {
+    grid-template-columns:
+      1fr;
+  }
+
+  .timerPreview {
+    grid-template-columns:
+      1fr;
+  }
+
+  .addRunner {
+    grid-template-columns:
+      1fr;
+  }
+
+  #addRunnerBtn {
+    grid-column:
+      auto;
+  }
+
+  .runnerSetupList {
+    grid-template-columns:
+      1fr;
+  }
+
+  #launchPerformanceBtn {
+    min-height:
+      62px;
+
+    font-size:
+      17px;
   }
 
   .mainTime {
@@ -1340,6 +1999,86 @@ strong {
 
     height:
       80px;
+  }
+
+  .timerLapButton {
+    width:
+      112px;
+
+    height:
+      112px;
+  }
+
+  .timerRunInfo {
+    grid-template-columns:
+      1fr 1fr 1fr;
+
+    gap:
+      6px;
+  }
+
+  .timerMetric {
+    min-height:
+      78px;
+
+    padding:
+      8px;
+  }
+
+  .timerMetric strong {
+    font-size:
+      20px;
+  }
+
+  .activeRunnerBanner {
+    min-height:
+      104px;
+
+    padding:
+      42px 16px 16px;
+  }
+
+  .activeRunnerBanner strong {
+    font-size:
+      27px;
+  }
+
+  .runnerCard {
+    min-height:
+      190px;
+  }
+
+  .runnerName {
+    font-size:
+      26px;
+  }
+
+  .vmaResultGrid {
+    grid-template-columns:
+      1fr 1fr;
+  }
+
+  .vmaResultCard {
+    min-height:
+      96px;
+  }
+
+  .vmaResultCard strong {
+    font-size:
+      21px;
+  }
+
+  .partialDistanceControls {
+    align-items:
+      stretch;
+
+    flex-direction:
+      column;
+  }
+
+  .partialDistanceUnit {
+    padding:
+      0;
   }
 
 }
