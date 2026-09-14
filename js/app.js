@@ -2152,14 +2152,12 @@
 
 
     /*
-      Durée personnalisée :
-      pas de protocole VMA standard.
-      On utilise donc la vitesse moyenne
-      comme estimation indicative.
-    */
+  Durée personnalisée :
+  pas de protocole VMA standard.
+  On ne calcule donc pas de VMA.
+*/
 
-    return averageSpeed;
-
+return null;
   }
 
 
