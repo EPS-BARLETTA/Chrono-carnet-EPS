@@ -1703,33 +1703,63 @@
 
   function stopAction() {
 
-    if (!running) {
-      return;
-    }
+  if (!running) {
+    return;
+  }
 
 
-    if (
-      isSimple()
-    ) {
+  if (
+    isSimple()
+  ) {
 
-      stopClock();
+    stopClock();
 
-      return;
-
-    }
-
-
-    if (
-      isTimed()
-    ) {
-
-      finishTimedRun(false);
-
-    }
+    return;
 
   }
 
 
+  if (
+    isTimed()
+  ) {
+
+    if (
+      state.trainingTool === "vma" &&
+      (
+        state.vmaProtocol === "6" ||
+        state.vmaProtocol === "12"
+      )
+    ) {
+
+      const ok =
+        confirm(
+          "Interrompre le test ? Aucun résultat VMA ne sera enregistré."
+        );
+
+      if (!ok) {
+        return;
+      }
+
+      resetClock();
+
+      resetTimedRuntime();
+
+      renderPerf();
+
+      toast(
+        "Test interrompu · aucun résultat VMA enregistré."
+      );
+
+      return;
+
+    }
+
+
+    finishTimedRun(false);
+
+  }
+
+}
   /* =========================================================
      CHRONO PERFORMANCE / CCF
   ========================================================= */
