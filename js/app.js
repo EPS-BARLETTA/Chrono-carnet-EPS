@@ -815,7 +815,7 @@
 
     $("totalDistance").value =
       [
-        100,200,400,600,800,
+        100,200,400,500,600,800,
         1000,1200,1500,2000,3000
       ].includes(state.totalDistance)
         ? String(state.totalDistance)
@@ -4831,6 +4831,24 @@ return null;
 
   $("totalDistance").onchange =
     () => {
+
+      if (
+        $("totalDistance").value === "custom"
+      ) {
+
+        setVisible(
+          "customDistanceWrap",
+          true
+        );
+
+        $("customDistance").value =
+          state.totalDistance;
+
+        $("customDistance").focus();
+
+        return;
+
+      }
 
       readConfig();
 
