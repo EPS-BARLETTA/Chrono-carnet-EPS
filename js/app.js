@@ -929,7 +929,7 @@
         x =>
           x.classList.toggle(
             "hidden",
-            !ccf
+            true
           )
       );
 
@@ -1475,35 +1475,15 @@
 
 
     const p1 =
-      state.mode === "ccf"
-        ? estimateMs("project1")
-        : null;
+      null;
 
 
     const p2 =
-      state.mode === "ccf"
-        ? estimateMs("project2")
-        : null;
+      null;
 
 
     if (
-      state.mode === "ccf" &&
-      (
-        !cls ||
-        !p1 ||
-        !p2
-      )
-    ) {
-
-      return toast(
-        "Classe et deux estimations valides sont obligatoires."
-      );
-
-    }
-
-
-    if (
-      isExam500() &&
+      isExamMode() &&
       !cls
     ) {
 
@@ -1600,13 +1580,13 @@
      LANCEMENT
   ========================================================= */
 
-  function openExam500Estimates(
+  function openRaceEstimates(
     race,
     onValid
   ) {
 
     if (
-      !isExam500() ||
+      !isExamMode() ||
       ![1,2].includes(race)
     ) {
       onValid?.();
@@ -1639,7 +1619,9 @@
 
     dialog.innerHTML =
       '<div class="dialogPanel" style="min-width:min(520px,92vw)">' +
-      '<h3>Annonce · 500 m n°' +
+      '<h3>Annonce · ' +
+      (isExam500() ? "500" : "800") +
+      ' m n°' +
       race +
       '</h3>' +
       '<p style="margin-top:0">Chaque coureur annonce le temps qu’il pense réaliser avant la course.</p>' +
@@ -1846,26 +1828,7 @@
 
 
     if (
-      state.mode === "ccf" &&
-      state.runners.some(
-        r =>
-          !r.last ||
-          !r.first ||
-          !r.classroom ||
-          !r.project1Ms ||
-          !r.project2Ms
-      )
-    ) {
-
-      return toast(
-        "Identité et estimations incomplètes."
-      );
-
-    }
-
-
-    if (
-      isExam500() &&
+      isExamMode() &&
       state.runners.some(
         r =>
           !r.last ||
@@ -1882,14 +1845,14 @@
 
 
     if (
-      isExam500() &&
+      isExamMode() &&
       state.runners.some(
         r =>
           !r.project1Ms
       )
     ) {
 
-      openExam500Estimates(
+      openRaceEstimates(
         1,
         launch
       );
@@ -2960,7 +2923,7 @@ return null;
 
 
     if (
-      isExam500() &&
+      isExamMode() &&
       race === 2 &&
       state.runners.some(
         r =>
@@ -2968,7 +2931,7 @@ return null;
       )
     ) {
 
-      openExam500Estimates(
+      openRaceEstimates(
         2,
         () =>
           setRace(2)
