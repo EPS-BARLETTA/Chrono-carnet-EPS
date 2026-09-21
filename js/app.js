@@ -142,6 +142,8 @@
   let timedFinished = false;
   let timedActualDurationMs = 0;
 
+  let lapLockedUntil = 0;
+
 
   /* =========================================================
      UTILITAIRES
@@ -380,6 +382,97 @@
           $("toast").hidden = true,
         2200
       );
+
+  }
+
+
+  function lapConfirmationBeep() {
+
+    try {
+
+      const AudioCtx =
+        window.AudioContext ||
+        window.webkitAudioContext;
+
+      if (!AudioCtx) {
+        return;
+      }
+
+      const ctx =
+        new AudioCtx();
+
+      const osc =
+        ctx.createOscillator();
+
+      const gain =
+        ctx.createGain();
+
+      osc.type =
+        "sine";
+
+      osc.frequency.value =
+        880;
+
+      gain.gain.setValueAtTime(
+        0.12,
+        ctx.currentTime
+      );
+
+      gain.gain.exponentialRampToValueAtTime(
+        0.001,
+        ctx.currentTime + 0.12
+      );
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(
+        ctx.currentTime + 0.12
+      );
+
+      osc.onended =
+        () => ctx.close();
+
+    } catch {}
+
+  }
+
+
+  function confirmLapRecorded() {
+
+    lapLockedUntil =
+      performance.now() +
+      5000;
+
+    const button =
+      $("lapBtn");
+
+    if (button) {
+
+      button.textContent =
+        "✓ TOUR VALIDÉ";
+
+      button.disabled =
+        true;
+
+      setTimeout(
+        () => {
+
+          if ($("lapBtn")) {
+            $("lapBtn").textContent =
+              "TOUR";
+          }
+
+        },
+        900
+      );
+
+    }
+
+    lapConfirmationBeep();
+
+    navigator.vibrate?.(35);
 
   }
 
@@ -1561,6 +1654,12 @@
     running = false;
     startedAt = 0;
     elapsedMs = 0;
+    lapLockedUntil = 0;
+
+    if ($("lapBtn")) {
+      $("lapBtn").textContent =
+        "TOUR";
+    }
 
   }
 
@@ -1918,7 +2017,7 @@
     });
 
 
-    navigator.vibrate?.(25);
+    confirmLapRecorded();
 
 
     if (
@@ -2832,7 +2931,9 @@ return null;
 
       $("lapBtn").disabled =
         !running ||
-        !r;
+        !r ||
+        performance.now() <
+          lapLockedUntil;
 
     }
 
