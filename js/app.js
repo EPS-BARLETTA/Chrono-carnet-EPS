@@ -143,7 +143,6 @@
   let timedActualDurationMs = 0;
 
   let lapLockedUntil = 0;
-  let lapAudioContext = null;
 
 
   /* =========================================================
@@ -387,83 +386,6 @@
   }
 
 
-  function prepareLapAudio() {
-
-    try {
-
-      const AudioCtx =
-        window.AudioContext ||
-        window.webkitAudioContext;
-
-      if (!AudioCtx) {
-        return;
-      }
-
-      if (!lapAudioContext) {
-        lapAudioContext =
-          new AudioCtx();
-      }
-
-      if (
-        lapAudioContext.state ===
-        "suspended"
-      ) {
-        lapAudioContext.resume();
-      }
-
-    } catch {}
-
-  }
-
-
-  function lapConfirmationBeep() {
-
-    try {
-
-      prepareLapAudio();
-
-      const ctx =
-        lapAudioContext;
-
-      if (!ctx) {
-        return;
-      }
-
-      const osc =
-        ctx.createOscillator();
-
-      const gain =
-        ctx.createGain();
-
-      osc.type =
-        "sine";
-
-      osc.frequency.value =
-        880;
-
-      gain.gain.setValueAtTime(
-        0.16,
-        ctx.currentTime
-      );
-
-      gain.gain.exponentialRampToValueAtTime(
-        0.001,
-        ctx.currentTime + 0.14
-      );
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start();
-      osc.stop(
-        ctx.currentTime + 0.14
-      );
-
-    } catch {}
-
-  }
-
-
   function showLapValidatedPopup() {
 
     let popup =
@@ -532,7 +454,7 @@
 
     lapLockedUntil =
       performance.now() +
-      5000;
+      3000;
 
     const button =
       $("lapBtn");
@@ -554,12 +476,10 @@
           }
 
         },
-        900
+        3000
       );
 
     }
-
-    lapConfirmationBeep();
 
     showLapValidatedPopup();
 
@@ -1802,8 +1722,6 @@
 
 
   function start() {
-
-    prepareLapAudio();
 
     if (running) {
       return;
