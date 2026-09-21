@@ -4652,100 +4652,201 @@ return null;
       return "";
     }
 
+    const identity =
+      (r.last
+        ? r.last.toUpperCase() + " " + r.first
+        : r.name) +
+      (r.classroom ? " · " + r.classroom : "");
 
-    const head =
-
-      `${
-        r.last
-          ? r.last.toUpperCase() +
-            " " +
-            r.first
-          : r.name
-      }` +
-
-      `${
-        r.classroom
-          ? ` · ${r.classroom}`
-          : ""
-      }`;
-
-
-    if (
-      isTimed()
-    ) {
+    if (isTimed()) {
 
       const tr =
-        timedRunFor(
-          r.id
-        );
-
+        timedRunFor(r.id);
 
       if (!tr) {
-        return head;
+        return identity;
       }
 
-
       return (
-
-        head +
-
-        "\n" +
-
-        `${
-          tr.tool === "vma"
-            ? tr.protocolName ||
-              "Test VMA"
-            : "Minuteur / Tours"
-        }\n` +
-
-        `Durée : ${fmtClock(tr.durationMs)}\n` +
-
-        `Tours : ${tr.laps}\n` +
-
-        `Distance : ${tr.totalDistance} m\n` +
-
-        `Vitesse moyenne : ${tr.speed.toFixed(1)} km/h` +
-
-        `${
-          tr.vma != null
-            ? `\nVMA estimée : ${tr.vma.toFixed(1)} km/h`
-            : ""
-        }`
-
+        "🏃 " + identity + "\n\n" +
+        (tr.tool === "vma"
+          ? tr.protocolName || "Test VMA"
+          : "Minuteur / Tours") + "\n" +
+        "Durée : " + fmtClock(tr.durationMs) + "\n" +
+        "Tours : " + tr.laps + "\n" +
+        "Distance : " + tr.totalDistance + " m\n" +
+        "Vitesse moyenne : " + tr.speed.toFixed(1) + " km/h" +
+        (tr.vma != null
+          ? "\nVMA estimée : " + tr.vma.toFixed(1) + " km/h"
+          : "")
       );
 
     }
 
+    const results =
+      state.results
+        .filter(x => x.runnerId === r.id);
+
+    if (!results.length) {
+      return identity;
+    }
+
+    if (isExamMode()) {
+
+      const distance =
+        isExam500() ? 500 : 800;
+
+      const races =
+        [...new Set(
+          results.map(x => x.race)
+        )].sort((a,b) => a-b);
+
+      const lines = [
+        "🏃 DEMI-FOND · " +
+          (isExam500() ? "3 × 500 m" : "2 × 800 m"),
+        identity
+      ];
+
+      races.forEach(race => {
+
+        const a =
+          results
+            .filter(x => x.race === race)
+            .sort((x,y) => x.distance - y.distance);
+
+        const project =
+          race === 1
+            ? r.project1Ms
+            : race === 2
+              ? r.project2Ms
+              : null;
+
+        lines.push("");
+        lines.push(
+          "▶ " + distance + " m n°" + race +
+          (project
+            ? " · estimation " + fmt(project)
+            : isExam500() && race === 3
+              ? " · performance"
+              : "")
+        );
+
+        a.forEach(x => {
+          lines.push(
+            x.distance + " m · tour " + fmt(x.lapMs) +
+            " · cumul " + fmt(x.cumulativeMs) +
+            " · " + x.speed.toFixed(1) + " km/h"
+          );
+        });
+
+        const finish =
+          a.at(-1);
+
+        if (finish) {
+          const averageSpeed =
+            spd(
+              distance,
+              finish.cumulativeMs
+            );
+
+          lines.push(
+            "✓ Temps : " + fmt(finish.cumulativeMs) +
+            " · vitesse moyenne " +
+            averageSpeed.toFixed(1) + " km/h"
+          );
+
+          if (project) {
+            const gap =
+              Math.abs(
+                finish.cumulativeMs - project
+              );
+
+            lines.push(
+              "↔ Écart estimation : " +
+              fmt(gap)
+            );
+          }
+        }
+
+      });
+
+      const finishes =
+        races
+          .map(race => {
+            const a =
+              results
+                .filter(x => x.race === race)
+                .sort((x,y) => x.distance - y.distance);
+            return a.at(-1);
+          })
+          .filter(Boolean);
+
+      if (finishes.length) {
+
+        const best =
+          finishes.reduce(
+            (a,b) =>
+              a.cumulativeMs <= b.cumulativeMs
+                ? a
+                : b
+          );
+
+        const segments =
+          results.filter(
+            x => x.lapMs > 0
+          );
+
+        const fastest =
+          segments.length
+            ? segments.reduce(
+                (a,b) =>
+                  a.speed >= b.speed ? a : b
+              )
+            : null;
+
+        const slowest =
+          segments.length
+            ? segments.reduce(
+                (a,b) =>
+                  a.speed <= b.speed ? a : b
+              )
+            : null;
+
+        lines.push("");
+        lines.push("📊 BILAN");
+        lines.push(
+          "Meilleure course : " +
+          fmt(best.cumulativeMs)
+        );
+
+        if (fastest && slowest) {
+          lines.push(
+            "Portion la plus rapide : " +
+            fastest.distance + " m · " +
+            fastest.speed.toFixed(1) + " km/h"
+          );
+          lines.push(
+            "Portion la moins rapide : " +
+            slowest.distance + " m · " +
+            slowest.speed.toFixed(1) + " km/h"
+          );
+        }
+      }
+
+      return lines.join("\n");
+
+    }
 
     return (
-
-      head +
-
-      "\n" +
-
-      state.results
-        .filter(
-          x =>
-            x.runnerId === r.id
-        )
+      "🏃 " + identity + "\n\n" +
+      results
         .map(
           x =>
-
-            `${
-              state.mode === "ccf"
-                ? `800 n°${x.race} · `
-                : ""
-            }` +
-
-            `${x.distance} m : ${fmt(x.lapMs)} · ` +
-
-            `cumul ${fmt(x.cumulativeMs)} · ` +
-
-            `${x.speed.toFixed(1)} km/h`
-
+            x.distance + " m · tour " + fmt(x.lapMs) +
+            " · cumul " + fmt(x.cumulativeMs) +
+            " · " + x.speed.toFixed(1) + " km/h"
         )
         .join("\n")
-
     );
 
   }
