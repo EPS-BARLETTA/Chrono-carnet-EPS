@@ -4669,15 +4669,16 @@ return null;
 
       return (
         "🏃 " + identity + "\n\n" +
+        "⏱ " +
         (tr.tool === "vma"
           ? tr.protocolName || "Test VMA"
-          : "Minuteur / Tours") + "\n" +
-        "Durée : " + fmtClock(tr.durationMs) + "\n" +
-        "Tours : " + tr.laps + "\n" +
-        "Distance : " + tr.totalDistance + " m\n" +
-        "Vitesse moyenne : " + tr.speed.toFixed(1) + " km/h" +
+          : "Minuteur / Tours") + "\n\n" +
+        "⏳ Durée : " + fmtClock(tr.durationMs) + "\n" +
+        "🔁 Tours : " + tr.laps + "\n" +
+        "📏 Distance : " + tr.totalDistance + " m\n" +
+        "⚡ Vitesse moyenne : " + tr.speed.toFixed(1) + " km/h" +
         (tr.vma != null
-          ? "\nVMA estimée : " + tr.vma.toFixed(1) + " km/h"
+          ? "\n🚀 VMA estimée : " + tr.vma.toFixed(1) + " km/h"
           : "")
       );
 
@@ -4696,6 +4697,9 @@ return null;
       const distance =
         isExam500() ? 500 : 800;
 
+      const split =
+        isExam500() ? 250 : 200;
+
       const races =
         [...new Set(
           results.map(x => x.race)
@@ -4704,7 +4708,7 @@ return null;
       const lines = [
         "🏃 DEMI-FOND · " +
           (isExam500() ? "3 × 500 m" : "2 × 800 m"),
-        identity
+        "👤 " + identity
       ];
 
       races.forEach(race => {
@@ -4723,48 +4727,88 @@ return null;
 
         lines.push("");
         lines.push(
-          "▶ " + distance + " m n°" + race +
+          "━━━━━━━━━━━━━━━━━━"
+        );
+
+        lines.push(
+          "▶️ " + distance + " m n°" + race +
           (project
-            ? " · estimation " + fmt(project)
+            ? " · 🎯 " + fmt(project)
             : isExam500() && race === 3
-              ? " · performance"
+              ? " · 🔥 PERFORMANCE"
               : "")
         );
 
-        a.forEach(x => {
+        lines.push("");
+
+        a.forEach((x,index) => {
+
+          const isFinish =
+            x.distance === distance;
+
+          const icon =
+            isFinish
+              ? "🏁"
+              : "📍";
+
           lines.push(
-            x.distance + " m · tour " + fmt(x.lapMs) +
-            " · cumul " + fmt(x.cumulativeMs) +
-            " · " + x.speed.toFixed(1) + " km/h"
+            icon + " " + x.distance + " m"
           );
+
+          lines.push(
+            "   ⏱ " + fmt(x.cumulativeMs) +
+            (index > 0
+              ? "   ·   tour " + fmt(x.lapMs)
+              : "")
+          );
+
+          lines.push(
+            "   ⚡ " + x.speed.toFixed(1) + " km/h"
+          );
+
         });
 
         const finish =
           a.at(-1);
 
         if (finish) {
+
           const averageSpeed =
             spd(
               distance,
               finish.cumulativeMs
             );
 
+          lines.push("");
           lines.push(
-            "✓ Temps : " + fmt(finish.cumulativeMs) +
-            " · vitesse moyenne " +
-            averageSpeed.toFixed(1) + " km/h"
+            "✅ TEMPS FINAL : " +
+            fmt(finish.cumulativeMs)
+          );
+
+          lines.push(
+            "⚡ Vitesse moyenne : " +
+            averageSpeed.toFixed(1) +
+            " km/h"
           );
 
           if (project) {
-            const gap =
-              Math.abs(
-                finish.cumulativeMs - project
-              );
+
+            const signedGap =
+              finish.cumulativeMs -
+              project;
 
             lines.push(
-              "↔ Écart estimation : " +
-              fmt(gap)
+              "🎯 Écart au projet : " +
+              (
+                signedGap > 0
+                  ? "+"
+                  : signedGap < 0
+                    ? "−"
+                    : "±"
+              ) +
+              short(signedGap)
             );
+
           }
         }
 
@@ -4813,24 +4857,49 @@ return null;
             : null;
 
         lines.push("");
-        lines.push("📊 BILAN");
         lines.push(
-          "Meilleure course : " +
+          "━━━━━━━━━━━━━━━━━━"
+        );
+        lines.push("📊 BILAN");
+        lines.push("");
+
+        lines.push(
+          "🏆 Meilleure course : " +
           fmt(best.cumulativeMs)
         );
 
         if (fastest && slowest) {
+
+          const fastestStart =
+            Math.max(
+              0,
+              fastest.distance - split
+            );
+
+          const slowestStart =
+            Math.max(
+              0,
+              slowest.distance - split
+            );
+
           lines.push(
-            "Portion la plus rapide : " +
+            "🚀 Segment le plus rapide : " +
+            fastestStart + "–" +
             fastest.distance + " m · " +
-            fastest.speed.toFixed(1) + " km/h"
+            fastest.speed.toFixed(1) +
+            " km/h"
           );
+
           lines.push(
-            "Portion la moins rapide : " +
+            "🐢 Segment le moins rapide : " +
+            slowestStart + "–" +
             slowest.distance + " m · " +
-            slowest.speed.toFixed(1) + " km/h"
+            slowest.speed.toFixed(1) +
+            " km/h"
           );
+
         }
+
       }
 
       return lines.join("\n");
@@ -4842,11 +4911,12 @@ return null;
       results
         .map(
           x =>
-            x.distance + " m · tour " + fmt(x.lapMs) +
-            " · cumul " + fmt(x.cumulativeMs) +
-            " · " + x.speed.toFixed(1) + " km/h"
+            "📍 " + x.distance + " m\n" +
+            "   ⏱ " + fmt(x.cumulativeMs) +
+            " · tour " + fmt(x.lapMs) + "\n" +
+            "   ⚡ " + x.speed.toFixed(1) + " km/h"
         )
-        .join("\n")
+        .join("\n\n")
     );
 
   }
