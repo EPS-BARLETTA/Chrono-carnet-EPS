@@ -151,6 +151,28 @@
 
         </label>
 
+        <label class="modeCard">
+
+          <input
+            type="radio"
+            name="mode"
+            value="exam500"
+          >
+
+          <span>
+
+            <strong>
+              Examen 3 × 500 m
+            </strong>
+
+            <small>
+              C1/C2 avec annonce · C3 performance · passages 250/500 · QR professeur.
+            </small>
+
+          </span>
+
+        </label>
+
 
       </div>
 
@@ -831,6 +853,21 @@
 
       </div>
 
+      <div
+        id="exam500Config"
+        class="ccfInfo hidden"
+      >
+
+        <strong>
+          Examen demi-fond · 3 × 500 m
+        </strong>
+
+        <span>
+          C1 et C2 avec annonce obligatoire · C3 sans annonce, à fond · passages 250 / 500 m · QR professeur final.
+        </span>
+
+      </div>
+
 
       <div
         id="configMessage"
@@ -1203,6 +1240,13 @@
 
         <button data-race="2">
           800 m n°2
+        </button>
+
+        <button
+          data-race="3"
+          class="exam500Race hidden"
+        >
+          500 m n°3
         </button>
 
 
@@ -1649,7 +1693,7 @@
 
 <script src="/js/ccf-input-guard.js?v=1"></script>
 
-<script src="/js/app.js?v=5.6"></script>
+<script src="/js/app.js?v=5.7"></script>
 
 
 </body>
