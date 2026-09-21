@@ -1267,7 +1267,7 @@
               }` +
 
               `${
-                state.mode === "ccf"
+                isExamMode()
                   ? ` · ${r.sex}` +
                     ` · P1 ${
                       r.project1Ms
