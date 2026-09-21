@@ -316,6 +316,21 @@
   }
 
 
+  function safeQrText(value) {
+
+    return String(value ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g,"")
+      .replace(/[’‘‛]/g,"'")
+      .replace(/[‐‑‒–—―]/g,"-")
+      .replace(/[\u0000-\u001F\u007F]/g," ")
+      .replace(/[^A-Za-z0-9 .,'_\-\/]/g," ")
+      .replace(/\s+/g," ")
+      .trim();
+
+  }
+
+
   function stableStudentId(last,first,cls) {
 
     const s =
@@ -3505,16 +3520,16 @@ return null;
         r.externalId,
 
       last:
-        r.last,
+        safeQrText(r.last),
 
       first:
-        r.first,
+        safeQrText(r.first),
 
       classroom:
-        r.classroom,
+        safeQrText(r.classroom),
 
       sex:
-        r.sex,
+        safeQrText(r.sex),
 
       race,
 
@@ -3638,26 +3653,43 @@ return null;
       window.QRCode
     ) {
 
-      new QRCode(
-        box,
-        {
+      try {
 
-          text:
-            JSON.stringify(
-              payload
-            ),
+        const qrText =
+          JSON.stringify(
+            payload
+          );
 
-          width:
-            260,
+        new QRCode(
+          box,
+          {
 
-          height:
-            260,
+            text:
+              qrText,
 
-          correctLevel:
-            QRCode.CorrectLevel.M
+            width:
+              260,
 
-        }
-      );
+            height:
+              260,
+
+            correctLevel:
+              QRCode.CorrectLevel.M
+
+          }
+        );
+
+      } catch (error) {
+
+        console.error(
+          "QR generation failed",
+          error
+        );
+
+        box.innerHTML =
+          '<p>Impossible de générer le QR code. Les caractères du nom ont été sécurisés ; réessaie ou recrée l’élève.</p>';
+
+      }
 
     } else {
 
