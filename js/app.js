@@ -2714,13 +2714,15 @@ return null;
 
 
     if (
-      state.mode === "ccf" &&
-      race === 2 &&
-      !allDone(1)
+      isExamMode() &&
+      race > 1 &&
+      !allDone(race - 1)
     ) {
 
       return toast(
-        "Termine d’abord le 800 m n°1 des deux coureurs."
+        isExam500()
+          ? "Termine d’abord la course précédente des deux coureurs."
+          : "Termine d’abord le 800 m n°1 des deux coureurs."
       );
 
     }
@@ -3051,17 +3053,21 @@ return null;
 
 
       if (
-        state.mode === "ccf"
+        isExamMode()
       ) {
 
         proj =
           state.activeRace === 1
             ? r.project1Ms
-            : r.project2Ms;
+            : state.activeRace === 2
+              ? r.project2Ms
+              : null;
 
 
         activity =
-          `800 n°${state.activeRace}`;
+          isExam500()
+            ? `500 n°${state.activeRace}`
+            : `800 n°${state.activeRace}`;
 
 
       } else if (
@@ -3253,13 +3259,17 @@ return null;
                   : (
                       state.activeRace === 1
                         ? r.project1Ms
-                        : r.project2Ms
+                        : state.activeRace === 2
+                          ? r.project2Ms
+                          : null
                     );
 
 
               meta =
-                state.mode === "ccf"
-                  ? `800 n°${state.activeRace}`
+                isExamMode()
+                  ? isExam500()
+                    ? `500 n°${state.activeRace}`
+                    : `800 n°${state.activeRace}`
                   : "Course";
 
 
