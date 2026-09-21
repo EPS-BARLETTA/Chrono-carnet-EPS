@@ -3679,6 +3679,64 @@ return null;
 
   function qrPayload(r,race) {
 
+    if (isExam500()) {
+
+      const races =
+        [1,2,3].map(
+          n => rr(r.id,n)
+        );
+
+      if (
+        races.some(
+          a => a.length < 2
+        )
+      ) {
+        return null;
+      }
+
+      return {
+        type: "DF_3X500_RESULT",
+        v: 1,
+        resultId:
+          r.externalId + "-3x500-" + Date.now(),
+        studentId: r.externalId,
+        last: safeQrText(r.last),
+        first: safeQrText(r.first),
+        classroom:
+          safeQrText(r.classroom),
+        sex: safeQrText(r.sex),
+        projects: [
+          fmt(r.project1Ms),
+          fmt(r.project2Ms)
+        ],
+        races:
+          races.map(
+            (a,index) => ({
+              race: index + 1,
+              project:
+                index === 0
+                  ? fmt(r.project1Ms)
+                  : index === 1
+                    ? fmt(r.project2Ms)
+                    : null,
+              split250Ms:
+                Math.round(
+                  a[0].cumulativeMs
+                ),
+              total500Ms:
+                Math.round(
+                  a[1].cumulativeMs
+                )
+            })
+          ),
+        createdAt:
+          new Date().toISOString()
+      };
+
+    }
+
+
+
     const a =
       rr(
         r.id,
@@ -3828,7 +3886,9 @@ return null;
 
 
     $("teacherQrTitle").textContent =
-      `${r.last.toUpperCase()} ${r.first} · 800 n°${race}`;
+      isExam500()
+        ? `${r.last.toUpperCase()} ${r.first} · 3 × 500 m`
+        : `${r.last.toUpperCase()} ${r.first} · 800 n°${race}`;
 
 
     const box =
