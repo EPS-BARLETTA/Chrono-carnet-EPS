@@ -4708,7 +4708,7 @@ return null;
       const lines = [
         "🏃 DEMI-FOND · " +
           (isExam500() ? "3 × 500 m" : "2 × 800 m"),
-        "👤 " + identity
+        identity
       ];
 
       races.forEach(race => {
@@ -4727,89 +4727,48 @@ return null;
 
         lines.push("");
         lines.push(
-          "━━━━━━━━━━━━━━━━━━"
-        );
-
-        lines.push(
-          "▶️ " + distance + " m n°" + race +
+          "▶ " + distance + " m n°" + race +
           (project
-            ? " · 🎯 " + fmt(project)
+            ? " · projet " + fmt(project)
             : isExam500() && race === 3
-              ? " · 🔥 PERFORMANCE"
+              ? " · performance"
               : "")
         );
 
-        lines.push("");
-
-        a.forEach((x,index) => {
-
-          const isFinish =
-            x.distance === distance;
-
-          const icon =
-            isFinish
-              ? "🏁"
-              : "📍";
-
+        a.forEach(x => {
           lines.push(
-            icon + " " + x.distance + " m"
+            x.distance + " m · " +
+            fmt(x.cumulativeMs) +
+            " · " +
+            x.speed.toFixed(1) +
+            " km/h"
           );
-
-          lines.push(
-            "   ⏱ " + fmt(x.cumulativeMs) +
-            (index > 0
-              ? "   ·   tour " + fmt(x.lapMs)
-              : "")
-          );
-
-          lines.push(
-            "   ⚡ " + x.speed.toFixed(1) + " km/h"
-          );
-
         });
 
         const finish =
           a.at(-1);
 
-        if (finish) {
+        if (
+          finish &&
+          project
+        ) {
 
-          const averageSpeed =
-            spd(
-              distance,
-              finish.cumulativeMs
-            );
-
-          lines.push("");
-          lines.push(
-            "✅ TEMPS FINAL : " +
-            fmt(finish.cumulativeMs)
-          );
+          const signedGap =
+            finish.cumulativeMs -
+            project;
 
           lines.push(
-            "⚡ Vitesse moyenne : " +
-            averageSpeed.toFixed(1) +
-            " km/h"
+            "Écart projet : " +
+            (
+              signedGap > 0
+                ? "+"
+                : signedGap < 0
+                  ? "−"
+                  : "±"
+            ) +
+            short(signedGap)
           );
 
-          if (project) {
-
-            const signedGap =
-              finish.cumulativeMs -
-              project;
-
-            lines.push(
-              "🎯 Écart au projet : " +
-              (
-                signedGap > 0
-                  ? "+"
-                  : signedGap < 0
-                    ? "−"
-                    : "±"
-              ) +
-              short(signedGap)
-            );
-
-          }
         }
 
       });
@@ -4857,14 +4816,9 @@ return null;
             : null;
 
         lines.push("");
+        lines.push("BILAN");
         lines.push(
-          "━━━━━━━━━━━━━━━━━━"
-        );
-        lines.push("📊 BILAN");
-        lines.push("");
-
-        lines.push(
-          "🏆 Meilleure course : " +
+          "Meilleur " + distance + " : " +
           fmt(best.cumulativeMs)
         );
 
@@ -4883,7 +4837,7 @@ return null;
             );
 
           lines.push(
-            "🚀 Segment le plus rapide : " +
+            "Segment le plus rapide : " +
             fastestStart + "–" +
             fastest.distance + " m · " +
             fastest.speed.toFixed(1) +
@@ -4891,7 +4845,7 @@ return null;
           );
 
           lines.push(
-            "🐢 Segment le moins rapide : " +
+            "Segment le moins rapide : " +
             slowestStart + "–" +
             slowest.distance + " m · " +
             slowest.speed.toFixed(1) +
@@ -4905,6 +4859,7 @@ return null;
       return lines.join("\n");
 
     }
+
 
     return (
       "🏃 " + identity + "\n\n" +
