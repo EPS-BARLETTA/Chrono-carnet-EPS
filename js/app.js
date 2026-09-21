@@ -896,16 +896,27 @@
     const ccf =
       state.mode === "ccf";
 
+    const exam500 =
+      isExam500();
+
+    const examMode =
+      ccf || exam500;
+
 
     setVisible(
       "trainingConfig",
-      !ccf
+      !examMode
     );
 
 
     setVisible(
       "ccfConfig",
       ccf
+    );
+
+    setVisible(
+      "exam500Config",
+      exam500
     );
 
 
@@ -917,7 +928,7 @@
         x =>
           x.classList.toggle(
             "hidden",
-            !ccf
+            !examMode
           )
       );
 
@@ -952,9 +963,25 @@
 
     setVisible(
       "runnerSetupBlock",
-      ccf ||
+      examMode ||
       state.trainingTool !== "simple"
     );
+
+
+    const p1Label =
+      $("project1Min")?.closest(".estimateBox")?.querySelector("span");
+    const p2Label =
+      $("project2Min")?.closest(".estimateBox")?.querySelector("span");
+
+    if (p1Label) {
+      p1Label.textContent =
+        exam500 ? "Annonce 500 n°1" : "Estimation 800 n°1";
+    }
+
+    if (p2Label) {
+      p2Label.textContent =
+        exam500 ? "Annonce 500 n°2" : "Estimation 800 n°2";
+    }
 
 
     /* Chrono performance */
@@ -1102,6 +1129,14 @@
         "200 m / passage"
       );
 
+    } else if (exam500) {
+
+      recap.push(
+        "Examen demi-fond",
+        "3 × 500 m",
+        "250 / 500 m"
+      );
+
     } else if (
       state.trainingTool === "simple"
     ) {
@@ -1166,7 +1201,7 @@
     $("launchPerformanceBtn")
       .textContent =
 
-      ccf
+      examMode
         ? "Passer à la prise de performance"
 
         : state.trainingTool === "simple"
