@@ -2022,7 +2022,7 @@
 
     const dist =
       pass *
-      state.splitDistance;
+      raceSplitDistance();
 
 
     const delta =
@@ -2038,7 +2038,9 @@
         : (
             state.activeRace === 1
               ? r.project1Ms
-              : r.project2Ms
+              : state.activeRace === 2
+                ? r.project2Ms
+                : null
           );
 
 
@@ -2070,7 +2072,7 @@
 
       speed:
         spd(
-          state.splitDistance,
+          raceSplitDistance(),
           lap
         ),
 
@@ -2083,7 +2085,7 @@
             target *
             (
               dist /
-              state.totalDistance
+              raceDistance()
             )
           : null
 
@@ -2102,7 +2104,7 @@
 
 
       if (
-        state.mode === "ccf"
+        isExamMode()
       ) {
 
         const next =
@@ -2123,17 +2125,21 @@
           );
 
         } else if (
-          state.activeRace === 1
+          state.activeRace < raceCount()
         ) {
 
           toast(
-            "800 m n°1 terminés · lance la récupération puis passe au n°2"
+            isExam500()
+              ? "500 m terminé · passe à la course suivante"
+              : "800 m n°1 terminés · lance la récupération puis passe au n°2"
           );
 
         } else {
 
           toast(
-            "Les deux 800 m sont terminés · bilan et QR disponibles"
+            isExam500()
+              ? "Les trois 500 m sont terminés · QR professeur disponible"
+              : "Les deux 800 m sont terminés · bilan et QR disponibles"
           );
 
         }
