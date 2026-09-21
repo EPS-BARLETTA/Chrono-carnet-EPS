@@ -3966,11 +3966,48 @@ return null;
 
 
     if (
-      state.mode !== "ccf"
+      !isExamMode()
     ) {
 
       host.innerHTML =
         "";
+
+      return;
+
+    }
+
+
+    if (isExam500()) {
+
+      host.innerHTML =
+        state.runners
+          .map(
+            r =>
+              [1,2,3].every(
+                race => done(r.id,race)
+              )
+                ? '<div style="margin-top:10px"><button class="btn primary" data-qr-runner="' +
+                  r.id +
+                  '" data-qr-race="3">QR prof · ' +
+                  esc(r.last.toUpperCase()) +
+                  ' · 3 × 500 m</button></div>'
+                : ""
+          )
+          .join("");
+
+      host
+        .querySelectorAll(
+          "[data-qr-runner]"
+        )
+        .forEach(
+          b =>
+            b.onclick =
+              () =>
+                showTeacherQR(
+                  b.dataset.qrRunner,
+                  3
+                )
+        );
 
       return;
 
@@ -4040,13 +4077,27 @@ return null;
 
 
     if (
-      state.mode !== "ccf"
+      !isExamMode()
     ) {
 
       box.classList.add("hidden");
 
       renderTeacherQrActions();
 
+      return;
+
+    }
+
+
+    if (isExam500()) {
+
+      box.innerHTML =
+        "<h3>Examen 3 × 500 m</h3>" +
+        "<p>Résultats enregistrés. La note sera calculée dans DemiFond Scan après lecture du QR professeur.</p>";
+
+      box.classList.remove("hidden");
+      $("teacherRevealBtn").classList.add("hidden");
+      renderTeacherQrActions();
       return;
 
     }
@@ -5091,6 +5142,14 @@ return null;
 
               state.totalDistance = 800;
               state.splitDistance = 200;
+              state.displayMode = "cumulative";
+
+            } else if (
+              isExam500()
+            ) {
+
+              state.totalDistance = 500;
+              state.splitDistance = 250;
               state.displayMode = "cumulative";
 
             }
