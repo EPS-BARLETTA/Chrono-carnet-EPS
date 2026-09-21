@@ -143,6 +143,7 @@
   let timedActualDurationMs = 0;
 
   let lapLockedUntil = 0;
+  let lapAudioContext = null;
 
 
   /* =========================================================
@@ -386,7 +387,7 @@
   }
 
 
-  function lapConfirmationBeep() {
+  function prepareLapAudio() {
 
     try {
 
@@ -398,8 +399,35 @@
         return;
       }
 
+      if (!lapAudioContext) {
+        lapAudioContext =
+          new AudioCtx();
+      }
+
+      if (
+        lapAudioContext.state ===
+        "suspended"
+      ) {
+        lapAudioContext.resume();
+      }
+
+    } catch {}
+
+  }
+
+
+  function lapConfirmationBeep() {
+
+    try {
+
+      prepareLapAudio();
+
       const ctx =
-        new AudioCtx();
+        lapAudioContext;
+
+      if (!ctx) {
+        return;
+      }
 
       const osc =
         ctx.createOscillator();
@@ -414,13 +442,13 @@
         880;
 
       gain.gain.setValueAtTime(
-        0.12,
+        0.16,
         ctx.currentTime
       );
 
       gain.gain.exponentialRampToValueAtTime(
         0.001,
-        ctx.currentTime + 0.12
+        ctx.currentTime + 0.14
       );
 
       osc.connect(gain);
@@ -428,13 +456,74 @@
 
       osc.start();
       osc.stop(
-        ctx.currentTime + 0.12
+        ctx.currentTime + 0.14
       );
 
-      osc.onended =
-        () => ctx.close();
-
     } catch {}
+
+  }
+
+
+  function showLapValidatedPopup() {
+
+    let popup =
+      $("lapValidatedPopup");
+
+    if (!popup) {
+
+      popup =
+        document.createElement(
+          "div"
+        );
+
+      popup.id =
+        "lapValidatedPopup";
+
+      Object.assign(
+        popup.style,
+        {
+          position: "fixed",
+          left: "50%",
+          top: "48%",
+          transform: "translate(-50%,-50%)",
+          zIndex: "9999",
+          padding: "10px 16px",
+          borderRadius: "14px",
+          background: "rgba(15,23,42,.88)",
+          color: "#fff",
+          fontWeight: "700",
+          fontSize: "16px",
+          boxShadow: "0 8px 24px rgba(0,0,0,.18)",
+          opacity: "0",
+          pointerEvents: "none",
+          transition: "opacity .15s ease"
+        }
+      );
+
+      popup.textContent =
+        "✓ Tour validé";
+
+      document.body.appendChild(
+        popup
+      );
+
+    }
+
+    clearTimeout(
+      showLapValidatedPopup.t
+    );
+
+    popup.style.opacity =
+      "1";
+
+    showLapValidatedPopup.t =
+      setTimeout(
+        () => {
+          popup.style.opacity =
+            "0";
+        },
+        2000
+      );
 
   }
 
@@ -471,6 +560,8 @@
     }
 
     lapConfirmationBeep();
+
+    showLapValidatedPopup();
 
     navigator.vibrate?.(35);
 
@@ -1711,6 +1802,8 @@
 
 
   function start() {
+
+    prepareLapAudio();
 
     if (running) {
       return;
