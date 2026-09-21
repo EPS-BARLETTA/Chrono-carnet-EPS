@@ -87,7 +87,7 @@
 
   /* Compatibilité avec les anciennes données */
 
-  if (!["training","ccf"].includes(state.mode)) {
+  if (!["training","ccf","exam500"].includes(state.mode)) {
     state.mode = "training";
   }
 
@@ -248,6 +248,23 @@
     v == null
       ? "—"
       : `${v > 0 ? "+" : v < 0 ? "−" : "±"}${short(v)}`;
+
+
+  const isExam500 = () =>
+    state.mode === "exam500";
+
+  const isExamMode = () =>
+    state.mode === "ccf" ||
+    isExam500();
+
+  const raceDistance = () =>
+    isExam500() ? 500 : state.totalDistance;
+
+  const raceSplitDistance = () =>
+    isExam500() ? 250 : state.splitDistance;
+
+  const raceCount = () =>
+    isExam500() ? 3 : state.mode === "ccf" ? 2 : 1;
 
 
   const isSimple = () =>
@@ -505,8 +522,8 @@
 
   const requiredSplits = () =>
     Math.floor(
-      state.totalDistance /
-      state.splitDistance
+      raceDistance() /
+      raceSplitDistance()
     );
 
 
@@ -680,6 +697,16 @@
 
       state.totalDistance = 800;
       state.splitDistance = 200;
+      state.displayMode = "cumulative";
+
+      return;
+
+    }
+
+    if (isExam500()) {
+
+      state.totalDistance = 500;
+      state.splitDistance = 250;
       state.displayMode = "cumulative";
 
       return;
