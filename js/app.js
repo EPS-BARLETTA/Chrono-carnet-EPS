@@ -5093,7 +5093,12 @@ return null;
     () => {
 
       if (
-        state.mode === "ccf" &&
+        state.mode !== "ccf"
+      ) {
+        return;
+      }
+
+      if (
         !allDone(1)
       ) {
 
