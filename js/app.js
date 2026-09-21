@@ -1450,7 +1450,7 @@
 
 
     if (
-      state.mode === "ccf" &&
+      isExamMode() &&
       state.runners.length >= 2
     ) {
 
@@ -1474,19 +1474,19 @@
 
 
     const p1 =
-      state.mode === "ccf"
+      isExamMode()
         ? estimateMs("project1")
         : null;
 
 
     const p2 =
-      state.mode === "ccf"
+      isExamMode()
         ? estimateMs("project2")
         : null;
 
 
     if (
-      state.mode === "ccf" &&
+      isExamMode() &&
       (
         !cls ||
         !p1 ||
@@ -1537,7 +1537,7 @@
           : "green",
 
       lockedIdentity:
-        state.mode === "ccf"
+        isExamMode()
 
     };
 
@@ -1606,7 +1606,7 @@
 
     if (
       (
-        state.mode === "ccf" ||
+        isExamMode() ||
         isChrono()
       ) &&
       (
@@ -1650,7 +1650,7 @@
 
 
     if (
-      state.mode === "ccf" &&
+      isExamMode() &&
       state.runners.some(
         r =>
           !r.last ||
