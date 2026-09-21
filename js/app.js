@@ -428,11 +428,12 @@
           zIndex: "9999",
           padding: "10px 16px",
           borderRadius: "14px",
-          background: "rgba(15,23,42,.88)",
-          color: "#fff",
-          fontWeight: "700",
-          fontSize: "16px",
-          boxShadow: "0 8px 24px rgba(0,0,0,.18)",
+          background: "#39ff88",
+          color: "#052e16",
+          border: "2px solid #16a34a",
+          fontWeight: "800",
+          fontSize: "18px",
+          boxShadow: "0 10px 28px rgba(34,197,94,.38)",
           opacity: "0",
           pointerEvents: "none",
           transition: "opacity .15s ease"
@@ -461,7 +462,7 @@
           popup.style.opacity =
             "0";
         },
-        2000
+        3000
       );
 
   }
@@ -928,7 +929,7 @@
         x =>
           x.classList.toggle(
             "hidden",
-            !examMode
+            !ccf
           )
       );
 
@@ -1455,7 +1456,7 @@
     ) {
 
       return toast(
-        "Le mode CCF fonctionne avec deux coureurs maximum."
+        "Deux coureurs maximum dans ce mode examen."
       );
 
     }
@@ -1474,19 +1475,19 @@
 
 
     const p1 =
-      isExamMode()
+      state.mode === "ccf"
         ? estimateMs("project1")
         : null;
 
 
     const p2 =
-      isExamMode()
+      state.mode === "ccf"
         ? estimateMs("project2")
         : null;
 
 
     if (
-      isExamMode() &&
+      state.mode === "ccf" &&
       (
         !cls ||
         !p1 ||
@@ -1496,6 +1497,18 @@
 
       return toast(
         "Classe et deux estimations valides sont obligatoires."
+      );
+
+    }
+
+
+    if (
+      isExam500() &&
+      !cls
+    ) {
+
+      return toast(
+        "La classe est obligatoire."
       );
 
     }
@@ -1650,7 +1663,7 @@
 
 
     if (
-      isExamMode() &&
+      state.mode === "ccf" &&
       state.runners.some(
         r =>
           !r.last ||
@@ -1663,6 +1676,23 @@
 
       return toast(
         "Identité et estimations incomplètes."
+      );
+
+    }
+
+
+    if (
+      isExam500() &&
+      state.runners.some(
+        r =>
+          !r.last ||
+          !r.first ||
+          !r.classroom
+      )
+    ) {
+
+      return toast(
+        "Identité élève incomplète."
       );
 
     }
@@ -1783,6 +1813,72 @@
   }
 
 
+  function requestExam500Project(
+    runner,
+    race
+  ) {
+
+    if (
+      !isExam500() ||
+      race === 3
+    ) {
+      return true;
+    }
+
+    const key =
+      race === 1
+        ? "project1Ms"
+        : "project2Ms";
+
+    if (
+      runner[key]
+    ) {
+      return true;
+    }
+
+    const answer =
+      prompt(
+        `Annonce ton temps prévu pour le 500 m n°${race}\nExemple : 1:45`
+      );
+
+    if (
+      answer == null
+    ) {
+      return false;
+    }
+
+    const value =
+      parseTime(
+        answer
+      );
+
+    if (
+      !value ||
+      value < 20000 ||
+      value > 600000
+    ) {
+
+      toast(
+        "Temps annoncé invalide. Utilise par exemple 1:45."
+      );
+
+      return false;
+    }
+
+    runner[key] =
+      value;
+
+    save();
+
+    toast(
+      `Annonce enregistrée : ${fmt(value)}`
+    );
+
+    return true;
+
+  }
+
+
   function start() {
 
     if (running) {
@@ -1856,6 +1952,17 @@
         "Cette course est déjà terminée pour ce coureur."
       );
 
+    }
+
+
+    if (
+      isExam500() &&
+      !requestExam500Project(
+        r,
+        state.activeRace
+      )
+    ) {
+      return;
     }
 
 
