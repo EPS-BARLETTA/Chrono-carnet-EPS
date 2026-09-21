@@ -1600,6 +1600,189 @@
      LANCEMENT
   ========================================================= */
 
+  function openExam500Estimates(
+    race,
+    onValid
+  ) {
+
+    if (
+      !isExam500() ||
+      ![1,2].includes(race)
+    ) {
+      onValid?.();
+      return;
+    }
+
+    const key =
+      race === 1
+        ? "project1Ms"
+        : "project2Ms";
+
+    let dialog =
+      $("exam500EstimateDialog");
+
+    if (!dialog) {
+
+      dialog =
+        document.createElement(
+          "dialog"
+        );
+
+      dialog.id =
+        "exam500EstimateDialog";
+
+      document.body.appendChild(
+        dialog
+      );
+
+    }
+
+    dialog.innerHTML =
+      '<div class="dialogPanel" style="min-width:min(520px,92vw)">' +
+      '<h3>Annonce · 500 m n°' +
+      race +
+      '</h3>' +
+      '<p style="margin-top:0">Chaque coureur annonce le temps qu’il pense réaliser avant la course.</p>' +
+      '<div id="exam500EstimateFields" style="display:grid;gap:12px;margin:18px 0"></div>' +
+      '<div id="exam500EstimateError" style="min-height:20px;color:#b91c1c;font-weight:700"></div>' +
+      '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">' +
+      '<button type="button" id="exam500EstimateCancel" class="btn soft">Annuler</button>' +
+      '<button type="button" id="exam500EstimateValidate" class="btn primary">Valider les annonces</button>' +
+      '</div>' +
+      '</div>';
+
+    const fields =
+      $("exam500EstimateFields");
+
+    fields.innerHTML =
+      state.runners
+        .map(
+          r =>
+            '<label class="field">' +
+            '<span><strong>' +
+            esc(
+              r.last
+                ? r.last.toUpperCase() +
+                  " " +
+                  r.first
+                : r.name
+            ) +
+            '</strong>' +
+            (
+              r.classroom
+                ? " · " +
+                  esc(r.classroom)
+                : ""
+            ) +
+            '</span>' +
+            '<input class="exam500EstimateInput" data-runner="' +
+            r.id +
+            '" inputmode="decimal" placeholder="Ex. 1:45" value="' +
+            (
+              r[key]
+                ? fmt(r[key])
+                    .replace(
+                      /^00:/,
+                      ""
+                    )
+                    .replace(
+                      /\.00$/,
+                      ""
+                    )
+                : ""
+            ) +
+            '">' +
+            '</label>'
+        )
+        .join("");
+
+    $("exam500EstimateCancel").onclick =
+      () =>
+        dialog.close();
+
+    $("exam500EstimateValidate").onclick =
+      () => {
+
+        const inputs =
+          [
+            ...dialog.querySelectorAll(
+              ".exam500EstimateInput"
+            )
+          ];
+
+        const values = [];
+
+        for (
+          const input
+          of inputs
+        ) {
+
+          const value =
+            parseTime(
+              input.value
+            );
+
+          if (
+            !value ||
+            value < 20000 ||
+            value > 600000
+          ) {
+
+            $("exam500EstimateError")
+              .textContent =
+                "Saisis un temps valide pour chaque coureur, par exemple 1:45.";
+
+            input.focus();
+
+            return;
+
+          }
+
+          values.push({
+            id:
+              input.dataset.runner,
+            value
+          });
+
+        }
+
+        values.forEach(
+          item => {
+
+            const runner =
+              state.runners.find(
+                r =>
+                  r.id === item.id
+              );
+
+            if (runner) {
+              runner[key] =
+                item.value;
+            }
+
+          }
+        );
+
+        save();
+
+        dialog.close();
+
+        onValid?.();
+
+      };
+
+    dialog.showModal();
+
+    const firstEmpty =
+      dialog.querySelector(
+        ".exam500EstimateInput"
+      );
+
+    firstEmpty?.focus();
+
+  }
+
+
   function launch() {
 
     readConfig();
@@ -1694,6 +1877,24 @@
       return toast(
         "Identité élève incomplète."
       );
+
+    }
+
+
+    if (
+      isExam500() &&
+      state.runners.some(
+        r =>
+          !r.project1Ms
+      )
+    ) {
+
+      openExam500Estimates(
+        1,
+        launch
+      );
+
+      return;
 
     }
 
@@ -1813,72 +2014,6 @@
   }
 
 
-  function requestExam500Project(
-    runner,
-    race
-  ) {
-
-    if (
-      !isExam500() ||
-      race === 3
-    ) {
-      return true;
-    }
-
-    const key =
-      race === 1
-        ? "project1Ms"
-        : "project2Ms";
-
-    if (
-      runner[key]
-    ) {
-      return true;
-    }
-
-    const answer =
-      prompt(
-        `Annonce ton temps prévu pour le 500 m n°${race}\nExemple : 1:45`
-      );
-
-    if (
-      answer == null
-    ) {
-      return false;
-    }
-
-    const value =
-      parseTime(
-        answer
-      );
-
-    if (
-      !value ||
-      value < 20000 ||
-      value > 600000
-    ) {
-
-      toast(
-        "Temps annoncé invalide. Utilise par exemple 1:45."
-      );
-
-      return false;
-    }
-
-    runner[key] =
-      value;
-
-    save();
-
-    toast(
-      `Annonce enregistrée : ${fmt(value)}`
-    );
-
-    return true;
-
-  }
-
-
   function start() {
 
     if (running) {
@@ -1952,17 +2087,6 @@
         "Cette course est déjà terminée pour ce coureur."
       );
 
-    }
-
-
-    if (
-      isExam500() &&
-      !requestExam500Project(
-        r,
-        state.activeRace
-      )
-    ) {
-      return;
     }
 
 
@@ -2831,6 +2955,26 @@ return null;
           ? "Termine d’abord la course précédente des deux coureurs."
           : "Termine d’abord le 800 m n°1 des deux coureurs."
       );
+
+    }
+
+
+    if (
+      isExam500() &&
+      race === 2 &&
+      state.runners.some(
+        r =>
+          !r.project2Ms
+      )
+    ) {
+
+      openExam500Estimates(
+        2,
+        () =>
+          setRace(2)
+      );
+
+      return;
 
     }
 
