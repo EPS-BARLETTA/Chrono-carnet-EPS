@@ -4059,6 +4059,12 @@ return null;
     const ccf =
       state.mode === "ccf";
 
+    const exam500 =
+      isExam500();
+
+    const examMode =
+      ccf || exam500;
+
 
     if (
       isSimple()
@@ -4105,8 +4111,8 @@ return null;
         `<span>Inter. ${state.splitDistance} m</span>` +
 
         `${
-          ccf
-            ? `<span>800 n°${state.activeRace}</span>`
+          examMode
+            ? `<span>${exam500 ? "500" : "800"} n°${state.activeRace}</span>`
             : ""
         }`;
 
@@ -4115,7 +4121,7 @@ return null;
 
     setVisible(
       "raceTabs",
-      ccf
+      examMode
     );
 
 
@@ -4124,13 +4130,39 @@ return null;
         "[data-race]"
       )
       .forEach(
-        x =>
+        x => {
+          const race = +x.dataset.race;
+
           x.classList.toggle(
             "active",
-            +x.dataset.race ===
-            state.activeRace
-          )
+            race === state.activeRace
+          );
+
+          if (race === 3) {
+            x.classList.toggle(
+              "hidden",
+              !exam500
+            );
+          }
+
+          if (race <= 2) {
+            x.textContent =
+              exam500
+                ? `500 m n°${race}`
+                : `800 m n°${race}`;
+          }
+        }
       );
+
+    setVisible(
+      "startRecoveryBtn",
+      ccf
+    );
+
+    setVisible(
+      "recoveryDisplay",
+      ccf
+    );
 
 
     setVisible(
@@ -4141,7 +4173,7 @@ return null;
 
     setVisible(
       "resultsSection",
-      ccf ||
+      examMode ||
       isChrono()
     );
 
@@ -4151,7 +4183,7 @@ return null;
 
       !isSimple() &&
       (
-        ccf ||
+        examMode ||
         isChrono() ||
         state.timedRuns.some(
           x =>
@@ -4187,7 +4219,7 @@ return null;
 
 
     if (
-      ccf ||
+      examMode ||
       isChrono()
     ) {
 
