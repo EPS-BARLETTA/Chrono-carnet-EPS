@@ -423,25 +423,34 @@
         {
           position: "fixed",
           left: "50%",
-          top: "48%",
-          transform: "translate(-50%,-50%)",
+          top: "46%",
+          transform: "translate(-50%,-50%) scale(.72) rotate(-4deg)",
           zIndex: "9999",
-          padding: "10px 16px",
-          borderRadius: "14px",
-          background: "#39ff88",
+          width: "min(300px,72vw)",
+          height: "min(300px,72vw)",
+          borderRadius: "50%",
+          background: "linear-gradient(145deg,#faff00,#39ff88 55%,#00e5ff)",
           color: "#052e16",
-          border: "2px solid #16a34a",
-          fontWeight: "800",
-          fontSize: "18px",
-          boxShadow: "0 10px 28px rgba(34,197,94,.38)",
+          border: "6px solid rgba(255,255,255,.95)",
+          fontWeight: "900",
+          fontSize: "clamp(24px,6vw,34px)",
+          lineHeight: "1.05",
+          textAlign: "center",
+          boxShadow: "0 0 0 8px rgba(57,255,136,.28),0 18px 55px rgba(0,229,255,.35)",
           opacity: "0",
           pointerEvents: "none",
-          transition: "opacity .15s ease"
+          transition: "opacity .16s ease, transform .22s cubic-bezier(.2,1.45,.4,1)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "column"
         }
       );
 
-      popup.textContent =
-        "✓ Tour validé";
+      popup.innerHTML =
+        '<span style="font-size:64px;line-height:.9">✓</span>' +
+        '<span>TOUR<br>VALIDÉ !</span>' +
+        '<span style="font-size:22px;margin-top:10px">⚡</span>';
 
       document.body.appendChild(
         popup
@@ -454,13 +463,30 @@
     );
 
     popup.style.opacity =
-      "1";
+      "0";
+
+    popup.style.transform =
+      "translate(-50%,-50%) scale(.72) rotate(-4deg)";
+
+    requestAnimationFrame(
+      () =>
+        requestAnimationFrame(
+          () => {
+            popup.style.opacity =
+              "1";
+            popup.style.transform =
+              "translate(-50%,-50%) scale(1) rotate(0deg)";
+          }
+        )
+    );
 
     showLapValidatedPopup.t =
       setTimeout(
         () => {
           popup.style.opacity =
             "0";
+          popup.style.transform =
+            "translate(-50%,-50%) scale(1.12) rotate(3deg)";
         },
         3000
       );
