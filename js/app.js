@@ -4735,39 +4735,107 @@ return null;
               : "")
         );
 
-        a.forEach(x => {
+        lines.push("");
+        lines.push(
+          "TEMPS PAR " + split + " m · régularité"
+        );
+
+        a.forEach((x,index) => {
+
+          const start =
+            index * split;
+
+          const end =
+            x.distance;
+
           lines.push(
-            x.distance + " m · " +
-            fmt(x.cumulativeMs) +
-            " · " +
+            start + "–" + end + " m : " +
+            fmt(x.lapMs)
+          );
+
+        });
+
+        lines.push("");
+        lines.push(
+          "TEMPS CUMULÉS · repères de course"
+        );
+
+        a.forEach(x => {
+
+          lines.push(
+            x.distance + " m : " +
+            fmt(x.cumulativeMs)
+          );
+
+        });
+
+        lines.push("");
+        lines.push(
+          "VITESSE PAR " + split + " m"
+        );
+
+        a.forEach((x,index) => {
+
+          const start =
+            index * split;
+
+          const end =
+            x.distance;
+
+          lines.push(
+            start + "–" + end + " m : " +
             x.speed.toFixed(1) +
             " km/h"
           );
+
         });
 
         const finish =
           a.at(-1);
 
-        if (
-          finish &&
-          project
-        ) {
+        if (finish) {
 
-          const signedGap =
-            finish.cumulativeMs -
-            project;
+          const averageSpeed =
+            spd(
+              distance,
+              finish.cumulativeMs
+            );
+
+          lines.push("");
+          lines.push(
+            "Temps final : " +
+            fmt(finish.cumulativeMs)
+          );
 
           lines.push(
-            "Écart projet : " +
-            (
-              signedGap > 0
-                ? "+"
-                : signedGap < 0
-                  ? "−"
-                  : "±"
-            ) +
-            short(signedGap)
+            "Vitesse moyenne : " +
+            averageSpeed.toFixed(1) +
+            " km/h"
           );
+
+          if (project) {
+
+            const signedGap =
+              finish.cumulativeMs -
+              project;
+
+            lines.push(
+              "Projet " +
+              fmt(project) +
+              " → réalisé " +
+              fmt(finish.cumulativeMs) +
+              " · écart " +
+              (
+                signedGap > 0
+                  ? "+"
+                  : signedGap < 0
+                    ? "−"
+                    : "±"
+              ) +
+              short(signedGap)
+            );
+
+          }
 
         }
 
