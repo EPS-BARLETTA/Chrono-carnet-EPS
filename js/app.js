@@ -4894,6 +4894,24 @@ return null;
   $("splitDistance").onchange =
     () => {
 
+      if (
+        $("splitDistance").value === "custom"
+      ) {
+
+        setVisible(
+          "customSplitWrap",
+          true
+        );
+
+        $("customSplit").value =
+          state.splitDistance;
+
+        $("customSplit").focus();
+
+        return;
+
+      }
+
       readConfig();
 
       save();
