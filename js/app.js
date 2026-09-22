@@ -2125,6 +2125,10 @@
 
     stopClock();
 
+    save();
+
+    renderPerf();
+
     return;
 
   }
@@ -4532,14 +4536,21 @@ return null;
     setVisible(
       "exportSection",
 
-      !isSimple() &&
       (
-        examMode ||
-        isChrono() ||
-        state.timedRuns.some(
-          x =>
-            x.tool ===
-            state.trainingTool
+        isSimple() &&
+        !running &&
+        elapsedMs > 0
+      ) ||
+      (
+        !isSimple() &&
+        (
+          examMode ||
+          isChrono() ||
+          state.timedRuns.some(
+            x =>
+              x.tool ===
+              state.trainingTool
+          )
         )
       )
     );
@@ -4647,6 +4658,25 @@ return null;
 
 
   function resultTextFor(r) {
+
+    if (
+      isSimple()
+    ) {
+
+      if (
+        !elapsedMs
+      ) {
+        return "";
+      }
+
+      return (
+        "CHRONO SIMPLE\n\n" +
+        "Temps total : " +
+        fmt(elapsedMs)
+      );
+
+    }
+
 
     if (!r) {
       return "";
@@ -5065,10 +5095,12 @@ return null;
       resultTextFor(r);
 
 
-    if (!r) {
+    if (
+      !text
+    ) {
 
       return toast(
-        "Aucun coureur."
+        "Aucun résultat à exporter."
       );
 
     }
@@ -5095,6 +5127,43 @@ return null;
 
     const r =
       selectedExportRunner();
+
+
+    if (
+      isSimple()
+    ) {
+
+      if (
+        !elapsedMs
+      ) {
+        return toast(
+          "Aucun résultat à afficher."
+        );
+      }
+
+      $("captureSheet").innerHTML =
+
+        '<div class="captureTitle">' +
+        '<h2>Chrono simple</h2>' +
+        '<p>' +
+        new Date().toLocaleDateString("fr-FR") +
+        '</p>' +
+        '</div>' +
+        '<section class="captureRunner">' +
+        '<table class="captureTable"><tbody>' +
+        '<tr><th>Temps total</th><td>' +
+        fmt(elapsedMs) +
+        '</td></tr>' +
+        '</tbody></table>' +
+        '</section>';
+
+      $("carnetDialog").close();
+
+      $("sheetDialog").showModal();
+
+      return;
+
+    }
 
 
     if (!r) {
