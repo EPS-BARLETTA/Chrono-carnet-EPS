@@ -3960,6 +3960,82 @@ return null;
       };
     }
 
+    if (isTimed()) {
+
+      const tr =
+        timedRunFor(
+          r.id
+        );
+
+      if (!tr) {
+        return null;
+      }
+
+      return {
+        type:
+          "DF_TRAINING_RESULT",
+        v: 1,
+        tool:
+          tr.tool ||
+          state.trainingTool,
+        resultId:
+          r.externalId +
+          "-" +
+          (tr.tool || state.trainingTool) +
+          "-" +
+          (tr.id || Date.now()),
+        studentId:
+          r.externalId,
+        last:
+          safeQrText(r.last),
+        first:
+          safeQrText(r.first),
+        classroom:
+          safeQrText(
+            r.classroom
+          ),
+        sex:
+          safeQrText(r.sex),
+        durationMs:
+          Math.round(
+            tr.durationMs || 0
+          ),
+        trackDistance:
+          Math.round(
+            tr.track || 0
+          ),
+        laps:
+          Math.round(
+            tr.laps || 0
+          ),
+        partialDistance:
+          Math.round(
+            tr.partialDistance || 0
+          ),
+        totalDistance:
+          Math.round(
+            tr.totalDistance || 0
+          ),
+        speed:
+          Number(
+            tr.speed || 0
+          ),
+        vma:
+          tr.vma == null
+            ? null
+            : Number(
+                tr.vma
+              ),
+        protocol:
+          tr.protocol ||
+          null,
+        createdAt:
+          tr.createdAt ||
+          new Date()
+            .toISOString()
+      };
+    }
+
     return null;
   }
 
@@ -4745,29 +4821,56 @@ return null;
       exportQrHost.innerHTML =
         "";
 
-      if (
+      const runner =
+        selectedExportRunner();
+
+      const canExportSimple =
         isSimple() &&
         !running &&
-        elapsedMs > 0
+        elapsedMs > 0;
+
+      const canExportTimed =
+        isTimed() &&
+        !running &&
+        runner &&
+        !!timedRunFor(
+          runner.id
+        );
+
+      if (
+        canExportSimple ||
+        canExportTimed
       ) {
 
-        const runner =
-          selectedExportRunner();
-
-        renderInlineQr(
-          exportQrHost,
+        const payload =
           trainingQrPayload(
             runner
-          ),
-          (
-            runner
-              ? runner.last.toUpperCase() +
-                " " +
-                runner.first
-              : "Chrono simple"
-          ) +
-          " · Chrono simple"
-        );
+          );
+
+        if (payload) {
+
+          const label =
+            isSimple()
+              ? "Chrono simple"
+              : payload.tool === "vma"
+                ? "Test VMA"
+                : "Minuteur / Tours";
+
+          renderInlineQr(
+            exportQrHost,
+            payload,
+            (
+              runner
+                ? runner.last.toUpperCase() +
+                  " " +
+                  runner.first
+                : label
+            ) +
+            " · " +
+            label
+          );
+
+        }
 
       }
 
