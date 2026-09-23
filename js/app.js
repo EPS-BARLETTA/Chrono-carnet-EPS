@@ -990,8 +990,7 @@
 
     setVisible(
       "runnerSetupBlock",
-      examMode ||
-      state.trainingTool !== "simple"
+      true
     );
 
 
@@ -1509,7 +1508,6 @@
 
 
     if (
-      isExamMode() &&
       !cls
     ) {
 
@@ -1797,12 +1795,11 @@
 
 
     if (
-      !isSimple() &&
       !state.runners.length
     ) {
 
       return toast(
-        "Ajoute au moins un coureur."
+        "Ajoute au moins un élève."
       );
 
     }
@@ -3921,6 +3918,52 @@ return null;
      QR CCF
   ========================================================= */
 
+  function trainingQrPayload(r) {
+
+    if (!r) {
+      return null;
+    }
+
+    if (
+      isSimple() &&
+      elapsedMs > 0
+    ) {
+      return {
+        type:
+          "DF_TRAINING_RESULT",
+        v: 1,
+        tool:
+          "simple",
+        resultId:
+          r.externalId +
+          "-simple-" +
+          Date.now(),
+        studentId:
+          r.externalId,
+        last:
+          safeQrText(r.last),
+        first:
+          safeQrText(r.first),
+        classroom:
+          safeQrText(
+            r.classroom
+          ),
+        sex:
+          safeQrText(r.sex),
+        totalMs:
+          Math.round(
+            elapsedMs
+          ),
+        createdAt:
+          new Date()
+            .toISOString()
+      };
+    }
+
+    return null;
+  }
+
+
   function qrPayload(r,race) {
 
     if (isExam500()) {
@@ -4198,6 +4241,79 @@ return null;
   }
 
 
+  function renderInlineQr(
+    host,
+    payload,
+    title
+  ) {
+
+    if (
+      !host ||
+      !payload
+    ) {
+      return;
+    }
+
+    host.innerHTML =
+      '<div class="scoreCard" style="margin-top:14px">' +
+      '<strong>' +
+      esc(title) +
+      '</strong>' +
+      '<div class="inlineTeacherQr" style="display:flex;justify-content:center;margin:14px 0"></div>' +
+      '<span>QR professeur · à scanner dans DemiFond Scan</span>' +
+      '</div>';
+
+    const box =
+      host.querySelector(
+        ".inlineTeacherQr"
+      );
+
+    if (
+      window.QRCode
+    ) {
+
+      try {
+
+        new QRCode(
+          box,
+          {
+            text:
+              JSON.stringify(
+                payload
+              ),
+            width:
+              230,
+            height:
+              230,
+            correctLevel:
+              QRCode
+                .CorrectLevel
+                .M
+          }
+        );
+
+      } catch (error) {
+
+        console.error(
+          "QR inline failed",
+          error
+        );
+
+        box.innerHTML =
+          "<p>Impossible de générer le QR.</p>";
+
+      }
+
+    } else {
+
+      box.innerHTML =
+        "<p>Générateur QR indisponible.</p>";
+
+    }
+
+  }
+
+
   function renderTeacherQrActions() {
 
     const host =
@@ -4224,33 +4340,43 @@ return null;
     if (isExam500()) {
 
       host.innerHTML =
-        state.runners
-          .map(
-            r =>
-              [1,2,3].every(
-                race => done(r.id,race)
-              )
-                ? '<div style="margin-top:10px"><button class="btn primary" data-qr-runner="' +
-                  r.id +
-                  '" data-qr-race="3">QR prof · ' +
-                  esc(r.last.toUpperCase()) +
-                  ' · 3 × 500 m</button></div>'
-                : ""
-          )
-          .join("");
+        "";
 
-      host
-        .querySelectorAll(
-          "[data-qr-runner]"
+      state.runners
+        .filter(
+          r =>
+            [1,2,3].every(
+              race =>
+                done(
+                  r.id,
+                  race
+                )
+            )
         )
         .forEach(
-          b =>
-            b.onclick =
-              () =>
-                showTeacherQR(
-                  b.dataset.qrRunner,
-                  3
-                )
+          r => {
+            const item =
+              document
+                .createElement(
+                  "div"
+                );
+
+            host.appendChild(
+              item
+            );
+
+            renderInlineQr(
+              item,
+              qrPayload(
+                r,
+                3
+              ),
+              r.last.toUpperCase() +
+              " " +
+              r.first +
+              " · 3 × 500 m"
+            );
+          }
         );
 
       return;
@@ -4611,6 +4737,42 @@ return null;
 
     }
 
+    const exportQrHost =
+      $("teacherQrExportActions");
+
+    if (exportQrHost) {
+
+      exportQrHost.innerHTML =
+        "";
+
+      if (
+        isSimple() &&
+        !running &&
+        elapsedMs > 0
+      ) {
+
+        const runner =
+          selectedExportRunner();
+
+        renderInlineQr(
+          exportQrHost,
+          trainingQrPayload(
+            runner
+          ),
+          (
+            runner
+              ? runner.last.toUpperCase() +
+                " " +
+                runner.first
+              : "Chrono simple"
+          ) +
+          " · Chrono simple"
+        );
+
+      }
+
+    }
+
   }
 
 
@@ -4669,8 +4831,26 @@ return null;
         return "";
       }
 
+      const identity =
+        r
+          ? (
+              (r.last
+                ? r.last.toUpperCase() +
+                  " " +
+                  r.first
+                : r.name) +
+              (r.classroom
+                ? " · " +
+                  r.classroom
+                : "")
+            )
+          : "";
+
       return (
-        "CHRONO SIMPLE\n\n" +
+        "CHRONO SIMPLE\n" +
+        (identity
+          ? identity + "\n\n"
+          : "\n") +
         "Temps total : " +
         fmt(elapsedMs)
       );
