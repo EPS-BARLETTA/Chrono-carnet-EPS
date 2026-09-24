@@ -1876,7 +1876,7 @@
             '</span>' +
             '<input class="exam500EstimateInput" data-runner="' +
             r.id +
-            '" inputmode="decimal" placeholder="Ex. 1:45" value="' +
+            '" inputmode="numeric" placeholder="Ex. 145 = 1:45" value="' +
             (
               r[key]
                 ? fmt(r[key])
@@ -1929,7 +1929,7 @@
 
             $("exam500EstimateError")
               .textContent =
-                "Saisis un temps valide pour chaque coureur, par exemple 1:45.";
+                "Saisis un temps valide, par exemple 145 pour 1:45 ou 1:45.";
 
             input.focus();
 
@@ -1999,6 +1999,27 @@
 
 
     if (
+      isChronoSeries()
+    ) {
+
+      if (
+        !state.chronoSeriesDistances.length
+      ) {
+        return toast(
+          "Ajoute au moins une distance dans la série."
+        );
+      }
+
+      if (
+        state.chronoSeriesWithSplits &&
+        state.splitDistance <= 0
+      ) {
+        return toast(
+          "Distance intermédiaire invalide."
+        );
+      }
+
+    } else if (
       (
         isExamMode() ||
         isChrono()
@@ -3128,15 +3149,20 @@ return null;
 
 
     if (
-      isExamMode() &&
+      (
+        isExamMode() ||
+        isChronoSeries()
+      ) &&
       race > 1 &&
       !allDone(race - 1)
     ) {
 
       return toast(
-        isExam500()
+        isChronoSeries()
           ? "Termine d’abord la course précédente des deux coureurs."
-          : "Termine d’abord le 800 m n°1 des deux coureurs."
+          : isExam500()
+            ? "Termine d’abord la course précédente des deux coureurs."
+            : "Termine d’abord le 800 m n°1 des deux coureurs."
       );
 
     }
