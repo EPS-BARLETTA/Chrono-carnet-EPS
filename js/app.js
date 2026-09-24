@@ -5068,6 +5068,56 @@ return null;
       examMode
     );
 
+    setVisible(
+      "trainingSequenceTabs",
+      isChronoSeries()
+    );
+
+    const sequenceTabs =
+      $("trainingSequenceTabs");
+
+    if (
+      sequenceTabs &&
+      isChronoSeries()
+    ) {
+      sequenceTabs.innerHTML =
+        state.chronoSeriesDistances
+          .map(
+            (distance,index) =>
+              '<button type="button" data-series-race="' +
+              (index + 1) +
+              '" class="' +
+              (
+                state.activeRace === index + 1
+                  ? "active"
+                  : ""
+              ) +
+              '">' +
+              (index + 1) +
+              ". " +
+              distance +
+              " m</button>"
+          )
+          .join("");
+
+      sequenceTabs
+        .querySelectorAll(
+          "[data-series-race]"
+        )
+        .forEach(
+          button => {
+            button.onclick =
+              () =>
+                setRace(
+                  Number(
+                    button.dataset
+                      .seriesRace
+                  )
+                );
+          }
+        );
+    }
+
 
     document
       .querySelectorAll(
@@ -5224,9 +5274,23 @@ return null;
           runner.id
         );
 
+      const canExportChrono =
+        isChrono() &&
+        !running &&
+        runner &&
+        Array.from(
+          { length: raceCount() },
+          (_, index) =>
+            done(
+              runner.id,
+              index + 1
+            )
+        ).every(Boolean);
+
       if (
         canExportSimple ||
-        canExportTimed
+        canExportTimed ||
+        canExportChrono
       ) {
 
         const payload =
@@ -5239,9 +5303,15 @@ return null;
           const label =
             isSimple()
               ? "Chrono simple"
-              : payload.tool === "vma"
-                ? "Test VMA"
-                : "Minuteur / Tours";
+              : payload.tool === "chrono"
+                ? (
+                    payload.planMode === "series"
+                      ? "Série / pyramide"
+                      : "Chrono performance"
+                  )
+                : payload.tool === "vma"
+                  ? "Test VMA"
+                  : "Minuteur / Tours";
 
           renderInlineQr(
             exportQrHost,
@@ -6379,6 +6449,57 @@ return null;
 
 
   /* Chrono performance */
+
+  $("chronoPlanMode").onchange =
+    () => {
+
+      readConfig();
+
+      state.activeRace = 1;
+
+      save();
+
+      renderSetup();
+
+    };
+
+
+  $("chronoSeriesText").onchange =
+    () => {
+
+      readConfig();
+
+      if (
+        !state.chronoSeriesDistances
+          .length
+      ) {
+
+        return toast(
+          "Saisis au moins une distance."
+        );
+
+      }
+
+      state.activeRace = 1;
+
+      save();
+
+      renderSetup();
+
+    };
+
+
+  $("chronoSeriesWithSplits").onchange =
+    () => {
+
+      readConfig();
+
+      save();
+
+      renderSetup();
+
+    };
+
 
   $("totalDistance").onchange =
     () => {
