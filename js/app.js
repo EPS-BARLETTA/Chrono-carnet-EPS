@@ -869,6 +869,28 @@
       state.trainingTool === "chrono"
     ) {
 
+      state.chronoPlanMode =
+        $("chronoPlanMode")?.value === "series"
+          ? "series"
+          : "single";
+
+      state.chronoSeriesText =
+        $("chronoSeriesText")?.value?.trim() ||
+        state.chronoSeriesText;
+
+      const parsedSeries =
+        parseSeriesDistances(
+          state.chronoSeriesText
+        );
+
+      if (parsedSeries.length) {
+        state.chronoSeriesDistances =
+          parsedSeries;
+      }
+
+      state.chronoSeriesWithSplits =
+        $("chronoSeriesWithSplits")?.value === "yes";
+
       state.totalDistance =
         $("totalDistance").value === "custom"
           ? Math.max(
@@ -892,9 +914,11 @@
 
 
       state.targetMs =
-        parseTime(
-          $("targetTime").value
-        );
+        state.chronoPlanMode === "series"
+          ? null
+          : parseTime(
+              $("targetTime").value
+            );
 
     }
 
@@ -1136,6 +1160,46 @@
 
     /* Chrono performance */
 
+    $("chronoPlanMode").value =
+      state.chronoPlanMode;
+
+    $("chronoSeriesText").value =
+      state.chronoSeriesText;
+
+    $("chronoSeriesWithSplits").value =
+      state.chronoSeriesWithSplits
+        ? "yes"
+        : "no";
+
+    const chronoSeries =
+      state.chronoPlanMode === "series";
+
+    setVisible(
+      "chronoSeriesField",
+      chronoSeries
+    );
+
+    setVisible(
+      "chronoSeriesSplitToggleField",
+      chronoSeries
+    );
+
+    setVisible(
+      "singleDistanceField",
+      !chronoSeries
+    );
+
+    setVisible(
+      "targetTimeField",
+      !chronoSeries
+    );
+
+    setVisible(
+      "splitDistanceField",
+      !chronoSeries ||
+      state.chronoSeriesWithSplits
+    );
+
     $("totalDistance").value =
       [
         100,200,400,500,600,800,
@@ -1172,12 +1236,17 @@
 
     setVisible(
       "customDistanceWrap",
+      !chronoSeries &&
       $("totalDistance").value === "custom"
     );
 
 
     setVisible(
       "customSplitWrap",
+      (
+        !chronoSeries ||
+        state.chronoSeriesWithSplits
+      ) &&
       $("splitDistance").value === "custom"
     );
 
