@@ -5507,15 +5507,22 @@ return null;
       const lines = [
         "🏃 DEMI-FOND · " +
           (isExam500() ? "3 × 500 m" : "2 × 800 m"),
-        identity
+        identity,
+        ""
       ];
 
       races.forEach(race => {
-
         const a =
           results
             .filter(x => x.race === race)
             .sort((x,y) => x.distance - y.distance);
+
+        const finish =
+          a.at(-1);
+
+        if (!finish) {
+          return;
+        }
 
         const project =
           race === 1
@@ -5524,120 +5531,69 @@ return null;
               ? r.project2Ms
               : null;
 
-        lines.push("");
-        lines.push(
-          "▶ " + distance + " m n°" + race +
-          (project
-            ? " · projet " + fmt(project)
+        const title =
+          "Course " + race +
+          " · " + distance + " m";
+
+        lines.push(title);
+
+        const summary = [
+          project
+            ? "Projet " + fmt(project)
             : isExam500() && race === 3
-              ? " · performance"
-              : "")
-        );
-
-        lines.push("");
-        lines.push(
-          "TEMPS PAR " + split + " m · régularité"
-        );
-
-        a.forEach((x,index) => {
-
-          const start =
-            index * split;
-
-          const end =
-            x.distance;
-
-          lines.push(
-            start + "–" + end + " m : " +
-            fmt(x.lapMs)
-          );
-
-        });
-
-        lines.push("");
-        lines.push(
-          "TEMPS CUMULÉS · repères de course"
-        );
-
-        a.forEach(x => {
-
-          lines.push(
-            x.distance + " m : " +
-            fmt(x.cumulativeMs)
-          );
-
-        });
-
-        lines.push("");
-        lines.push(
-          "VITESSE PAR " + split + " m"
-        );
-
-        a.forEach((x,index) => {
-
-          const start =
-            index * split;
-
-          const end =
-            x.distance;
-
-          lines.push(
-            start + "–" + end + " m : " +
-            x.speed.toFixed(1) +
-            " km/h"
-          );
-
-        });
-
-        const finish =
-          a.at(-1);
-
-        if (finish) {
-
-          const averageSpeed =
-            spd(
-              distance,
-              finish.cumulativeMs
-            );
-
-          lines.push("");
-          lines.push(
-            "Temps final : " +
-            fmt(finish.cumulativeMs)
-          );
-
-          lines.push(
-            "Vitesse moyenne : " +
-            averageSpeed.toFixed(1) +
-            " km/h"
-          );
-
-          if (project) {
-
-            const signedGap =
-              finish.cumulativeMs -
-              project;
-
-            lines.push(
-              "Projet " +
-              fmt(project) +
-              " → réalisé " +
-              fmt(finish.cumulativeMs) +
-              " · écart " +
+              ? "Libre"
+              : null,
+          "Réalisé " + fmt(finish.cumulativeMs),
+          project
+            ? "Écart " +
               (
-                signedGap > 0
+                finish.cumulativeMs - project > 0
                   ? "+"
-                  : signedGap < 0
+                  : finish.cumulativeMs - project < 0
                     ? "−"
                     : "±"
               ) +
-              short(signedGap)
-            );
+              short(
+                finish.cumulativeMs - project
+              )
+            : null
+        ].filter(Boolean);
 
-          }
+        lines.push(
+          summary.join(" · ")
+        );
 
+        lines.push(
+          "Repères : " +
+          a.map(
+            x =>
+              x.distance +
+              " m " +
+              fmt(x.cumulativeMs)
+          ).join(" · ")
+        );
+
+        if (a.length > 1) {
+          lines.push(
+            "Segments : " +
+            a.map(
+              (x,index) => {
+                const start =
+                  index * split;
+
+                return (
+                  start +
+                  "–" +
+                  x.distance +
+                  " m " +
+                  fmt(x.lapMs)
+                );
+              }
+            ).join(" · ")
+          );
         }
 
+        lines.push("");
       });
 
       const finishes =
@@ -5652,7 +5608,6 @@ return null;
           .filter(Boolean);
 
       if (finishes.length) {
-
         const best =
           finishes.reduce(
             (a,b) =>
@@ -5670,7 +5625,7 @@ return null;
           segments.length
             ? segments.reduce(
                 (a,b) =>
-                  a.speed >= b.speed ? a : b
+                  a.lapMs <= b.lapMs ? a : b
               )
             : null;
 
@@ -5678,55 +5633,48 @@ return null;
           segments.length
             ? segments.reduce(
                 (a,b) =>
-                  a.speed <= b.speed ? a : b
+                  a.lapMs >= b.lapMs ? a : b
               )
             : null;
 
-        lines.push("");
         lines.push("BILAN");
         lines.push(
-          "Meilleur " + distance + " : " +
+          "Meilleur " +
+          distance +
+          " m : " +
           fmt(best.cumulativeMs)
         );
 
         if (fastest && slowest) {
-
-          const fastestStart =
+          lines.push(
+            "Segment + rapide : " +
             Math.max(
               0,
               fastest.distance - split
-            );
+            ) +
+            "–" +
+            fastest.distance +
+            " m · " +
+            fmt(fastest.lapMs)
+          );
 
-          const slowestStart =
+          lines.push(
+            "Segment + lent : " +
             Math.max(
               0,
               slowest.distance - split
-            );
-
-          lines.push(
-            "Segment le plus rapide : " +
-            fastestStart + "–" +
-            fastest.distance + " m · " +
-            fastest.speed.toFixed(1) +
-            " km/h"
+            ) +
+            "–" +
+            slowest.distance +
+            " m · " +
+            fmt(slowest.lapMs)
           );
-
-          lines.push(
-            "Segment le moins rapide : " +
-            slowestStart + "–" +
-            slowest.distance + " m · " +
-            slowest.speed.toFixed(1) +
-            " km/h"
-          );
-
         }
-
       }
 
       return lines.join("\n");
 
     }
-
 
     if (
       isChronoSeries()
