@@ -3076,6 +3076,28 @@ return null;
     }
 
 
+    if (isExamMode()) {
+      const richHtml = carnetTableHtml(r);
+
+      if (richHtml) {
+        $("captureSheet").innerHTML =
+          '<div class="captureTitle"><h2>' +
+          esc(r.last ? r.last.toUpperCase() + " " + r.first : r.name) +
+          '</h2><p>' +
+          esc(r.classroom || "") +
+          ' · ' +
+          new Date().toLocaleDateString("fr-FR") +
+          '</p></div><section class="captureRunner">' +
+          richHtml +
+          '</section>';
+
+        $("carnetDialog").close();
+        $("sheetDialog").showModal();
+        return;
+      }
+    }
+
+
     if (
       isTimed()
     ) {
@@ -5877,6 +5899,81 @@ return null;
   }
 
 
+  function carnetTableHtml(r) {
+    if (!r || !isExamMode()) {
+      return "";
+    }
+
+    const distance = isExam500() ? 500 : 800;
+    const split = isExam500() ? 250 : 200;
+
+    const raceIds = [...new Set(
+      state.results
+        .filter(x => x.runnerId === r.id)
+        .map(x => x.race)
+    )].sort((a,b) => a-b);
+
+    const races = raceIds.map(race => {
+      const rows = state.results
+        .filter(x => x.runnerId === r.id && x.race === race)
+        .sort((a,b) => a.distance - b.distance);
+
+      const finish = rows.at(-1);
+      const project = race === 1 ? r.project1Ms : race === 2 ? r.project2Ms : null;
+
+      return { race, rows, finish, project };
+    }).filter(item => item.finish);
+
+    if (!races.length) return "";
+
+    const allSegments = state.results.filter(x => x.runnerId === r.id && x.lapMs > 0);
+    const fastest = allSegments.length ? allSegments.reduce((a,b) => a.lapMs <= b.lapMs ? a : b) : null;
+    const slowest = allSegments.length ? allSegments.reduce((a,b) => a.lapMs >= b.lapMs ? a : b) : null;
+    const best = races.reduce((a,b) => a.finish.cumulativeMs <= b.finish.cumulativeMs ? a : b);
+
+    const head = races.map(item =>
+      "<th style=\"padding:6px 8px;border:1px solid #d9dee8;background:#eef3ff;text-align:center\">Course " + item.race + "</th>"
+    ).join("");
+
+    const row = (label, values) =>
+      "<tr><th style=\"padding:6px 8px;border:1px solid #d9dee8;background:#f8fafc;text-align:left\">" + label + "</th>" +
+      values.map(value => "<td style=\"padding:6px 8px;border:1px solid #d9dee8;text-align:center\">" + value + "</td>").join("") +
+      "</tr>";
+
+    let body = "";
+
+    body += row("Projet", races.map(item => item.project ? fmt(item.project) : "Libre"));
+    body += row("Réalisé", races.map(item => fmt(item.finish.cumulativeMs)));
+    body += row("Écart", races.map(item => {
+      if (!item.project) return "—";
+      const delta = item.finish.cumulativeMs - item.project;
+      return (delta > 0 ? "+" : delta < 0 ? "−" : "±") + short(delta);
+    }));
+
+    const checkpoints = races[0].rows.map(x => x.distance);
+    checkpoints.forEach(d => {
+      body += row(d + " m", races.map(item => {
+        const pass = item.rows.find(x => x.distance === d);
+        return pass ? fmt(pass.cumulativeMs) : "—";
+      }));
+    });
+
+    const identity = esc(r.last ? r.last.toUpperCase() + " " + r.first : r.name);
+    let bilan = "Meilleur " + distance + " m : " + fmt(best.finish.cumulativeMs);
+    if (fastest) bilan += " · Meilleur " + split + " m : " + fmt(fastest.lapMs);
+    if (slowest) bilan += " · Moins bon " + split + " m : " + fmt(slowest.lapMs);
+
+    return "<div style=\"font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;color:#172033\">" +
+      "<p style=\"margin:0 0 8px;font-weight:800\">🏃 DEMI-FOND · " + (isExam500() ? "3 × 500 m" : "2 × 800 m") + "</p>" +
+      "<p style=\"margin:0 0 10px;font-weight:700\">" + identity + " · " + esc(r.classroom || "") + "</p>" +
+      "<table style=\"border-collapse:collapse;width:100%;max-width:760px;font-size:13px\">" +
+        "<thead><tr><th style=\"padding:6px 8px;border:1px solid #d9dee8;background:#f8fafc;text-align:left\"></th>" + head + "</tr></thead>" +
+        "<tbody>" + body + "</tbody>" +
+      "</table>" +
+      "<p style=\"margin:10px 0 0;font-size:13px\"><b>Bilan :</b> " + bilan + "</p>" +
+    "</div>";
+  }
+
   async function openCarnet() {
 
     const r =
@@ -5899,12 +5996,27 @@ return null;
 
 
     try {
+      const richHtml = carnetTableHtml(r);
 
-      await navigator
-        .clipboard
-        .writeText(text);
-
-    } catch {}
+      if (
+        richHtml &&
+        navigator.clipboard?.write &&
+        window.ClipboardItem
+      ) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": new Blob([richHtml], { type: "text/html" }),
+            "text/plain": new Blob([text], { type: "text/plain" })
+          })
+        ]);
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
+    } catch {
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {}
+    }
 
 
     window.open(
