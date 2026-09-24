@@ -5261,6 +5261,61 @@ return null;
       const runner =
         selectedExportRunner();
 
+      if (
+        isChronoSeries()
+      ) {
+
+        state.runners
+          .filter(
+            item =>
+              Array.from(
+                { length: raceCount() },
+                (_, index) =>
+                  done(
+                    item.id,
+                    index + 1
+                  )
+              ).every(Boolean)
+          )
+          .forEach(
+            item => {
+
+              const payload =
+                trainingQrPayload(
+                  item
+                );
+
+              if (!payload) {
+                return;
+              }
+
+              const host =
+                document
+                  .createElement(
+                    "div"
+                  );
+
+              exportQrHost
+                .appendChild(
+                  host
+                );
+
+              renderInlineQr(
+                host,
+                payload,
+                item.last.toUpperCase() +
+                " " +
+                item.first +
+                " · Série / pyramide"
+              );
+
+            }
+          );
+
+        return;
+
+      }
+
       const canExportSimple =
         isSimple() &&
         !running &&
