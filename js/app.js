@@ -44,6 +44,11 @@
     displayMode: "both",
     targetMs: null,
 
+    chronoPlanMode: "single",
+    chronoSeriesText: "100 200 300 200 100",
+    chronoSeriesDistances: [100,200,300,200,100],
+    chronoSeriesWithSplits: false,
+
     timerDurationChoice: "360",
     timerDurationMs: 360000,
 
@@ -94,6 +99,22 @@
   if (!["simple","chrono","timer","vma"].includes(state.trainingTool)) {
     state.trainingTool = "simple";
   }
+
+  if (!["single","series"].includes(state.chronoPlanMode)) {
+    state.chronoPlanMode = "single";
+  }
+
+  if (!Array.isArray(state.chronoSeriesDistances)) {
+    state.chronoSeriesDistances = [100,200,300,200,100];
+  }
+
+  if (!state.chronoSeriesText) {
+    state.chronoSeriesText =
+      state.chronoSeriesDistances.join(" ");
+  }
+
+  state.chronoSeriesWithSplits =
+    !!state.chronoSeriesWithSplits;
 
   if (!Array.isArray(state.timedRuns)) {
     state.timedRuns = [];
@@ -257,14 +278,86 @@
     state.mode === "ccf" ||
     isExam500();
 
-  const raceDistance = () =>
-    isExam500() ? 500 : state.totalDistance;
+  const isChronoSeries = () =>
+    isChrono() &&
+    state.chronoPlanMode === "series";
 
-  const raceSplitDistance = () =>
-    isExam500() ? 250 : state.splitDistance;
+  function parseSeriesDistances(value) {
+    return String(value || "")
+      .split(/[\s,;\-→>]+/)
+      .map(Number)
+      .filter(
+        distance =>
+          Number.isFinite(distance) &&
+          distance > 0 &&
+          distance <= 10000
+      )
+      .slice(0,20);
+  }
+
+  const raceDistance = (
+    race = state.activeRace
+  ) => {
+    if (isExam500()) {
+      return 500;
+    }
+
+    if (isChronoSeries()) {
+      return (
+        Number(
+          state.chronoSeriesDistances[
+            Math.max(0, race - 1)
+          ]
+        ) ||
+        state.totalDistance
+      );
+    }
+
+    return state.totalDistance;
+  };
+
+  const raceSplitDistance = (
+    race = state.activeRace
+  ) => {
+    if (isExam500()) {
+      return 250;
+    }
+
+    const distance =
+      raceDistance(race);
+
+    if (
+      isChronoSeries() &&
+      !state.chronoSeriesWithSplits
+    ) {
+      return distance;
+    }
+
+    const split =
+      Number(state.splitDistance);
+
+    if (
+      isChronoSeries() &&
+      (
+        !split ||
+        split >= distance ||
+        distance % split !== 0
+      )
+    ) {
+      return distance;
+    }
+
+    return split;
+  };
 
   const raceCount = () =>
-    isExam500() ? 3 : state.mode === "ccf" ? 2 : 1;
+    isExam500()
+      ? 3
+      : state.mode === "ccf"
+        ? 2
+        : isChronoSeries()
+          ? state.chronoSeriesDistances.length
+          : 1;
 
 
   const isSimple = () =>
@@ -328,9 +421,35 @@
         /^(\d+(?:\.\d+)?)$/
       );
 
-    return m
-      ? +m[1] * 1000
-      : null;
+    if (!m) {
+      return null;
+    }
+
+    if (
+      /^\d{3,4}$/.test(v)
+    ) {
+      const digits =
+        v.replace(/\D/g,"");
+
+      const sec =
+        Number(
+          digits.slice(-2)
+        );
+
+      const min =
+        Number(
+          digits.slice(0,-2)
+        );
+
+      if (sec < 60) {
+        return (
+          min * 60 +
+          sec
+        ) * 1000;
+      }
+    }
+
+    return +m[1] * 1000;
 
   }
 
@@ -547,10 +666,15 @@
     );
 
 
-  const requiredSplits = () =>
-    Math.floor(
-      raceDistance() /
-      raceSplitDistance()
+  const requiredSplits = (
+    race = state.activeRace
+  ) =>
+    Math.max(
+      1,
+      Math.floor(
+        raceDistance(race) /
+        raceSplitDistance(race)
+      )
     );
 
 
@@ -566,7 +690,7 @@
     race = state.activeRace
   ) =>
     rr(id,race).length >=
-    requiredSplits();
+    requiredSplits(race);
 
 
   const allDone = race =>
