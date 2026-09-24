@@ -5994,6 +5994,17 @@ return null;
 
     }
 
+    /*
+     * Safari/iPad bloque parfois window.open() si on l'appelle
+     * après un await. On ouvre donc l'onglet immédiatement,
+     * pendant le geste utilisateur, puis on remplit le presse-papiers.
+     */
+    const carnetTab =
+      window.open(
+        "about:blank",
+        "_blank"
+      );
+
 
     try {
       const richHtml = carnetTableHtml(r);
@@ -6019,10 +6030,16 @@ return null;
     }
 
 
-    window.open(
-      CARNET_URL,
-      "_blank"
-    );
+    if (
+      carnetTab &&
+      !carnetTab.closed
+    ) {
+      carnetTab.location.href =
+        CARNET_URL;
+    } else {
+      window.location.href =
+        CARNET_URL;
+    }
 
   }
 
