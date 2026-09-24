@@ -5647,27 +5647,33 @@ return null;
 
         if (fastest && slowest) {
           lines.push(
-            "Segment + rapide : " +
+            "Meilleur " +
+            split +
+            " m : " +
+            fmt(fastest.lapMs) +
+            " (" +
             Math.max(
               0,
               fastest.distance - split
             ) +
             "–" +
             fastest.distance +
-            " m · " +
-            fmt(fastest.lapMs)
+            " m)"
           );
 
           lines.push(
-            "Segment + lent : " +
+            "Moins bon " +
+            split +
+            " m : " +
+            fmt(slowest.lapMs) +
+            " (" +
             Math.max(
               0,
               slowest.distance - split
             ) +
             "–" +
             slowest.distance +
-            " m · " +
-            fmt(slowest.lapMs)
+            " m)"
           );
         }
       }
