@@ -5995,19 +5995,23 @@ return null;
     }
 
     /*
-     * Safari/iPad bloque parfois window.open() si on l'appelle
-     * après un await. On ouvre donc l'onglet immédiatement,
-     * pendant le geste utilisateur, puis on remplit le presse-papiers.
+     * iPad/Safari : ouvrir directement le Carnet pendant
+     * le clic utilisateur. C'est plus fiable qu'un onglet
+     * about:blank que l'on redirige ensuite.
      */
     const carnetTab =
       window.open(
-        "about:blank",
+        CARNET_URL,
         "_blank"
       );
 
+    $("carnetDialog")
+      ?.close();
+
 
     try {
-      const richHtml = carnetTableHtml(r);
+      const richHtml =
+        carnetTableHtml(r);
 
       if (
         richHtml &&
@@ -6016,27 +6020,42 @@ return null;
       ) {
         await navigator.clipboard.write([
           new ClipboardItem({
-            "text/html": new Blob([richHtml], { type: "text/html" }),
-            "text/plain": new Blob([text], { type: "text/plain" })
+            "text/html":
+              new Blob(
+                [richHtml],
+                {
+                  type:
+                    "text/html"
+                }
+              ),
+            "text/plain":
+              new Blob(
+                [text],
+                {
+                  type:
+                    "text/plain"
+                }
+              )
           })
         ]);
       } else {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard
+          .writeText(text);
       }
+
     } catch {
       try {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard
+          .writeText(text);
       } catch {}
     }
 
 
-    if (
-      carnetTab &&
-      !carnetTab.closed
-    ) {
-      carnetTab.location.href =
-        CARNET_URL;
-    } else {
+    /*
+     * Si Safari a bloqué le nouvel onglet, on bascule
+     * dans l'onglet courant au lieu de laisser l'élève bloqué.
+     */
+    if (!carnetTab) {
       window.location.href =
         CARNET_URL;
     }
