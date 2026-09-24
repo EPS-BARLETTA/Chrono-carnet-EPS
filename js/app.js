@@ -2579,6 +2579,60 @@
 
         }
 
+      } else if (
+        isChronoSeries()
+      ) {
+
+        const next =
+          nextRunnerSameRace(
+            r.id
+          );
+
+        if (next) {
+
+          state.activeRunnerId =
+            next.id;
+
+          resetClock();
+
+          toast(
+            `${r.name} terminé · au tour de ${next.name}`
+          );
+
+        } else if (
+          state.activeRace <
+          raceCount()
+        ) {
+
+          state.activeRace += 1;
+
+          state.activeRunnerId =
+            state.runners.find(
+              runner =>
+                !done(
+                  runner.id,
+                  state.activeRace
+                )
+            )?.id ||
+            state.runners[0]?.id ||
+            null;
+
+          resetClock();
+
+          toast(
+            `Course suivante · ${raceDistance()} m`
+          );
+
+        } else {
+
+          resetClock();
+
+          toast(
+            "Série terminée · QR professeur disponible pour chaque élève"
+          );
+
+        }
+
       } else {
 
         toast(
