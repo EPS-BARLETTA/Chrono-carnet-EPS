@@ -4233,6 +4233,120 @@ return null;
       };
     }
 
+    if (isChrono()) {
+
+      const races =
+        Array.from(
+          { length: raceCount() },
+          (_, index) => {
+            const race =
+              index + 1;
+
+            const rows =
+              rr(r.id, race)
+                .slice()
+                .sort(
+                  (a, b) =>
+                    a.distance -
+                    b.distance
+                );
+
+            if (
+              rows.length <
+              requiredSplits(race)
+            ) {
+              return null;
+            }
+
+            return {
+              race,
+              distance:
+                raceDistance(race),
+              splitDistance:
+                raceSplitDistance(race),
+              passes:
+                rows.map(
+                  item => ({
+                    distance:
+                      Number(item.distance),
+                    cumulativeMs:
+                      Math.round(
+                        Number(
+                          item.cumulativeMs
+                        )
+                      ),
+                    lapMs:
+                      Math.round(
+                        Number(
+                          item.lapMs
+                        )
+                      ),
+                    speed:
+                      Number(
+                        item.speed || 0
+                      )
+                  })
+                ),
+              totalMs:
+                Math.round(
+                  Number(
+                    rows.at(-1)
+                      ?.cumulativeMs ||
+                    0
+                  )
+                )
+            };
+          }
+        );
+
+      if (
+        races.some(
+          race => !race
+        )
+      ) {
+        return null;
+      }
+
+      return {
+        type:
+          "DF_TRAINING_RESULT",
+        v: 2,
+        tool:
+          "chrono",
+        resultId:
+          r.externalId +
+          "-chrono-" +
+          Date.now(),
+        studentId:
+          r.externalId,
+        last:
+          safeQrText(r.last),
+        first:
+          safeQrText(r.first),
+        classroom:
+          safeQrText(
+            r.classroom
+          ),
+        sex:
+          safeQrText(r.sex),
+        planMode:
+          isChronoSeries()
+            ? "series"
+            : "single",
+        seriesLabel:
+          races
+            .map(
+              race =>
+                race.distance + "m"
+            )
+            .join("-"),
+        races,
+        createdAt:
+          new Date()
+            .toISOString()
+      };
+    }
+
     if (isTimed()) {
 
       const tr =
