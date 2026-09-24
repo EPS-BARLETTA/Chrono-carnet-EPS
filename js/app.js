@@ -5699,6 +5699,75 @@ return null;
     }
 
 
+    if (
+      isChronoSeries()
+    ) {
+
+      const lines = [
+        "🏃 CHRONO PERFORMANCE · SÉRIE / PYRAMIDE",
+        identity,
+        ""
+      ];
+
+      for (
+        let race = 1;
+        race <= raceCount();
+        race++
+      ) {
+
+        const rows =
+          results
+            .filter(
+              item =>
+                item.race === race
+            )
+            .sort(
+              (a,b) =>
+                a.distance -
+                b.distance
+            );
+
+        if (!rows.length) {
+          continue;
+        }
+
+        lines.push(
+          "▶ Course " +
+          race +
+          " · " +
+          raceDistance(race) +
+          " m"
+        );
+
+        rows.forEach(
+          item => {
+
+            lines.push(
+              item.distance +
+              " m : " +
+              fmt(
+                item.cumulativeMs
+              ) +
+              (
+                rows.length > 1
+                  ? " · segment " +
+                    fmt(item.lapMs)
+                  : ""
+              )
+            );
+
+          }
+        );
+
+        lines.push("");
+
+      }
+
+      return lines.join("\n");
+
+    }
+
+
     return (
       "🏃 " + identity + "\n\n" +
       results
