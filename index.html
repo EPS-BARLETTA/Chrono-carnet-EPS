@@ -319,10 +319,73 @@
           class="trainingSubConfig hidden"
         >
 
+          <div class="trainingInfoBox">
+
+            <strong>
+              ⏱️ Chrono performance
+            </strong>
+
+            <span>
+              Course unique ou série / pyramide. Jusqu’à deux élèves, avec ou sans temps intermédiaires.
+            </span>
+
+          </div>
+
           <div class="configGrid">
 
-
             <label class="field">
+
+              <span>
+                Type de séance
+              </span>
+
+              <select id="chronoPlanMode">
+                <option value="single">Course unique</option>
+                <option value="series">Série / pyramide</option>
+              </select>
+
+            </label>
+
+            <label
+              id="chronoSeriesField"
+              class="field hidden"
+            >
+
+              <span>
+                Distances successives
+              </span>
+
+              <input
+                id="chronoSeriesText"
+                inputmode="numeric"
+                placeholder="Ex. 100 200 300 200 100"
+                value="100 200 300 200 100"
+              >
+
+              <small>
+                Sépare les distances par un espace, une virgule ou un tiret.
+              </small>
+
+            </label>
+
+            <label
+              id="chronoSeriesSplitToggleField"
+              class="field hidden"
+            >
+
+              <span>
+                Temps intermédiaires
+              </span>
+
+              <select id="chronoSeriesWithSplits">
+                <option value="no">Non · seulement le temps final</option>
+                <option value="yes">Oui · utiliser l’intervalle ci-dessous</option>
+              </select>
+
+            </label>
+
+
+            <label id="singleDistanceField" class="field">
 
               <span>
                 Distance totale
@@ -375,7 +438,7 @@
             </label>
 
 
-            <label class="field">
+            <label id="splitDistanceField" class="field">
 
               <span>
                 Intermédiaire tous les
@@ -451,7 +514,7 @@
             </label>
 
 
-            <label class="field">
+            <label id="targetTimeField" class="field">
 
               <span>
                 Temps cible facultatif
@@ -459,8 +522,8 @@
 
               <input
                 id="targetTime"
-                inputmode="decimal"
-                placeholder="Ex. 4:00"
+                inputmode="numeric"
+                placeholder="Ex. 400 = 4:00"
               >
 
             </label>
@@ -1260,6 +1323,11 @@
 
       </div>
 
+      <div
+        id="trainingSequenceTabs"
+        class="raceTabs hidden"
+      ></div>
+
 
       <section
         id="runnerPerformanceBlock"
@@ -1693,7 +1761,7 @@
 
 <script src="/js/ccf-input-guard.js?v=1"></script>
 
-<script src="/js/app.js?v=6.6"></script>
+<script src="/js/app.js?v=46.6"></script>
 
 
 </body>
