@@ -4259,41 +4259,18 @@ return null;
             }
 
             return {
-              race,
-              distance:
+              d:
                 raceDistance(race),
-              splitDistance:
+              s:
                 raceSplitDistance(race),
-              passes:
+              c:
                 rows.map(
-                  item => ({
-                    distance:
-                      Number(item.distance),
-                    cumulativeMs:
-                      Math.round(
-                        Number(
-                          item.cumulativeMs
-                        )
-                      ),
-                    lapMs:
-                      Math.round(
-                        Number(
-                          item.lapMs
-                        )
-                      ),
-                    speed:
+                  item =>
+                    Math.round(
                       Number(
-                        item.speed || 0
+                        item.cumulativeMs
                       )
-                  })
-                ),
-              totalMs:
-                Math.round(
-                  Number(
-                    rows.at(-1)
-                      ?.cumulativeMs ||
-                    0
-                  )
+                    )
                 )
             };
           }
@@ -4307,45 +4284,42 @@ return null;
         return null;
       }
 
+      /*
+       * QR compact : on n'encode que les données non redondantes.
+       * Les temps de segment et vitesses peuvent être recalculés à
+       * partir des cumuls. Cela garde le QR lisible par la caméra iPad.
+       */
       return {
         type:
           "DF_TRAINING_RESULT",
-        v: 2,
+        v: 3,
         tool:
           "chrono",
-        resultId:
+        id:
           r.externalId +
-          "-chrono-" +
+          "-" +
           Date.now(),
-        studentId:
+        sid:
           r.externalId,
-        last:
+        l:
           safeQrText(r.last),
-        first:
+        f:
           safeQrText(r.first),
-        classroom:
+        c:
           safeQrText(
             r.classroom
           ),
-        sex:
+        x:
           safeQrText(r.sex),
-        planMode:
+        m:
           isChronoSeries()
             ? "series"
             : "single",
-        seriesLabel:
+        r:
           races
-            .map(
-              race =>
-                race.distance + "m"
-            )
-            .join("-"),
-        races,
-        createdAt:
-          new Date()
-            .toISOString()
       };
     }
+
 
     if (isTimed()) {
 
