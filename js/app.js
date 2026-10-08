@@ -7408,14 +7408,37 @@ return null;
     try { cfg = validateChronoShare(decodeChronoShare(raw)); }
     catch (error) { alert("QR code de séance invalide ou incompatible. Aucun réglage modifié."); return; }
 
-    if (running || state.view === "performance") {
-      alert("Une course est en cours. Termine-la et sauvegarde ses résultats avant d'ouvrir un nouveau QR code.");
+    if (running) {
+      alert("Le chronomètre tourne. Termine la course avant de charger une nouvelle séance.");
       return;
     }
-    if ((state.runners?.length || 0) || (state.results?.length || 0) || (state.timedRuns?.length || 0)) {
-      alert("Des coureurs ou résultats existent déjà sur cet iPad. Sauvegarde-les puis crée une nouvelle séance avant de scanner le QR code. Aucune donnée n'a été modifiée.");
-      return;
+
+    const hasResults = (state.results?.length || 0) > 0 ||
+      (state.timedRuns?.length || 0) > 0 || elapsedMs > 0;
+    const hasSession = hasResults || (state.runners?.length || 0) > 0;
+
+    if (hasSession) {
+      if (hasResults) {
+        const keep = confirm(
+          "Cette tablette contient déjà des résultats.\\n\\n" +
+          "Avant de changer de séance, récupère les résultats de chaque coureur dans le Carnet V2 ou enregistre leurs fichiers.\\n\\n" +
+          "OK : ouvrir les options de récupération des résultats.\\n" +
+          "Annuler : conserver la séance actuelle."
+        );
+        if (keep) {
+          prepareExportDialog();
+          $("carnetDialog").showModal();
+          alert("Une fois les résultats récupérés, scanne de nouveau le QR code du professeur. La séance actuelle est conservée.");
+        }
+        return;
+      }
+      if (!confirm("Une séance sans résultat est déjà préparée. La remplacer par celle du professeur ?")) return;
     }
+
+    // Reset the previous setup so runners, protocols and results cannot mix.
+    state = base();
+    resetClock();
+    resetTimedRuntime();
     state.mode = "training";
     state.trainingTool = "chrono";
     state.chronoPlanMode = cfg.p === "s" ? "series" : "single";
