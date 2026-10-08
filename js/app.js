@@ -175,6 +175,7 @@
 
   let recoveryTimer = null;
   let exportRunnerId = null;
+  let pendingSharedChronoCfg = null;
 
   let timedLapCount = 0;
   let timedFinished = false;
@@ -6706,6 +6707,8 @@ return null;
   $("carnetBtn").onclick =
     () => {
 
+      pendingSharedChronoCfg = null;
+      $("startSharedChronoBtn").style.display = "none";
       prepareExportDialog();
 
       $("carnetDialog").showModal();
@@ -7400,41 +7403,12 @@ return null;
     });
   }
 
-  function importSharedChrono() {
-    const raw = new URLSearchParams(location.search).get("c");
-    if (!raw) return;
-    try { history.replaceState(null, "", location.pathname + location.hash); } catch {}
-    let cfg;
-    try { cfg = validateChronoShare(decodeChronoShare(raw)); }
-    catch (error) { alert("QR code de séance invalide ou incompatible. Aucun réglage modifié."); return; }
-
+  function launchSharedChrono(cfg) {
     if (running) {
-      alert("Le chronomètre tourne. Termine la course avant de charger une nouvelle séance.");
+      alert("Le chronomètre tourne. Termine la course avant de changer de séance.");
       return;
     }
-
-    const hasResults = (state.results?.length || 0) > 0 ||
-      (state.timedRuns?.length || 0) > 0 || elapsedMs > 0;
-    const hasSession = hasResults || (state.runners?.length || 0) > 0;
-
-    if (hasSession) {
-      if (hasResults) {
-        const proceed = confirm(
-          "Tu as déjà des résultats enregistrés !\n\n" +
-          "Avant de charger la nouvelle séance de ton professeur, récupère tes résultats dans ton Carnet V2 ou enregistre-les dans un fichier pour les conserver.\n\n" +
-          "OK : accéder à « Mes résultats ».\n" +
-          "Annuler : conserver la séance actuelle."
-        );
-        if (proceed) {
-          prepareExportDialog();
-          $("carnetDialog").showModal();
-        }
-        return;
-      }
-      if (!confirm("Une séance sans résultat est déjà préparée. La remplacer par celle du professeur ?")) return;
-    }
-
-    // Reset the previous setup so runners, protocols and results cannot mix.
+    // Only this new session is cleared; existing results are never mixed into it.
     state = base();
     resetClock();
     resetTimedRuntime();
@@ -7456,8 +7430,60 @@ return null;
     state.view = "setup";
     setupStep = "runners";
     save();
-    toast("Séance chargée : renseigne les coureurs");
+    render();
+    toast("Nouvelle séance chargée : renseigne les coureurs");
   }
+
+  function importSharedChrono() {
+    const raw = new URLSearchParams(location.search).get("c");
+    if (!raw) return;
+    try { history.replaceState(null, "", location.pathname + location.hash); } catch {}
+    let cfg;
+    try { cfg = validateChronoShare(decodeChronoShare(raw)); }
+    catch (error) { alert("QR code de séance invalide ou incompatible. Aucun réglage modifié."); return; }
+
+    if (running) {
+      alert("Le chronomètre tourne. Termine la course avant de charger une nouvelle séance.");
+      return;
+    }
+
+    const hasResults = (state.results?.length || 0) > 0 ||
+      (state.timedRuns?.length || 0) > 0 || elapsedMs > 0;
+    const hasSession = hasResults || (state.runners?.length || 0) > 0;
+
+    if (hasResults) {
+      const proceed = confirm(
+        "Tu as déjà des résultats enregistrés !\\n\\n" +
+        "Avant de lancer la séance de ton professeur, récupère tes résultats dans ton Carnet V2 ou enregistre un fichier pour chaque coureur.\\n\\n" +
+        "OK : accéder à « Mes résultats ».\\n" +
+        "Annuler : conserver la séance actuelle."
+      );
+      if (!proceed) return;
+      pendingSharedChronoCfg = cfg;
+      prepareExportDialog();
+      $("startSharedChronoBtn").style.display = "";
+      $("carnetDialog").showModal();
+      return;
+    }
+
+    if (hasSession && !confirm("Une séance sans résultat est déjà préparée. La remplacer par celle du professeur ?")) return;
+    launchSharedChrono(cfg);
+  }
+
+  $("startSharedChronoBtn").onclick = () => {
+    if (!pendingSharedChronoCfg) return;
+    const agree = confirm(
+      "As-tu bien récupéré les résultats de TOUS les coureurs dans le Carnet V2 ou enregistré leurs fichiers ?\\n\\n" +
+      "OK : lancer la nouvelle séance du professeur. Les anciens résultats seront remplacés sur cette tablette.\\n" +
+      "Annuler : retourner à « Mes résultats »."
+    );
+    if (!agree) return;
+    const cfg = pendingSharedChronoCfg;
+    pendingSharedChronoCfg = null;
+    $("carnetDialog").close();
+    $("startSharedChronoBtn").style.display = "none";
+    launchSharedChrono(cfg);
+  };
 
   function showChronoShareQr() {
     readConfig();
