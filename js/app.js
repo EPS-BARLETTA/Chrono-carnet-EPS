@@ -6709,6 +6709,7 @@ return null;
 
       pendingSharedChronoCfg = null;
       $("startSharedChronoBtn").style.display = "none";
+      $("startSharedChronoFromSheetBtn").style.display = "none";
       prepareExportDialog();
 
       $("carnetDialog").showModal();
@@ -7462,6 +7463,7 @@ return null;
       pendingSharedChronoCfg = cfg;
       prepareExportDialog();
       $("startSharedChronoBtn").style.display = "";
+      $("startSharedChronoFromSheetBtn").style.display = "";
       $("carnetDialog").showModal();
       return;
     }
@@ -7481,9 +7483,12 @@ return null;
     const cfg = pendingSharedChronoCfg;
     pendingSharedChronoCfg = null;
     $("carnetDialog").close();
+    $("sheetDialog").close();
     $("startSharedChronoBtn").style.display = "none";
     launchSharedChrono(cfg);
   };
+
+  $("startSharedChronoFromSheetBtn").onclick = () => $("startSharedChronoBtn").click();
 
   function showChronoShareQr() {
     readConfig();
