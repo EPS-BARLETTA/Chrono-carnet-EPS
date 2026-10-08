@@ -7485,6 +7485,7 @@ return null;
     $("carnetDialog").close();
     $("sheetDialog").close();
     $("startSharedChronoBtn").style.display = "none";
+    $("startSharedChronoFromSheetBtn").style.display = "none";
     launchSharedChrono(cfg);
   };
 
