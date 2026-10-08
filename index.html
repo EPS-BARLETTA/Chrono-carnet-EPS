@@ -531,6 +531,8 @@
 
           </div>
 
+          <button id="shareChronoQrBtn" type="button" class="btn soft full">📱 Partager aux élèves · QR code</button>
+
         </div>
 
 
@@ -1717,6 +1719,15 @@
 
 
     <button
+      id="startSharedChronoBtn"
+      type="button"
+      class="btn primary full"
+      style="display:none"
+    >
+      Lancer la nouvelle séance
+    </button>
+
+    <button
       value="cancel"
       class="btn soft full"
     >
@@ -1768,6 +1779,15 @@
         Enregistrer pour mon Carnet (.json)
       </button>
 
+      <button
+        id="startSharedChronoFromSheetBtn"
+        type="button"
+        class="btn primary"
+        style="display:none"
+      >
+        Lancer la nouvelle séance
+      </button>
+
     </div>
 
 
@@ -1800,7 +1820,7 @@
 
 <script src="/js/ccf-input-guard.js?v=1"></script>
 
-<script src="/js/app.js?v=70"></script>
+<script src="/js/app.js?v=73"></script>
 <script src="/js/run-safety-ui.js?v=4"></script>
 
 

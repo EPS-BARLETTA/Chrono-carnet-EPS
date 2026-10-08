@@ -175,6 +175,7 @@
 
   let recoveryTimer = null;
   let exportRunnerId = null;
+  let pendingSharedChronoCfg = null;
 
   let timedLapCount = 0;
   let timedFinished = false;
@@ -6706,6 +6707,9 @@ return null;
   $("carnetBtn").onclick =
     () => {
 
+      pendingSharedChronoCfg = null;
+      $("startSharedChronoBtn").style.display = "none";
+      $("startSharedChronoFromSheetBtn").style.display = "none";
       prepareExportDialog();
 
       $("carnetDialog").showModal();
@@ -7242,7 +7246,7 @@ return null;
   function renderNetworkStatus() {
     $("offlineBadge").textContent = updatePending
       ? "Mise à jour prête · retour aux paramètres"
-      : navigator.onLine ? "En ligne · v70" : "Hors ligne · v70";
+      : navigator.onLine ? "En ligne · v71" : "Hors ligne · v71";
   }
 
   function applyUpdateWhenSafe() {
@@ -7312,7 +7316,7 @@ return null;
         checkForUpdate();
       })
       .catch(() => {
-        $("offlineBadge").textContent = "Hors ligne non disponible · v70";
+        $("offlineBadge").textContent = "Hors ligne non disponible · v71";
       });
 
     document.addEventListener("visibilitychange", () => {
@@ -7351,6 +7355,198 @@ return null;
 
   }
 
+
+
+  /* QR de préparation : uniquement Chrono Performance. Aucun résultat n'est transféré. */
+  function encodeChronoShare(value) {
+    const bytes = new TextEncoder().encode(JSON.stringify(value));
+    let binary = "";
+    bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+    return btoa(binary).split("+").join("-").split("/").join("_").replace(/=+$/, "");
+  }
+
+  function decodeChronoShare(value) {
+    if (!/^[A-Za-z0-9_-]{1,3000}$/.test(value)) throw new Error("Lien QR invalide");
+    const b64 = value.replace(/-/g, "+").replace(/_/g, "/");
+    const binary = atob(b64 + "=".repeat((4 - b64.length % 4) % 4));
+    return JSON.parse(new TextDecoder().decode(Uint8Array.from(binary, ch => ch.charCodeAt(0))));
+  }
+
+  function validateChronoShare(input) {
+    if (!input || typeof input !== "object" || Array.isArray(input) ||
+        input.v !== 1 || !["u", "s"].includes(input.p) ||
+        ![0, 1].includes(input.i) ||
+        !["lap", "cumulative", "both"].includes(input.m)) throw new Error("Paramètres QR incompatibles");
+    const integer = (n, min, max) => typeof n === "number" && Number.isInteger(n) && n >= min && n <= max;
+    if (!integer(input.s, 1, 10000)) throw new Error("Intermédiaire invalide");
+    if (input.p === "s") {
+      if (!Array.isArray(input.d) || input.d.length < 1 || input.d.length > 20 ||
+          !input.d.every(n => integer(n, 1, 10000))) throw new Error("Série invalide");
+      if (input.i && input.d.some(n => n % input.s !== 0 || input.s > n))
+        throw new Error("Intermédiaires incompatibles avec la série");
+    } else {
+      if (!integer(input.d, 1, 100000) ||
+          !integer(input.t, 0, 86400000)) throw new Error("Course invalide");
+      if (input.i && (input.s > input.d || input.d % input.s !== 0))
+        throw new Error("Intermédiaires incompatibles avec la distance");
+    }
+    return input;
+  }
+
+  function chronoShareConfig() {
+    const series = state.chronoPlanMode === "series";
+    return validateChronoShare({
+      v: 1, p: series ? "s" : "u",
+      d: series ? state.chronoSeriesDistances.slice() : state.totalDistance,
+      i: (series ? state.chronoSeriesWithSplits : state.chronoSingleWithSplits) ? 1 : 0,
+      s: state.splitDistance, m: state.displayMode,
+      ...(series ? {} : { t: state.targetMs || 0 })
+    });
+  }
+
+  function launchSharedChrono(cfg) {
+    if (running) {
+      alert("Le chronomètre tourne. Termine la course avant de changer de séance.");
+      return;
+    }
+    // Only this new session is cleared; existing results are never mixed into it.
+    state = base();
+    resetClock();
+    resetTimedRuntime();
+    state.mode = "training";
+    state.trainingTool = "chrono";
+    state.chronoPlanMode = cfg.p === "s" ? "series" : "single";
+    state.splitDistance = cfg.s;
+    state.displayMode = cfg.m;
+    if (cfg.p === "s") {
+      state.chronoSeriesDistances = cfg.d.slice();
+      state.chronoSeriesText = cfg.d.join(" ");
+      state.chronoSeriesWithSplits = cfg.i === 1;
+      state.targetMs = null;
+    } else {
+      state.totalDistance = cfg.d;
+      state.chronoSingleWithSplits = cfg.i === 1;
+      state.targetMs = cfg.t || null;
+    }
+    state.view = "setup";
+    setupStep = "runners";
+    save();
+    render();
+    toast("Nouvelle séance chargée : renseigne les coureurs");
+  }
+
+  function importSharedChrono() {
+    const raw = new URLSearchParams(location.search).get("c");
+    if (!raw) return;
+    try { history.replaceState(null, "", location.pathname + location.hash); } catch {}
+    let cfg;
+    try { cfg = validateChronoShare(decodeChronoShare(raw)); }
+    catch (error) { alert("QR code de séance invalide ou incompatible. Aucun réglage modifié."); return; }
+
+    if (running) {
+      alert("Le chronomètre tourne. Termine la course avant de charger une nouvelle séance.");
+      return;
+    }
+
+    const hasResults = (state.results?.length || 0) > 0 ||
+      (state.timedRuns?.length || 0) > 0 || elapsedMs > 0;
+    const hasSession = hasResults || (state.runners?.length || 0) > 0;
+
+    if (hasResults) {
+      const saved = confirm(
+        "As-tu bien sauvegardé les résultats de ta séance précédente ?\n\n" +
+        "OK : oui, charger la nouvelle séance du professeur.\n" +
+        "Annuler : non, récupérer mes résultats avant de continuer."
+      );
+      if (saved) {
+        launchSharedChrono(cfg);
+        return;
+      }
+      pendingSharedChronoCfg = cfg;
+      prepareExportDialog();
+      $("startSharedChronoBtn").style.display = "";
+      $("startSharedChronoFromSheetBtn").style.display = "";
+      $("carnetDialog").showModal();
+      return;
+    }
+
+    if (hasSession && !confirm("Une séance sans résultat est déjà préparée. La remplacer par celle du professeur ?")) return;
+    launchSharedChrono(cfg);
+  }
+
+  $("startSharedChronoBtn").onclick = () => {
+    if (!pendingSharedChronoCfg) return;
+    const agree = confirm(
+      "As-tu bien récupéré les résultats de TOUS les coureurs dans le Carnet V2 ou enregistré leurs fichiers ?\n\n" +
+      "OK : lancer la nouvelle séance du professeur. Les anciens résultats seront remplacés sur cette tablette.\n" +
+      "Annuler : retourner à « Mes résultats »."
+    );
+    if (!agree) return;
+    const cfg = pendingSharedChronoCfg;
+    pendingSharedChronoCfg = null;
+    $("carnetDialog").close();
+    $("sheetDialog").close();
+    $("startSharedChronoBtn").style.display = "none";
+    $("startSharedChronoFromSheetBtn").style.display = "none";
+    launchSharedChrono(cfg);
+  };
+
+  $("startSharedChronoFromSheetBtn").onclick = () => $("startSharedChronoBtn").click();
+
+  function showChronoShareQr() {
+    readConfig();
+    let cfg;
+    try { cfg = chronoShareConfig(); }
+    catch (error) { alert("Vérifie les distances et les intermédiaires : " + error.message); return; }
+    const url = location.origin + "/?c=" + encodeChronoShare(cfg);
+    let dialog = $("chronoShareDialog");
+    if (!dialog) {
+      dialog = document.createElement("dialog");
+      dialog.id = "chronoShareDialog";
+      dialog.innerHTML = '<div class="dialogPanel" style="text-align:center;max-width:min(95vw,650px);margin:auto">' +
+        '<h3>Partager la séance aux élèves</h3>' +
+        '<p id="chronoShareSummary"></p>' +
+        '<div id="chronoShareBox" style="display:flex;justify-content:center;margin:18px auto;background:white;padding:12px;width:max-content;max-width:90vw"></div>' +
+        '<p>Les élèves scannent avec l’appareil photo de leur iPad.</p>' +
+        '<button id="chronoShareFullscreen" type="button" class="btn soft full">⛶ Agrandir le QR code</button>' +
+        '<button id="chronoShareClose" type="button" class="btn soft full">Fermer</button></div>';
+      document.body.appendChild(dialog);
+      $("chronoShareClose").onclick = () => {
+        if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+        dialog.close();
+      };
+      $("chronoShareFullscreen").onclick = () => {
+        const panel = dialog.querySelector(".dialogPanel");
+        if (document.fullscreenElement) {
+          document.exitFullscreen?.().catch(() => {});
+        } else if (panel.requestFullscreen) {
+          panel.requestFullscreen().catch(() => {
+            dialog.style.width = "98vw"; dialog.style.maxWidth = "98vw";
+          });
+        } else {
+          dialog.style.width = "98vw"; dialog.style.maxWidth = "98vw";
+        }
+      };
+    }
+    $("chronoShareSummary").textContent =
+      (cfg.p === "s" ? cfg.d.join(" → ") : cfg.d) + " m" +
+      (cfg.i ? " · intermédiaires " + cfg.s + " m" : " · temps final seul");
+    const box = $("chronoShareBox");
+    box.replaceChildren();
+    if (!window.QRCode) {
+      box.textContent = "Générateur QR indisponible sur cet appareil.";
+      return dialog.showModal();
+    }
+    try {
+      new QRCode(box, { text: url, width: 320, height: 320, correctLevel: QRCode.CorrectLevel.M });
+    } catch (error) {
+      box.textContent = "QR impossible à générer. Réduis le nombre de distances.";
+    }
+    dialog.showModal();
+  }
+
+  $("shareChronoQrBtn").onclick = showChronoShareQr;
+  importSharedChrono();
 
   render();
 
