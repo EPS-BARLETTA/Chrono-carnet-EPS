@@ -7453,13 +7453,15 @@ return null;
     const hasSession = hasResults || (state.runners?.length || 0) > 0;
 
     if (hasResults) {
-      const proceed = confirm(
-        "Tu as déjà des résultats enregistrés !\n\n" +
-        "Avant de lancer la séance de ton professeur, récupère tes résultats dans ton Carnet V2 ou enregistre un fichier pour chaque coureur.\n\n" +
-        "OK : accéder à « Mes résultats ».\n" +
-        "Annuler : conserver la séance actuelle."
+      const saved = confirm(
+        "As-tu bien sauvegardé les résultats de ta séance précédente ?\n\n" +
+        "OK : oui, charger la nouvelle séance du professeur.\n" +
+        "Annuler : non, récupérer mes résultats avant de continuer."
       );
-      if (!proceed) return;
+      if (saved) {
+        launchSharedChrono(cfg);
+        return;
+      }
       pendingSharedChronoCfg = cfg;
       prepareExportDialog();
       $("startSharedChronoBtn").style.display = "";
