@@ -7419,17 +7419,10 @@ return null;
 
     if (hasSession) {
       if (hasResults) {
-        const keep = confirm(
-          "Cette tablette contient déjà des résultats.\\n\\n" +
-          "Avant de changer de séance, récupère les résultats de chaque coureur dans le Carnet V2 ou enregistre leurs fichiers.\\n\\n" +
-          "OK : ouvrir les options de récupération des résultats.\\n" +
-          "Annuler : conserver la séance actuelle."
-        );
-        if (keep) {
-          prepareExportDialog();
-          $("carnetDialog").showModal();
-          alert("Une fois les résultats récupérés, scanne de nouveau le QR code du professeur. La séance actuelle est conservée.");
-        }
+        // Keep the existing results untouched and show the familiar Carnet V2 choices.
+        // The QR can be scanned again after exporting the results.
+        prepareExportDialog();
+        $("carnetDialog").showModal();
         return;
       }
       if (!confirm("Une séance sans résultat est déjà préparée. La remplacer par celle du professeur ?")) return;
