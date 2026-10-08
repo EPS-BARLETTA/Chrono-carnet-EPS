@@ -7453,9 +7453,9 @@ return null;
 
     if (hasResults) {
       const proceed = confirm(
-        "Tu as déjà des résultats enregistrés !\\n\\n" +
-        "Avant de lancer la séance de ton professeur, récupère tes résultats dans ton Carnet V2 ou enregistre un fichier pour chaque coureur.\\n\\n" +
-        "OK : accéder à « Mes résultats ».\\n" +
+        "Tu as déjà des résultats enregistrés !\n\n" +
+        "Avant de lancer la séance de ton professeur, récupère tes résultats dans ton Carnet V2 ou enregistre un fichier pour chaque coureur.\n\n" +
+        "OK : accéder à « Mes résultats ».\n" +
         "Annuler : conserver la séance actuelle."
       );
       if (!proceed) return;
@@ -7473,8 +7473,8 @@ return null;
   $("startSharedChronoBtn").onclick = () => {
     if (!pendingSharedChronoCfg) return;
     const agree = confirm(
-      "As-tu bien récupéré les résultats de TOUS les coureurs dans le Carnet V2 ou enregistré leurs fichiers ?\\n\\n" +
-      "OK : lancer la nouvelle séance du professeur. Les anciens résultats seront remplacés sur cette tablette.\\n" +
+      "As-tu bien récupéré les résultats de TOUS les coureurs dans le Carnet V2 ou enregistré leurs fichiers ?\n\n" +
+      "OK : lancer la nouvelle séance du professeur. Les anciens résultats seront remplacés sur cette tablette.\n" +
       "Annuler : retourner à « Mes résultats »."
     );
     if (!agree) return;
