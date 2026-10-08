@@ -7419,10 +7419,16 @@ return null;
 
     if (hasSession) {
       if (hasResults) {
-        // Keep the existing results untouched and show the familiar Carnet V2 choices.
-        // The QR can be scanned again after exporting the results.
-        prepareExportDialog();
-        $("carnetDialog").showModal();
+        const proceed = confirm(
+          "Tu as déjà des résultats enregistrés !\n\n" +
+          "Avant de charger la nouvelle séance de ton professeur, récupère tes résultats dans ton Carnet V2 ou enregistre-les dans un fichier pour les conserver.\n\n" +
+          "OK : accéder à « Mes résultats ».\n" +
+          "Annuler : conserver la séance actuelle."
+        );
+        if (proceed) {
+          prepareExportDialog();
+          $("carnetDialog").showModal();
+        }
         return;
       }
       if (!confirm("Une séance sans résultat est déjà préparée. La remplacer par celle du professeur ?")) return;
