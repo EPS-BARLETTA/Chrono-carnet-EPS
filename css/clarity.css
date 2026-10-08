@@ -2210,3 +2210,41 @@ input:checked + span {
   box-shadow: inset 0 0 0 1px var(--tool-accent), 0 8px 22px #0f172a0c;
 }
 #setupPanel[data-step="tools"] #trainingToolSelector .trainingToolCard input:checked + span::after { background: var(--tool-accent); }
+
+
+/* Chrono Performance: centered QR sharing action in the setup navigation. */
+#setupPanel[data-step="settings"] .setupNavigation:has(#shareChronoQrBtn:not(.hidden)) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+}
+#setupPanel[data-step="settings"] .setupNavigation #setupBackBtn { justify-self: start; }
+#setupPanel[data-step="settings"] .setupNavigation #setupNextBtn { justify-self: end; }
+.qrShareAction {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 12px 22px;
+  border: 1px solid #bfdbfe;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #eff6ff, #e0f2fe);
+  color: #1d4ed8;
+  font-weight: 750;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, .09);
+  transition: background .15s ease, transform .15s ease;
+}
+.qrShareAction:hover { background: #dbeafe; transform: translateY(-1px); }
+.qrShareIcon { font-size: 24px; font-weight: 800; line-height: 1; }
+@media (max-width: 600px) {
+  #setupPanel[data-step="settings"] .setupNavigation:has(#shareChronoQrBtn:not(.hidden)) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: 7px;
+  }
+  .qrShareAction { gap: 5px; padding: 10px 7px; font-size: 12px; }
+  .qrShareIcon { font-size: 19px; }
+  #setupPanel[data-step="settings"] .setupNavigation #setupNextBtn,
+  #setupPanel[data-step="settings"] .setupNavigation #setupBackBtn { padding: 10px 8px; font-size: 12px; white-space: nowrap; }
+}
