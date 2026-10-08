@@ -7358,7 +7358,7 @@ return null;
     const bytes = new TextEncoder().encode(JSON.stringify(value));
     let binary = "";
     bytes.forEach(byte => { binary += String.fromCharCode(byte); });
-    return btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_").replace(/=+$/, "");
+    return btoa(binary).split("+").join("-").split("/").join("_").replace(/=+$/, "");
   }
 
   function decodeChronoShare(value) {
