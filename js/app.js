@@ -1110,6 +1110,7 @@
     setVisible("configMessage", settings);
     setVisible("setupBackBtn", !cover);
     setVisible("setupNextBtn", settings && !isSimple());
+    setVisible("shareChronoQrBtn", settings && !exam && state.trainingTool === "chrono");
     setVisible("launchPerformanceBtn", runners || (settings && isSimple()));
     if (exam) $("launchPerformanceBtn").textContent = "Continuer : annoncer les temps →";
   }
