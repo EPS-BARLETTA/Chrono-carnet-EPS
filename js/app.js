@@ -698,8 +698,19 @@
       state.exam500Validations.push(v);
       save();
     }
-    // Recréer un panneau autonome à chaque arrivée. Aucun dialog natif,
-    // aucun style global ni ancien noeud conservé entre les élèves.
+    // Une annonce de temps ouverte avec showModal() reste dans la top layer
+    // Safari et masque tout panneau HTML, même avec z-index maximal.
+    // La fermer explicitement avant d'afficher la validation professeur.
+    const estimate=$("exam500EstimateDialog");
+    if (estimate) {
+      try { if (estimate.open) estimate.close(); } catch (_) {}
+      estimate.removeAttribute("open");
+      estimate.style.display="none";
+    }
+    // Aucun autre dialogue natif ne doit recouvrir la validation.
+    document.querySelectorAll("dialog[open]").forEach(d=>{
+      try { d.close(); } catch (_) { d.removeAttribute("open"); }
+    });
     document.getElementById("exam500ValidationOverlay")?.remove();
     const overlay=document.createElement("div");
     overlay.id="exam500ValidationOverlay";
@@ -2203,7 +2214,8 @@
 
       };
 
-    dialog.showModal();
+    dialog.style.display="";
+    if (!dialog.open) dialog.showModal();
 
     const firstEmpty =
       dialog.querySelector(
@@ -7414,7 +7426,7 @@ return null;
   function renderNetworkStatus() {
     $("offlineBadge").textContent = updatePending
       ? "Mise à jour prête · retour aux paramètres"
-      : navigator.onLine ? "En ligne · v94" : "Hors ligne · v94";
+      : navigator.onLine ? "En ligne · v95" : "Hors ligne · v95";
   }
 
   function applyUpdateWhenSafe() {
@@ -7484,7 +7496,7 @@ return null;
         checkForUpdate();
       })
       .catch(() => {
-        $("offlineBadge").textContent = "Hors ligne non disponible · v94";
+        $("offlineBadge").textContent = "Hors ligne non disponible · v95";
       });
 
     document.addEventListener("visibilitychange", () => {
