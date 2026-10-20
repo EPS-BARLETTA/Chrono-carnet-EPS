@@ -712,6 +712,10 @@
     const v=validation500(r.id,race);
     const dialog=$("exam500ValidationDialog");
     if (!dialog) return;
+    // Isoler le panneau du reste de la page (CSS et positionnement Safari).
+    if (dialog.parentElement!==document.body) document.body.appendChild(dialog);
+    const backdrop=$("exam500ValidationBackdrop");
+    if (backdrop && backdrop.parentElement!==document.body) document.body.appendChild(backdrop);
     $("exam500ValidationName").textContent=r.name+" · 500 m n°"+race;
     $("exam500ValidationRaw").textContent=fmt(v.rawMs);
     const obs=$("exam500ValidationObserver");
@@ -721,13 +725,20 @@
     $("exam500TeacherTime").value="";
     $("exam500ValidationError").textContent="";
     $("exam500CorrectionFields").classList.add("hidden");
+    $("exam500CorrectionFields").style.display="none";
     dialog.dataset.runnerId=r.id;
     dialog.dataset.race=String(race);
     dialog.classList.remove("hidden");
     // Safari iPad : ne pas réutiliser showModal() entre deux arrivées.
-    const backdrop=$("exam500ValidationBackdrop");
     if (backdrop) backdrop.style.display="block";
     dialog.style.cssText="display:flex!important;flex-direction:column!important;gap:10px!important;box-sizing:border-box!important;position:fixed!important;top:50%!important;left:50%!important;right:auto!important;bottom:auto!important;margin:0!important;transform:translate(-50%,-50%)!important;width:calc(100% - 32px)!important;max-width:480px!important;max-height:90vh!important;overflow-y:auto!important;z-index:2147483646!important;padding:24px!important;border:5px solid #be123c!important;border-radius:16px!important;background:#fff!important;color:#172033!important;visibility:visible!important;opacity:1!important;";
+    // Garantir que le contenu du panneau reste visible malgré les styles hérités.
+    for (const child of dialog.children) {
+      if (child.id==="exam500CorrectionFields" && child.classList.contains("hidden")) continue;
+      child.style.visibility="visible";
+      child.style.opacity="1";
+      child.style.display=child.tagName==="BUTTON"?"block":child.tagName==="DIV"?"block":"block";
+    }
     dialog.scrollTop=0;
   }
   function finishValidation500(corrected) {
@@ -812,8 +823,11 @@
     renderPerf();
   }
   function observerAudit500(id) {
-    return state.exam500Validations.filter(v=>v.observerId===id && v.status!=="pending")
-      .map(v=>({r:v.race,d:Math.round((v.deltaMs||0)/1000),s:v.status}));
+    const observations=state.exam500Validations.filter(v=>v.observerId===id && v.status!=="pending");
+    return {correct:observations.filter(v=>v.status==="approved").length,total:observations.length,expected:3,
+      score:observations.filter(v=>v.status==="approved").length+"/3",
+      details:observations.map(v=>({race:v.race,runnerId:v.runnerId,correct:v.status==="approved",
+        observerMs:v.rawMs,teacherMs:v.teacherMs,deltaMs:v.deltaMs}))};
   }
 
   const rr = (
@@ -6949,6 +6963,7 @@ return null;
   if ($("exam500ValidationOk")) $("exam500ValidationOk").onclick=()=>finishValidation500(false);
   if ($("exam500ValidationNo")) $("exam500ValidationNo").onclick=()=>{
     $("exam500CorrectionFields").classList.remove("hidden");
+    $("exam500CorrectionFields").style.display="block";
     $("exam500TeacherTime").focus();
   };
   if ($("exam500ValidationConfirm")) $("exam500ValidationConfirm").onclick=()=>finishValidation500(true);
@@ -7410,7 +7425,7 @@ return null;
   function renderNetworkStatus() {
     $("offlineBadge").textContent = updatePending
       ? "Mise à jour prête · retour aux paramètres"
-      : navigator.onLine ? "En ligne · v92" : "Hors ligne · v92";
+      : navigator.onLine ? "En ligne · v93" : "Hors ligne · v93";
   }
 
   function applyUpdateWhenSafe() {
@@ -7480,7 +7495,7 @@ return null;
         checkForUpdate();
       })
       .catch(() => {
-        $("offlineBadge").textContent = "Hors ligne non disponible · v92";
+        $("offlineBadge").textContent = "Hors ligne non disponible · v93";
       });
 
     document.addEventListener("visibilitychange", () => {
