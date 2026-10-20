@@ -724,18 +724,9 @@
     dialog.dataset.runnerId=r.id;
     dialog.dataset.race=String(race);
     dialog.classList.remove("hidden");
-    // Le dialogue HTML peut rester en état non modal après un premier affichage
-    // sur Safari. Repartir d'un état fermé à CHAQUE arrivée, puis l'ouvrir.
-    try {
-      if (dialog.open) dialog.close();
-      dialog.removeAttribute("open");
-      dialog.style.cssText="";
-      dialog.showModal();
-    } catch (error) {
-      // Secours visible et utilisable, sans exiger de rechargement de page.
-      dialog.setAttribute("open","");
-      dialog.style.cssText="position:fixed;inset:5%;width:90%;max-height:90%;z-index:99999;background:white;overflow:auto;";
-    }
+    // Safari iPad : ne pas réutiliser showModal() entre deux arrivées.
+    dialog.setAttribute("open","");
+    dialog.style.cssText="display:block!important;position:fixed!important;top:50%!important;left:50%!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%)!important;width:calc(100% - 32px)!important;max-width:430px!important;max-height:90dvh!important;overflow:auto!important;z-index:2147483647!important;background:white!important;color:#172033!important;visibility:visible!important;opacity:1!important;";
     dialog.scrollTop=0;
   }
   function finishValidation500(corrected) {
@@ -776,8 +767,7 @@
     }
     // Enchaînement déterministe : toujours fermer la modale, puis sélectionner
     // le prochain coureur non terminé, ou le 500 m suivant.
-    if (dialog.open) dialog.close();
-    else dialog.removeAttribute("open");
+    dialog.removeAttribute("open");
     dialog.style.cssText="";
     if (supervised500()) {
       // Ne sélectionner le suivant qu'après validation de ce coureur.
@@ -2767,7 +2757,8 @@
     });
 
 
-    confirmLapRecorded();
+    // Ne pas afficher "TOUR VALIDÉ" par-dessus la fenêtre professeur.
+    if (!(supervised500() && pass >= requiredSplits())) confirmLapRecorded();
 
 
     if (
@@ -7417,7 +7408,7 @@ return null;
   function renderNetworkStatus() {
     $("offlineBadge").textContent = updatePending
       ? "Mise à jour prête · retour aux paramètres"
-      : navigator.onLine ? "En ligne · v90" : "Hors ligne · v90";
+      : navigator.onLine ? "En ligne · v91" : "Hors ligne · v91";
   }
 
   function applyUpdateWhenSafe() {
@@ -7487,7 +7478,7 @@ return null;
         checkForUpdate();
       })
       .catch(() => {
-        $("offlineBadge").textContent = "Hors ligne non disponible · v90";
+        $("offlineBadge").textContent = "Hors ligne non disponible · v91";
       });
 
     document.addEventListener("visibilitychange", () => {
