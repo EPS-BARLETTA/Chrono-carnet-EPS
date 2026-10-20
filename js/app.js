@@ -689,6 +689,14 @@
     if (panel) panel.classList.toggle("hidden",!isExam500());
     const toggle = $("exam500SupervisionToggle");
     if (toggle) toggle.checked = !!state.exam500Supervised;
+    const c3Panel = $("exam500C3Config");
+    if (c3Panel) c3Panel.classList.toggle("hidden",!isExam500());
+    const c3Toggle = $("exam500C3Toggle");
+    if (c3Toggle) {
+      c3Toggle.checked = !!state.exam500EstimateC3;
+      c3Toggle.disabled = isExam500() && (running ||
+        state.results.some(x => x.race === 3));
+    }
     const banner = $("exam500SupervisionBanner");
     if (banner) banner.classList.toggle("hidden",!on);
   }
@@ -6956,6 +6964,19 @@ return null;
     };
 
 
+
+  if ($("exam500C3Toggle")) $("exam500C3Toggle").onchange = e => {
+    if (running || state.results.some(x => x.race === 3)) {
+      e.target.checked = !!state.exam500EstimateC3;
+      toast("Impossible de changer le nombre d'annonces après le départ de C3.");
+      return;
+    }
+    state.exam500EstimateC3 = !!e.target.checked;
+    if (!state.exam500EstimateC3) {
+      state.runners.forEach(r => { r.project3Ms = null; });
+    }
+    save(); render();
+  };
 
   if ($("exam500SupervisionToggle")) $("exam500SupervisionToggle").onchange = e => {
     if (state.exam500Validations.length && !e.target.checked) {
