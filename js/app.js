@@ -69,6 +69,8 @@
     timedRuns: [],
     exam500Supervised: false,
     exam500EstimateC3: false,
+    exam500Level: "premiere",
+    exam500Regularity: "c1c2",
     exam500Validations: [],
 
     activeRace: 1,
@@ -175,6 +177,8 @@
 
   state.exam500Supervised = !!state.exam500Supervised;
   state.exam500EstimateC3 = !!state.exam500EstimateC3;
+  state.exam500Level = state.exam500Level === "seconde" ? "seconde" : "premiere";
+  state.exam500Regularity = state.exam500Regularity === "three" ? "three" : "c1c2";
   if (!Array.isArray(state.exam500Validations)) state.exam500Validations = [];
 
   let running = false;
@@ -689,6 +693,10 @@
     if (panel) panel.classList.toggle("hidden",!isExam500());
     const toggle = $("exam500SupervisionToggle");
     if (toggle) toggle.checked = !!state.exam500Supervised;
+    const levelSelect = $("exam500LevelSelect");
+    if (levelSelect) levelSelect.value = state.exam500Level;
+    const regularitySelect = $("exam500RegularitySelect");
+    if (regularitySelect) regularitySelect.value = state.exam500Regularity;
     const c3Panel = $("exam500C3Config");
     if (c3Panel) c3Panel.classList.toggle("hidden",!isExam500());
     const c3Toggle = $("exam500C3Toggle");
@@ -4930,6 +4938,11 @@ return null;
         classroom:
           safeQrText(r.classroom),
         sex: safeQrText(r.sex),
+        evaluationConfig: {
+          level: state.exam500Level,
+          estimationCount: state.exam500EstimateC3 ? 3 : 2,
+          regularityMode: state.exam500Regularity
+        },
         projects: [
           fmt(r.project1Ms),
           fmt(r.project2Ms),
@@ -6964,6 +6977,19 @@ return null;
     };
 
 
+
+  for (const [id,key] of [["exam500LevelSelect","exam500Level"],["exam500RegularitySelect","exam500Regularity"]]) {
+    const element = $(id);
+    if (element) element.onchange = e => {
+      if (running || state.results.length) {
+        e.target.value = state[key];
+        toast("Paramètres verrouillés après le début des courses.");
+        return;
+      }
+      state[key] = e.target.value;
+      save(); render();
+    };
+  }
 
   if ($("exam500C3Toggle")) $("exam500C3Toggle").onchange = e => {
     if (running || state.results.some(x => x.race >= 1)) {
