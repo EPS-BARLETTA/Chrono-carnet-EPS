@@ -927,19 +927,20 @@
         <p style="margin:8px 0 0">Disponible en Seconde et Première. Chaque 500 m devra être validé par l'enseignant avant le QR final.</p>
       </div>
 <div id="exam500EvaluationConfig" style="margin:12px 0;padding:16px;border:2px solid #2563eb;border-radius:14px">
-  <h3>Préparer mon évaluation 3 × 500 m</h3>
-  <p>Ces paramètres seront transmis automatiquement à DemiFond Scan avec le QR professeur.</p>
-  <div class="configGrid">
-    <label class="field"><span>Niveau</span><select id="exam500LevelSelect"><option value="seconde">Seconde</option><option value="premiere">Première</option></select></label>
-    <label class="field"><span>Régularité</span><select id="exam500RegularitySelect"><option value="c1c2">4 portions de 250 m · C1 et C2</option><option value="three">6 portions de 250 m · C1, C2 et C3</option></select></label>
-  </div>
-</div>
-<div id="exam500C3Config" class="hidden" style="margin:12px 0;padding:14px;border:2px solid #93c5fd;border-radius:12px;background:#eff6ff">
-  <label style="display:flex;align-items:center;gap:12px;font-weight:800">
-    <input id="exam500C3Toggle" type="checkbox" style="width:25px;height:25px">
-    Annonce C3 · 3 estimations à 1 point chacune
+  <h3>Préparer mon évaluation · 3 × 500 m</h3>
+  <label class="field" style="max-width:420px"><span>Niveau de classe</span>
+    <select id="exam500LevelSelect"><option value="seconde">Seconde</option><option value="premiere">Première</option></select>
   </label>
-  <p style="margin:8px 0 0">Désactivé : seules C1 et C2 sont annoncées (1,5 point chacune). Active cette option avant de démarrer l'épreuve. Le QR transmettra automatiquement ce choix à DemiFond Scan.</p>
+  <fieldset style="border:0;padding:0;margin:14px 0 0">
+    <legend style="font-weight:800;margin-bottom:8px">Nombre d'annonces</legend>
+    <label style="display:block;padding:12px;border:1px solid #93c5fd;border-radius:10px;margin-bottom:8px;background:#eff6ff">
+      <input type="radio" name="exam500AnnouncementChoice" value="2"> 2 annonces · C1 et C2 <small>— régularité sur 4 × 250 m</small>
+    </label>
+    <label style="display:block;padding:12px;border:1px solid #93c5fd;border-radius:10px;background:#eff6ff">
+      <input type="radio" name="exam500AnnouncementChoice" value="3"> 3 annonces · C1, C2 et C3 <small>— régularité sur 6 × 250 m</small>
+    </label>
+  </fieldset>
+  <p style="font-size:13px;color:#475569">Le calcul de régularité et les paramètres transmis à DemiFond Scan sont automatiques.</p>
 </div>
       <style>
         body.supervised500 {box-shadow:inset 0 0 0 10px #be123c!important}
@@ -1857,7 +1858,7 @@
 
 <script src="/js/ccf-input-guard.js?v=1"></script>
 
-<script src="/js/app.js?v=101"></script>
+<script src="/js/app.js?v=102"></script>
 <script src="/js/run-safety-ui.js?v=5"></script>
 
 
