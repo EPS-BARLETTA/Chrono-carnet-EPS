@@ -691,55 +691,46 @@
     if (banner) banner.classList.toggle("hidden",!on);
   }
   function openValidation500(r,race,originalMs) {
-    const existing = validation500(r.id,race);
-    // Une arrivee chronometree doit toujours afficher la validation professeur.
-    // Ne jamais abandonner silencieusement si une ancienne validation existe.
-    if (existing && existing.status !== "pending") {
-      existing.status="pending";
-      existing.rawMs=Math.round(originalMs);
-      existing.teacherMs=null;
-      existing.deltaMs=null;
+    let v=validation500(r.id,race);
+    if (!v) {
+      v={runnerId:r.id,race,rawMs:Math.round(originalMs),teacherMs:null,
+        deltaMs:null,status:"pending",observerId:state.runners.find(x=>x.id!==r.id)?.id||null};
+      state.exam500Validations.push(v);
       save();
     }
-    if (!existing) {
-      state.exam500Validations.push({
-        runnerId:r.id,race,rawMs:Math.round(originalMs),
-        teacherMs:null,deltaMs:null,status:"pending",
-        observerId:state.runners.find(x=>x.id!==r.id)?.id||null
-      });
-      save();
-    }
-    const v=validation500(r.id,race);
-    const dialog=$("exam500ValidationDialog");
-    if (!dialog) return;
-    // Isoler le panneau du reste de la page (CSS et positionnement Safari).
-    if (dialog.parentElement!==document.body) document.body.appendChild(dialog);
-    const backdrop=$("exam500ValidationBackdrop");
-    if (backdrop && backdrop.parentElement!==document.body) document.body.appendChild(backdrop);
-    $("exam500ValidationName").textContent=r.name+" · 500 m n°"+race;
-    $("exam500ValidationRaw").textContent=fmt(v.rawMs);
-    const obs=$("exam500ValidationObserver");
-    obs.innerHTML='<option value="">Observateur non renseigné (facultatif)</option>'+
-      state.runners.filter(x=>x.id!==r.id).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join("");
-    obs.value=v.observerId||"";
-    $("exam500TeacherTime").value="";
-    $("exam500ValidationError").textContent="";
-    $("exam500CorrectionFields").classList.add("hidden");
-    $("exam500CorrectionFields").style.display="none";
+    // Recréer un panneau autonome à chaque arrivée. Aucun dialog natif,
+    // aucun style global ni ancien noeud conservé entre les élèves.
+    document.getElementById("exam500ValidationOverlay")?.remove();
+    const overlay=document.createElement("div");
+    overlay.id="exam500ValidationOverlay";
+    overlay.style.cssText="position:fixed!important;inset:0!important;z-index:2147483647!important;background:rgba(0,0,0,.82)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:16px!important;box-sizing:border-box!important;";
+    const dialog=document.createElement("section");
+    dialog.id="exam500ValidationDialog";
+    dialog.setAttribute("role","dialog");
+    dialog.setAttribute("aria-modal","true");
     dialog.dataset.runnerId=r.id;
     dialog.dataset.race=String(race);
-    dialog.classList.remove("hidden");
-    // Safari iPad : ne pas réutiliser showModal() entre deux arrivées.
-    if (backdrop) backdrop.style.display="block";
-    dialog.style.cssText="display:flex!important;flex-direction:column!important;gap:10px!important;box-sizing:border-box!important;position:fixed!important;top:50%!important;left:50%!important;right:auto!important;bottom:auto!important;margin:0!important;transform:translate(-50%,-50%)!important;width:calc(100% - 32px)!important;max-width:480px!important;max-height:90vh!important;overflow-y:auto!important;z-index:2147483646!important;padding:24px!important;border:5px solid #be123c!important;border-radius:16px!important;background:#fff!important;color:#172033!important;visibility:visible!important;opacity:1!important;";
-    // Garantir que le contenu du panneau reste visible malgré les styles hérités.
-    for (const child of dialog.children) {
-      if (child.id==="exam500CorrectionFields" && child.classList.contains("hidden")) continue;
-      child.style.visibility="visible";
-      child.style.opacity="1";
-      child.style.display=child.tagName==="BUTTON"?"block":child.tagName==="DIV"?"block":"block";
-    }
-    dialog.scrollTop=0;
+    dialog.style.cssText="all:initial;display:flex!important;flex-direction:column!important;gap:14px!important;box-sizing:border-box!important;width:100%!important;max-width:500px!important;max-height:92vh!important;overflow:auto!important;padding:24px!important;background:white!important;color:#172033!important;border:5px solid #be123c!important;border-radius:18px!important;font:600 18px system-ui,sans-serif!important;box-shadow:0 20px 60px #0008!important;";
+    dialog.innerHTML='<h2 style="all:revert;margin:0;font-size:25px;color:#881337">Validation professeur · 500 m n°'+race+'</h2>'+
+      '<p style="margin:0;font-size:23px;font-weight:900">'+esc(r.name)+'</p>'+
+      '<p style="margin:0">Temps observateur : <strong style="font-size:32px;color:#111827">'+fmt(v.rawMs)+'</strong></p>'+
+      '<label style="display:block">Observateur<select id="exam500ValidationObserver" style="display:block;width:100%;padding:12px;font-size:18px;margin-top:8px">'+
+      '<option value="">Non renseigné</option>'+state.runners.filter(x=>x.id!==r.id).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join("")+'</select></label>'+
+      '<p style="margin:0;font-size:15px">Compare le chrono de l\'observateur avec celui du professeur.</p>'+
+      '<div id="exam500ValidationError" style="color:#be123c;font-weight:800"></div>'+
+      '<button id="exam500ValidationOk" type="button" style="display:block;padding:16px;background:#15803d;color:white;border:0;border-radius:10px;font-size:19px;font-weight:900">✓ OK — temps confirmé</button>'+
+      '<button id="exam500ValidationNo" type="button" style="display:block;padding:16px;background:#be123c;color:white;border:0;border-radius:10px;font-size:19px;font-weight:900">✕ NON — corriger le temps</button>'+
+      '<div id="exam500CorrectionFields" style="display:none"><label>Temps professeur (135 = 1 min 35 s)<input id="exam500TeacherTime" type="text" inputmode="decimal" placeholder="135 ou 1:35" style="display:block;width:100%;box-sizing:border-box;padding:14px;font-size:22px;margin:8px 0"></label>'+
+      '<button id="exam500ValidationConfirm" type="button" style="display:block;width:100%;padding:16px;background:#15803d;color:white;border:0;border-radius:10px;font-size:18px;font-weight:900">Enregistrer le temps professeur</button></div>';
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    document.getElementById("exam500ValidationObserver").value=v.observerId||"";
+    document.getElementById("exam500ValidationOk").onclick=()=>finishValidation500(false);
+    document.getElementById("exam500ValidationNo").onclick=()=>{
+      document.getElementById("exam500CorrectionFields").style.display="block";
+      document.getElementById("exam500TeacherTime").focus();
+    };
+    document.getElementById("exam500ValidationConfirm").onclick=()=>finishValidation500(true);
   }
   function finishValidation500(corrected) {
     const dialog=$("exam500ValidationDialog");
@@ -779,9 +770,7 @@
     }
     // Enchaînement déterministe : toujours fermer la modale, puis sélectionner
     // le prochain coureur non terminé, ou le 500 m suivant.
-    dialog.style.display="none";
-    dialog.style.cssText="display:none";
-    if ($("exam500ValidationBackdrop")) $("exam500ValidationBackdrop").style.display="none";
+    document.getElementById("exam500ValidationOverlay")?.remove();
     if (supervised500()) {
       // Ne sélectionner le suivant qu'après validation de ce coureur.
       // La course courante est fixée par le dialogue, jamais par un état UI périmé.
@@ -7425,7 +7414,7 @@ return null;
   function renderNetworkStatus() {
     $("offlineBadge").textContent = updatePending
       ? "Mise à jour prête · retour aux paramètres"
-      : navigator.onLine ? "En ligne · v93" : "Hors ligne · v93";
+      : navigator.onLine ? "En ligne · v94" : "Hors ligne · v94";
   }
 
   function applyUpdateWhenSafe() {
@@ -7495,7 +7484,7 @@ return null;
         checkForUpdate();
       })
       .catch(() => {
-        $("offlineBadge").textContent = "Hors ligne non disponible · v93";
+        $("offlineBadge").textContent = "Hors ligne non disponible · v94";
       });
 
     document.addEventListener("visibilitychange", () => {
