@@ -724,13 +724,17 @@
     dialog.dataset.runnerId=r.id;
     dialog.dataset.race=String(race);
     dialog.classList.remove("hidden");
-    if (!dialog.open) {
-      try { dialog.showModal(); }
-      catch (error) {
-        // Secours pour iPad : garder les boutons accessibles meme si showModal echoue.
-        dialog.setAttribute("open","");
-        dialog.style.cssText+=";position:fixed;inset:8%;z-index:99999;background:white;overflow:auto;";
-      }
+    // Le dialogue HTML peut rester en état non modal après un premier affichage
+    // sur Safari. Repartir d'un état fermé à CHAQUE arrivée, puis l'ouvrir.
+    try {
+      if (dialog.open) dialog.close();
+      dialog.removeAttribute("open");
+      dialog.style.cssText="";
+      dialog.showModal();
+    } catch (error) {
+      // Secours visible et utilisable, sans exiger de rechargement de page.
+      dialog.setAttribute("open","");
+      dialog.style.cssText="position:fixed;inset:5%;width:90%;max-height:90%;z-index:99999;background:white;overflow:auto;";
     }
     dialog.scrollTop=0;
   }
@@ -2775,10 +2779,11 @@
       if (supervised500()) {
         // Chaque arrivée crée une validation indexée par (coureur, numéro de 500).
         const race=state.activeRace;
-        // Le 250 m ne déclenche rien ; l'arrivée (2e passage) ouvre la validation.
+        // Enregistrer la validation avant le rendu pour que chaque arrivée
+        // possède sa propre entrée (élève + course), y compris au 2e et 3e 500.
+        openValidation500(r,race,cum);
         save();
         renderPerf();
-        openValidation500(r,race,cum);
         return;
       }
 
@@ -5499,17 +5504,8 @@ return null;
 
   function renderPerf() {
     refreshSupervised500();
-    // Récupération non intrusive d'une validation en attente (p.ex. après
-    // fermeture d'un autre dialogue). N'ouvre jamais synchroniquement
-    // la modale au milieu du rendu.
-    if (supervised500() && !$("exam500ValidationDialog")?.open) {
-      const pending=state.exam500Validations.find(v=>v.status==="pending");
-      const pendingRunner=pending&&state.runners.find(r=>r.id===pending.runnerId);
-      if (pendingRunner) queueMicrotask(()=>{
-        if (!$("exam500ValidationDialog")?.open && validation500(pending.runnerId,pending.race)?.status==="pending")
-          openValidation500(pendingRunner,pending.race,pending.rawMs);
-      });
-    }
+    // Le dialogue est ouvert uniquement par ARRIVÉE (ou par une demande
+    // explicite de reprise) : jamais pendant le rendu de la page.
 
     const ccf =
       state.mode === "ccf";
@@ -7421,7 +7417,7 @@ return null;
   function renderNetworkStatus() {
     $("offlineBadge").textContent = updatePending
       ? "Mise à jour prête · retour aux paramètres"
-      : navigator.onLine ? "En ligne · v89" : "Hors ligne · v89";
+      : navigator.onLine ? "En ligne · v90" : "Hors ligne · v90";
   }
 
   function applyUpdateWhenSafe() {
@@ -7491,7 +7487,7 @@ return null;
         checkForUpdate();
       })
       .catch(() => {
-        $("offlineBadge").textContent = "Hors ligne non disponible · v89";
+        $("offlineBadge").textContent = "Hors ligne non disponible · v90";
       });
 
     document.addEventListener("visibilitychange", () => {
