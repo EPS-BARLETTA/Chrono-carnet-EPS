@@ -695,7 +695,7 @@
     if (c3Toggle) {
       c3Toggle.checked = !!state.exam500EstimateC3;
       c3Toggle.disabled = isExam500() && (running ||
-        state.results.some(x => x.race === 3));
+        state.results.some(x => x.race >= 1));
     }
     const banner = $("exam500SupervisionBanner");
     if (banner) banner.classList.toggle("hidden",!on);
@@ -6966,7 +6966,7 @@ return null;
 
 
   if ($("exam500C3Toggle")) $("exam500C3Toggle").onchange = e => {
-    if (running || state.results.some(x => x.race === 3)) {
+    if (running || state.results.some(x => x.race >= 1)) {
       e.target.checked = !!state.exam500EstimateC3;
       toast("Impossible de changer le nombre d'annonces après le départ de C3.");
       return;
