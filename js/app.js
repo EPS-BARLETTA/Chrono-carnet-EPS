@@ -7452,7 +7452,7 @@ return null;
   function renderNetworkStatus() {
     $("offlineBadge").textContent = updatePending
       ? "Mise à jour prête · retour aux paramètres"
-      : navigator.onLine ? "En ligne · v98" : "Hors ligne · v98";
+      : navigator.onLine ? "En ligne · v99" : "Hors ligne · v99";
   }
 
   function applyUpdateWhenSafe() {
