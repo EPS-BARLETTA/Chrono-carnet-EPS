@@ -712,16 +712,16 @@
       try { d.close(); } catch (_) { d.removeAttribute("open"); }
     });
     document.getElementById("exam500ValidationOverlay")?.remove();
-    const overlay=document.createElement("div");
-    overlay.id="exam500ValidationOverlay";
-    overlay.style.cssText="position:fixed!important;inset:0!important;z-index:2147483647!important;background:rgba(0,0,0,.82)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:16px!important;box-sizing:border-box!important;";
+    document.getElementById("exam500ValidationDialog")?.remove();
+    const host=document.querySelector(".timerCard");
+    if (!host) { alert("Validation professeur indisponible : écran chronomètre introuvable."); return; }
     const dialog=document.createElement("section");
     dialog.id="exam500ValidationDialog";
     dialog.setAttribute("role","dialog");
     dialog.setAttribute("aria-modal","true");
     dialog.dataset.runnerId=r.id;
     dialog.dataset.race=String(race);
-    dialog.style.cssText="all:initial;display:flex!important;flex-direction:column!important;gap:14px!important;box-sizing:border-box!important;width:100%!important;max-width:500px!important;max-height:92vh!important;overflow:auto!important;padding:24px!important;background:white!important;color:#172033!important;border:5px solid #be123c!important;border-radius:18px!important;font:600 18px system-ui,sans-serif!important;box-shadow:0 20px 60px #0008!important;";
+    dialog.style.cssText="display:flex!important;flex-direction:column!important;gap:14px!important;box-sizing:border-box!important;width:calc(100% - 28px)!important;max-width:650px!important;margin:20px auto!important;overflow:visible!important;padding:24px!important;background:white!important;color:#172033!important;border:5px solid #be123c!important;border-radius:18px!important;font:600 18px system-ui,sans-serif!important;box-shadow:0 12px 35px #0004!important;";
     dialog.innerHTML='<h2 style="all:revert;margin:0;font-size:25px;color:#881337">Validation professeur · 500 m n°'+race+'</h2>'+
       '<p style="margin:0;font-size:23px;font-weight:900">'+esc(r.name)+'</p>'+
       '<p style="margin:0">Temps observateur : <strong style="font-size:32px;color:#111827">'+fmt(v.rawMs)+'</strong></p>'+
@@ -733,8 +733,11 @@
       '<button id="exam500ValidationNo" type="button" style="display:block;padding:16px;background:#be123c;color:white;border:0;border-radius:10px;font-size:19px;font-weight:900">✕ NON — corriger le temps</button>'+
       '<div id="exam500CorrectionFields" style="display:none"><label>Temps professeur (135 = 1 min 35 s)<input id="exam500TeacherTime" type="text" inputmode="decimal" placeholder="135 ou 1:35" style="display:block;width:100%;box-sizing:border-box;padding:14px;font-size:22px;margin:8px 0"></label>'+
       '<button id="exam500ValidationConfirm" type="button" style="display:block;width:100%;padding:16px;background:#15803d;color:white;border:0;border-radius:10px;font-size:18px;font-weight:900">Enregistrer le temps professeur</button></div>';
-    overlay.appendChild(dialog);
-    document.body.appendChild(overlay);
+    // Panneau intégré au chronomètre : aucun overlay, aucune top layer Safari.
+    const controls=host.querySelector("#startBtn")?.parentElement;
+    if (controls && controls.parentElement===host) host.insertBefore(dialog,controls);
+    else host.appendChild(dialog);
+    dialog.scrollIntoView({block:"center",behavior:"auto"});
     document.getElementById("exam500ValidationObserver").value=v.observerId||"";
     document.getElementById("exam500ValidationOk").onclick=()=>finishValidation500(false);
     document.getElementById("exam500ValidationNo").onclick=()=>{
@@ -781,7 +784,7 @@
     }
     // Enchaînement déterministe : toujours fermer la modale, puis sélectionner
     // le prochain coureur non terminé, ou le 500 m suivant.
-    document.getElementById("exam500ValidationOverlay")?.remove();
+    dialog.remove();
     if (supervised500()) {
       // Ne sélectionner le suivant qu'après validation de ce coureur.
       // La course courante est fixée par le dialogue, jamais par un état UI périmé.
@@ -2789,9 +2792,9 @@
         const race=state.activeRace;
         // Enregistrer la validation avant le rendu pour que chaque arrivée
         // possède sa propre entrée (élève + course), y compris au 2e et 3e 500.
-        openValidation500(r,race,cum);
         save();
         renderPerf();
+        openValidation500(r,race,cum);
         return;
       }
 
@@ -7426,7 +7429,7 @@ return null;
   function renderNetworkStatus() {
     $("offlineBadge").textContent = updatePending
       ? "Mise à jour prête · retour aux paramètres"
-      : navigator.onLine ? "En ligne · v95" : "Hors ligne · v95";
+      : navigator.onLine ? "En ligne · v96" : "Hors ligne · v96";
   }
 
   function applyUpdateWhenSafe() {
@@ -7496,7 +7499,7 @@ return null;
         checkForUpdate();
       })
       .catch(() => {
-        $("offlineBadge").textContent = "Hors ligne non disponible · v95";
+        $("offlineBadge").textContent = "Hors ligne non disponible · v96";
       });
 
     document.addEventListener("visibilitychange", () => {
