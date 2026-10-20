@@ -68,6 +68,7 @@
     results: [],
     timedRuns: [],
     exam500Supervised: false,
+    exam500EstimateC3: false,
     exam500Validations: [],
 
     activeRace: 1,
@@ -173,6 +174,7 @@
 
 
   state.exam500Supervised = !!state.exam500Supervised;
+  state.exam500EstimateC3 = !!state.exam500EstimateC3;
   if (!Array.isArray(state.exam500Validations)) state.exam500Validations = [];
 
   let running = false;
@@ -814,6 +816,9 @@
         // L'annonce préalable du temps pour la 2e course reste obligatoire.
         if (race+1===2 && state.runners.some(r=>!r.project2Ms)) {
           openRaceEstimates(2,()=>{resetClock();save();renderPerf();});
+        }
+        if (race+1===3 && state.exam500EstimateC3 && state.runners.some(r=>!r.project3Ms)) {
+          openRaceEstimates(3,()=>{resetClock();save();renderPerf();});
         }
         return;
       }
@@ -2059,16 +2064,14 @@
 
     if (
       !isExamMode() ||
-      ![1,2].includes(race)
+      !(race === 1 || race === 2 || (race === 3 && isExam500() && state.exam500EstimateC3))
     ) {
       onValid?.();
       return;
     }
 
     const key =
-      race === 1
-        ? "project1Ms"
-        : "project2Ms";
+      race === 1 ? "project1Ms" : race === 2 ? "project2Ms" : "project3Ms";
 
     let dialog =
       $("exam500EstimateDialog");
@@ -3488,17 +3491,13 @@ return null;
 
     if (
       isExamMode() &&
-      race === 2 &&
-      state.runners.some(
-        r =>
-          !r.project2Ms
-      )
+      ((race === 2 && state.runners.some(r => !r.project2Ms)) ||
+       (race === 3 && isExam500() && state.exam500EstimateC3 && state.runners.some(r => !r.project3Ms)))
     ) {
 
       openRaceEstimates(
-        2,
-        () =>
-          setRace(2)
+        race,
+        () => setRace(race)
       );
 
       return;
@@ -4925,7 +4924,8 @@ return null;
         sex: safeQrText(r.sex),
         projects: [
           fmt(r.project1Ms),
-          fmt(r.project2Ms)
+          fmt(r.project2Ms),
+          state.exam500EstimateC3 ? fmt(r.project3Ms) : null
         ],
         races:
           races.map(
@@ -4936,7 +4936,7 @@ return null;
                   ? fmt(r.project1Ms)
                   : index === 1
                     ? fmt(r.project2Ms)
-                    : null,
+                    : state.exam500EstimateC3 ? fmt(r.project3Ms) : null,
               split250Ms:
                 a[0]
                   ? Math.round(
@@ -5029,7 +5029,7 @@ return null;
         fmt(
           race === 1
             ? r.project1Ms
-            : r.project2Ms
+            : race === 2 ? r.project2Ms : r.project3Ms
         ),
 
       splits:
