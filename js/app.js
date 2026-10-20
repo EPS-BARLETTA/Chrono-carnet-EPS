@@ -4970,7 +4970,9 @@ return null;
         ...(state.exam500Supervised ? {
           supervised: true,
           validation: [1,2,3].map(n=>{const v=validation500(r.id,n);return v ? [n,v.status==="pending"?"P":v.status==="corrected"?"C":"O",Math.round((v.deltaMs||0)/1000)] : [n,"P",0];}),
-          observerAudit: observerAudit500(r.id)
+          // QR compact : le détail des observations reste dans le bilan local.
+          // Éviter un QR trop dense, difficile à lire sur iPad.
+          observerAudit: (()=>{const audit=observerAudit500(r.id);return {correct:audit.correct,total:audit.total,expected:3,score:audit.score};})()
         } : {})
       };
 
@@ -5178,13 +5180,13 @@ return null;
               qrText,
 
             width:
-              260,
+              440,
 
             height:
-              260,
+              440,
 
             correctLevel:
-              QRCode.CorrectLevel.M
+              QRCode.CorrectLevel.L
 
           }
         );
@@ -5255,13 +5257,13 @@ return null;
                 payload
               ),
             width:
-              230,
+              400,
             height:
-              230,
+              400,
             correctLevel:
               QRCode
                 .CorrectLevel
-                .M
+                .L
           }
         );
 
@@ -7429,7 +7431,7 @@ return null;
   function renderNetworkStatus() {
     $("offlineBadge").textContent = updatePending
       ? "Mise à jour prête · retour aux paramètres"
-      : navigator.onLine ? "En ligne · v96" : "Hors ligne · v96";
+      : navigator.onLine ? "En ligne · v97" : "Hors ligne · v97";
   }
 
   function applyUpdateWhenSafe() {
@@ -7499,7 +7501,7 @@ return null;
         checkForUpdate();
       })
       .catch(() => {
-        $("offlineBadge").textContent = "Hors ligne non disponible · v96";
+        $("offlineBadge").textContent = "Hors ligne non disponible · v97";
       });
 
     document.addEventListener("visibilitychange", () => {
