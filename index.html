@@ -41,7 +41,12 @@
   </title>
 
 <style>#setupPanel[data-step="cover"] #exam500EvaluationConfig,#setupPanel[data-step="cover"] #exam500C3Config,#setupPanel[data-step="cover"] #exam500SupervisionConfig{display:none!important}</style>
-</head>
+<style>
+.exam500-choice{display:flex;align-items:center;gap:10px;padding:14px;border:2px solid #cbd5e1;border-radius:12px;background:#f8fafc;font-weight:700;cursor:pointer;min-height:54px;flex-wrap:wrap;transition:background .15s,border-color .15s}
+.exam500-choice:has(input:checked){background:#dbeafe;border-color:#2563eb;color:#1e40af;box-shadow:inset 0 0 0 1px #2563eb}
+.exam500-choice input{width:22px;height:22px;accent-color:#2563eb}
+.exam500-choice small{font-weight:500}
+</style></head>
 
 
 <body>
@@ -928,15 +933,19 @@
       </div>
 <div id="exam500EvaluationConfig" style="margin:12px 0;padding:16px;border:2px solid #2563eb;border-radius:14px">
   <h3>Préparer mon évaluation · 3 × 500 m</h3>
-  <label class="field" style="max-width:420px"><span>Niveau de classe</span>
-    <select id="exam500LevelSelect"><option value="seconde">Seconde</option><option value="premiere">Première</option></select>
-  </label>
+  <fieldset style="border:0;padding:0;margin:0">
+    <legend style="font-weight:800;margin-bottom:8px">Niveau de classe</legend>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+      <label class="exam500-choice"><input type="radio" name="exam500LevelChoice" value="seconde"> Seconde</label>
+      <label class="exam500-choice"><input type="radio" name="exam500LevelChoice" value="premiere"> Première</label>
+    </div>
+  </fieldset>
   <fieldset style="border:0;padding:0;margin:14px 0 0">
     <legend style="font-weight:800;margin-bottom:8px">Nombre d'annonces</legend>
-    <label style="display:block;padding:12px;border:1px solid #93c5fd;border-radius:10px;margin-bottom:8px;background:#eff6ff">
+    <label class="exam500-choice">
       <input type="radio" name="exam500AnnouncementChoice" value="2"> 2 annonces · C1 et C2 <small>— régularité sur 4 × 250 m</small>
     </label>
-    <label style="display:block;padding:12px;border:1px solid #93c5fd;border-radius:10px;background:#eff6ff">
+    <label class="exam500-choice">
       <input type="radio" name="exam500AnnouncementChoice" value="3"> 3 annonces · C1, C2 et C3 <small>— régularité sur 6 × 250 m</small>
     </label>
   </fieldset>
@@ -1858,7 +1867,7 @@
 
 <script src="/js/ccf-input-guard.js?v=1"></script>
 
-<script src="/js/app.js?v=102"></script>
+<script src="/js/app.js?v=103"></script>
 <script src="/js/run-safety-ui.js?v=5"></script>
 
 
