@@ -1835,7 +1835,8 @@
 ></div>
 
 
-<dialog id="exam500ValidationDialog">
+<div id="exam500ValidationBackdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:2147483645"></div>
+<div id="exam500ValidationDialog" role="dialog" aria-modal="true" aria-label="Validation professeur" style="display:none">
   <h2>🛡️ Validation du chrono</h2>
   <p id="exam500ValidationName"></p>
   <p style="font-weight:900;font-size:28px">Chrono observateur : <span id="exam500ValidationRaw"></span></p>
@@ -1848,14 +1849,14 @@
     <label>Temps enseignant (ex. 135 = 1 min 35 s)<input id="exam500TeacherTime" type="text" inputmode="decimal" placeholder="135, 145, 150 ou 1:35"></label>
     <button id="exam500ValidationConfirm" class="btn primary" type="button">Valider le temps professeur et verrouiller</button>
   </div>
-</dialog>
+</div>
 <script src="/js/qrcode.min.js?v=1"></script>
 
 <script src="/js/v44.js?v=2"></script>
 
 <script src="/js/ccf-input-guard.js?v=1"></script>
 
-<script src="/js/app.js?v=91"></script>
+<script src="/js/app.js?v=92"></script>
 <script src="/js/run-safety-ui.js?v=5"></script>
 
 
