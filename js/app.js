@@ -4347,7 +4347,7 @@ return null;
 
             `<td>${fmt(x.lapMs)}</td>` +
 
-            `<td>${fmt(x.cumulativeMs)}</td>` +
+            `<td>${fmt(x.cumulativeMs)}${isExam500() && x.distance===500 ? (()=>{const v=state.exam500Validations.find(v=>v.runnerId===x.runnerId && Number(v.race)===Number(x.race));if(!v||v.status==="pending")return "";const original=fmt(v.rawMs),accepted=fmt(v.teacherMs||v.rawMs),gap=((v.deltaMs||0)/1000).toFixed(2);return v.status==="corrected" ? ' <button type="button" class="exam500-audit" title="Temps élève : '+original+' | Temps professeur : '+accepted+' | Écart : '+gap+' s" onclick="alert(this.title)" style="color:#9a3412;background:#ffedd5;border:1px solid #fdba74;border-radius:6px;cursor:pointer;padding:2px 6px">✏️ Corrigé prof</button>' : ' <span title="Validé sans correction par le professeur" style="color:#15803d">✓</span>';})():""}</td>` +
 
             `<td>${x.speed.toFixed(1)} km/h</td>` +
 
@@ -4969,7 +4969,7 @@ return null;
           new Date().toISOString(),
         ...(state.exam500Supervised ? {
           supervised: true,
-          validation: [1,2,3].map(n=>{const v=validation500(r.id,n);return v ? [n,v.status==="pending"?"P":v.status==="corrected"?"C":"O",Math.round((v.deltaMs||0)/1000)] : [n,"P",0];}),
+          validation: [1,2,3].map(n=>{const v=validation500(r.id,n);return v ? [n,v.status==="pending"?"P":v.status==="corrected"?"C":"O",Math.round((v.deltaMs||0)/1000),v.status==="corrected"?Math.round(v.rawMs):null] : [n,"P",0,null];}),
           // QR compact : le détail des observations reste dans le bilan local.
           // Éviter un QR trop dense, difficile à lire sur iPad.
           observerAudit: (()=>{const audit=observerAudit500(r.id);return {correct:audit.correct,total:audit.total,expected:3,score:audit.score};})()
@@ -7431,7 +7431,7 @@ return null;
   function renderNetworkStatus() {
     $("offlineBadge").textContent = updatePending
       ? "Mise à jour prête · retour aux paramètres"
-      : navigator.onLine ? "En ligne · v97" : "Hors ligne · v97";
+      : navigator.onLine ? "En ligne · v98" : "Hors ligne · v98";
   }
 
   function applyUpdateWhenSafe() {
@@ -7501,7 +7501,7 @@ return null;
         checkForUpdate();
       })
       .catch(() => {
-        $("offlineBadge").textContent = "Hors ligne non disponible · v97";
+        $("offlineBadge").textContent = "Hors ligne non disponible · v98";
       });
 
     document.addEventListener("visibilitychange", () => {
