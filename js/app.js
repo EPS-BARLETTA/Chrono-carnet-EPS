@@ -695,8 +695,11 @@
     if (toggle) toggle.checked = !!state.exam500Supervised;
     const levelSelect = $("exam500LevelSelect");
     if (levelSelect) levelSelect.value = state.exam500Level;
-    const regularitySelect = $("exam500RegularitySelect");
-    if (regularitySelect) regularitySelect.value = state.exam500Regularity;
+    state.exam500Regularity = state.exam500EstimateC3 ? "three" : "c1c2";
+    document.querySelectorAll('[name="exam500AnnouncementChoice"]').forEach(el => {
+      el.checked = el.value === (state.exam500EstimateC3 ? "3" : "2");
+      el.disabled = running || state.results.length > 0;
+    });
     const c3Panel = $("exam500C3Config");
     if (c3Panel) c3Panel.classList.toggle("hidden",!isExam500());
     const c3Toggle = $("exam500C3Toggle");
@@ -6978,18 +6981,26 @@ return null;
 
 
 
-  for (const [id,key] of [["exam500LevelSelect","exam500Level"],["exam500RegularitySelect","exam500Regularity"]]) {
-    const element = $(id);
-    if (element) element.onchange = e => {
+  if ($("exam500LevelSelect")) $("exam500LevelSelect").onchange = e => {
+    if (running || state.results.length) {
+      e.target.value = state.exam500Level;
+      toast("Niveau verrouillé après le début des courses.");
+      return;
+    }
+    state.exam500Level = e.target.value;
+    save(); render();
+  };
+  document.querySelectorAll('[name="exam500AnnouncementChoice"]').forEach(el => {
+    el.onchange = () => {
       if (running || state.results.length) {
-        e.target.value = state[key];
-        toast("Paramètres verrouillés après le début des courses.");
-        return;
+        render(); return;
       }
-      state[key] = e.target.value;
+      state.exam500EstimateC3 = el.value === "3";
+      state.exam500Regularity = state.exam500EstimateC3 ? "three" : "c1c2";
+      if (!state.exam500EstimateC3) state.runners.forEach(r => { r.project3Ms = null; });
       save(); render();
     };
-  }
+  });
 
   if ($("exam500C3Toggle")) $("exam500C3Toggle").onchange = e => {
     if (running || state.results.some(x => x.race >= 1)) {
