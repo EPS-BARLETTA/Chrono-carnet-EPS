@@ -1297,7 +1297,7 @@
     setVisible("configMessage", settings);
     setVisible("setupBackBtn", !cover);
     setVisible("setupNextBtn", settings && !isSimple());
-    setVisible("shareChronoQrBtn", settings && !exam && state.trainingTool === "chrono");
+    setVisible("shareChronoQrBtn", (settings && !exam && state.trainingTool === "chrono") || (runners && state.mode === "exam500"));
     setVisible("launchPerformanceBtn", runners || (settings && isSimple()));
     if (exam) $("launchPerformanceBtn").textContent = "Continuer : annoncer les temps →";
   }
@@ -7649,6 +7649,27 @@ return null;
     });
   }
 
+  function validateExam500Share(input) {
+    if (!input || input.v !== 2 || input.p !== "e" || !["seconde","premiere"].includes(input.l) || ![2,3].includes(input.a) || typeof input.s !== "boolean") throw new Error("Paramètres 3 × 500 incompatibles");
+    return input;
+  }
+
+  function launchSharedExam500(cfg) {
+    if (running) { alert("Termine la course avant de charger une autre séance."); return; }
+    state = base();
+    resetClock();
+    resetTimedRuntime();
+    state.mode = "exam500";
+    state.exam500Level = cfg.l;
+    state.exam500EstimateC3 = cfg.a === 3;
+    state.exam500Regularity = cfg.a === 3 ? "three" : "c1c2";
+    state.exam500Supervised = cfg.s;
+    state.view = "setup";
+    setupStep = "runners";
+    save(); render();
+    toast("Évaluation 3 × 500 chargée : renseigne les coureurs");
+  }
+
   function launchSharedChrono(cfg) {
     if (running) {
       alert("Le chronomètre tourne. Termine la course avant de changer de séance.");
@@ -7685,7 +7706,10 @@ return null;
     if (!raw) return;
     try { history.replaceState(null, "", location.pathname + location.hash); } catch {}
     let cfg;
-    try { cfg = validateChronoShare(decodeChronoShare(raw)); }
+    try {
+      const decoded = decodeChronoShare(raw);
+      cfg = decoded && decoded.p === "e" ? validateExam500Share(decoded) : validateChronoShare(decoded);
+    }
     catch (error) { alert("QR code de séance invalide ou incompatible. Aucun réglage modifié."); return; }
 
     if (running) {
@@ -7704,7 +7728,7 @@ return null;
         "Annuler : non, récupérer mes résultats avant de continuer."
       );
       if (saved) {
-        launchSharedChrono(cfg);
+        (cfg.p === "e" ? launchSharedExam500 : launchSharedChrono)(cfg);
         return;
       }
       pendingSharedChronoCfg = cfg;
@@ -7716,7 +7740,7 @@ return null;
     }
 
     if (hasSession && !confirm("Une séance sans résultat est déjà préparée. La remplacer par celle du professeur ?")) return;
-    launchSharedChrono(cfg);
+    (cfg.p === "e" ? launchSharedExam500 : launchSharedChrono)(cfg);
   }
 
   $("startSharedChronoBtn").onclick = () => {
@@ -7733,15 +7757,17 @@ return null;
     $("sheetDialog").close();
     $("startSharedChronoBtn").style.display = "none";
     $("startSharedChronoFromSheetBtn").style.display = "none";
-    launchSharedChrono(cfg);
+    (cfg.p === "e" ? launchSharedExam500 : launchSharedChrono)(cfg);
   };
 
   $("startSharedChronoFromSheetBtn").onclick = () => $("startSharedChronoBtn").click();
 
   function showChronoShareQr() {
-    readConfig();
+    if (state.mode !== "exam500") readConfig();
     let cfg;
-    try { cfg = chronoShareConfig(); }
+    try { cfg = state.mode === "exam500"
+      ? validateExam500Share({v:2,p:"e",l:state.exam500Level,a:state.exam500EstimateC3?3:2,s:!!state.exam500Supervised})
+      : chronoShareConfig(); }
     catch (error) { alert("Vérifie les distances et les intermédiaires : " + error.message); return; }
     const url = location.origin + "/?c=" + encodeChronoShare(cfg);
     let dialog = $("chronoShareDialog");
@@ -7774,7 +7800,8 @@ return null;
       };
     }
     $("chronoShareSummary").textContent =
-      (cfg.p === "s" ? cfg.d.join(" → ") : cfg.d) + " m" +
+      cfg.p === "e" ? "3 × 500 m · " + (cfg.l === "seconde" ? "Seconde" : "Première") + " · " + cfg.a + " annonces" + (cfg.s ? " · examen surveillé" : "")
+      : (cfg.p === "s" ? cfg.d.join(" → ") : cfg.d) + " m" +
       (cfg.i ? " · intermédiaires " + cfg.s + " m" : " · temps final seul");
     const box = $("chronoShareBox");
     box.replaceChildren();
