@@ -7727,7 +7727,7 @@ return null;
     const cfg = pendingSharedChronoCfg;
     const info = sharedSessionDescription(cfg);
     panel.innerHTML =
-      '<div style="max-width:850px;margin:auto;padding:12px 0 24px">' +
+      '<div style="max-width:1000px;margin:auto;padding:8px 0 20px">' +
       '<div style="background:linear-gradient(120deg,#2563eb,#4f46e5);border-radius:22px;padding:24px;color:white;margin-bottom:18px">' +
       '<p style="font-weight:850;letter-spacing:.1em;font-size:.9rem;margin:0 0 8px">🏁 SÉANCE DU JOUR</p>' +
       '<h2 style="font-size:clamp(2rem,5vw,3.2rem);margin:0 0 8px;color:white">' + esc(info.title) + '</h2>' +
@@ -7736,29 +7736,28 @@ return null;
       info.facts.map((fact,i) => '<span style="display:inline-block;background:' + (i===0?'#dcfce7':i===1?'#dbeafe':'#fef3c7') +
         ';color:' + (i===0?'#166534':i===1?'#1e40af':'#92400e') +
         ';padding:11px 16px;border-radius:13px;font-size:1rem;font-weight:850">' + esc(fact) + '</span>').join("") + '</div>' +
-      '<div style="background:#f0f7ff;border:2px solid #bfdbfe;border-radius:20px;padding:20px;margin:18px 0 24px">' +
+      '<div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:20px;padding:16px;margin:14px 0 20px">' +
       '<h3 style="margin:0 0 14px;font-size:1.3rem">🎯 Les consignes</h3>' +
-      '<div style="display:grid;gap:10px">' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:8px">' +
       info.instructions.map((x,i) => '<div style="display:flex;align-items:flex-start;gap:12px;background:white;border-radius:12px;padding:12px 14px;font-weight:750;line-height:1.35">' +
         '<span style="background:#dbeafe;color:#1d4ed8;border-radius:50%;width:28px;height:28px;display:inline-flex;flex:none;align-items:center;justify-content:center">' + (i+1) + '</span>' +
         '<span>' + esc(x) + '</span></div>').join("") + '</div></div>' +
-      '<h3>🏃 Organisation des coureurs</h3>' +
-      '<p>Choisis si un ou deux élèves courent pendant cette séance.</p>' +
-      '<div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0 20px">' +
-      '<label style="font-weight:750"><input type="radio" name="sharedRunnerCount" value="1"> Un coureur + un observateur</label>' +
-      '<label style="font-weight:750"><input type="radio" name="sharedRunnerCount" value="2" checked> Deux coureurs</label></div>' +
+      '<h3 style="margin:16px 0 10px;font-size:1.35rem">🏃 Qui court aujourd’hui ?</h3>' +
+      '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:10px 0 16px">' +
+      '<label id="sharedCountLabel1" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:16px 12px;background:#f8fafc;border:2px solid #cbd5e1;border-radius:16px;font-weight:800"><input type="radio" name="sharedRunnerCount" value="1" style="width:20px;height:20px;flex:none"> 🏃 Solo + observateur</label>' +
+      '<label id="sharedCountLabel2" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:16px 12px;background:#eff6ff;border:2px solid #3b82f6;border-radius:16px;font-weight:800"><input type="radio" name="sharedRunnerCount" value="2" checked style="width:20px;height:20px;flex:none"> 🏃🏃 Duo</label></div>' +
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px">' +
       [1,2].map(i => '<div id="sharedRunnerCard' + i + '" style="background:' + (i===1?'#e6f7ec':'#e7f0ff') +
         ';border:2px solid ' + (i===1?'#7bc99b':'#8bb4f5') + ';border-radius:18px;padding:18px">' +
         '<h4 style="margin:0 0 12px;color:' + (i===1?'#166534':'#1d4ed8') + '">Coureur ' + i + '</h4>' +
-        '<label class="field">Nom<input id="sharedLast' + i + '" autocomplete="off" placeholder="Nom" /></label>' +
-        '<label class="field">Prénom<input id="sharedFirst' + i + '" autocomplete="off" placeholder="Prénom" /></label>' +
-        '<label class="field">Classe<input id="sharedClass' + i + '" autocomplete="off" placeholder="Classe" /></label>' +
-        '<label class="field">Sexe<select id="sharedSex' + i + '"><option value="">Choisir</option><option value="F">Fille</option><option value="M">Garçon</option></select></label>' +
+        '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">' +
+        '<label class="field" style="min-width:0">Nom<input id="sharedLast' + i + '" autocomplete="off" placeholder="Nom" /></label>' +
+        '<label class="field" style="min-width:0">Prénom<input id="sharedFirst' + i + '" autocomplete="off" placeholder="Prénom" /></label>' +
+        '<label class="field" style="min-width:0">Classe<input id="sharedClass' + i + '" autocomplete="off" placeholder="Classe" /></label>' +
+        '<label class="field" style="min-width:0">Sexe<select id="sharedSex' + i + '"><option value="">Choisir</option><option value="F">Fille</option><option value="M">Garçon</option></select></label></div>' +
         '</div>').join("") + '</div>' +
       '<div id="sharedObserverCard" class="hidden" style="background:#f1f5f9;border:2px solid #cbd5e1;border-radius:18px;padding:18px;margin-top:16px">' +
-      '<h4 style="margin:0 0 12px">👀 Observateur</h4>' +
-      '<p style="margin:0 0 12px">Cet élève observe, il ne sera pas chronométré.</p>' +
+      '<h4 style="margin:0 0 10px">👀 Mon observateur <span style="font-size:.85rem;font-weight:500;color:#475569">(ne court pas)</span></h4>' +
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px">' +
       '<label class="field">Nom<input id="sharedObserverLast" autocomplete="off" placeholder="Nom" /></label>' +
       '<label class="field">Prénom<input id="sharedObserverFirst" autocomplete="off" placeholder="Prénom" /></label></div></div>' +
@@ -7769,6 +7768,12 @@ return null;
       const single = document.querySelector('input[name="sharedRunnerCount"]:checked')?.value === "1";
       $("sharedRunnerCard2").classList.toggle("hidden", single);
       $("sharedObserverCard").classList.toggle("hidden", !single);
+      [1,2].forEach(i => {
+        const active = single ? i === 1 : i === 2;
+        const label = $("sharedCountLabel" + i);
+        label.style.borderColor = active ? "#3b82f6" : "#cbd5e1";
+        label.style.background = active ? "#eff6ff" : "#f8fafc";
+      });
     };
     document.querySelectorAll('input[name="sharedRunnerCount"]').forEach(radio => {
       radio.onchange = updateCount;
