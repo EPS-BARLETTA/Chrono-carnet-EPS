@@ -188,6 +188,7 @@
   let recoveryTimer = null;
   let exportRunnerId = null;
   let pendingSharedChronoCfg = null;
+  let sharedStudentWelcome = false;
 
   let timedLapCount = 0;
   let timedFinished = false;
@@ -1297,9 +1298,9 @@
     setVisible("configMessage", settings);
     setVisible("setupBackBtn", !cover);
     setVisible("setupNextBtn", settings && !isSimple());
-    setVisible("shareChronoQrBtn", (settings && !exam && state.trainingTool === "chrono") || (runners && state.mode === "exam500"));
+    setVisible("shareChronoQrBtn", (settings && state.mode === "training") || (runners && exam));
     setVisible("launchPerformanceBtn", runners || (settings && isSimple()));
-    if (exam) $("launchPerformanceBtn").textContent = "Continuer : annoncer les temps →";
+    $("launchPerformanceBtn").textContent = exam ? "Continuer : annoncer les temps →" : "Lancer la séance →";
   }
 
   function goSetupStep(step) {
@@ -5845,8 +5846,10 @@ return null;
       .classList
       .toggle(
         "hidden",
-        state.view !== "setup"
+        state.view !== "setup" || sharedStudentWelcome
       );
+
+    renderSharedStudentWelcome();
 
 
     $("performancePanel")
@@ -6831,6 +6834,7 @@ return null;
 
       state =
         base();
+      sharedStudentWelcome = false;
       setupStep = "cover";
 
 
@@ -7654,6 +7658,158 @@ return null;
     return input;
   }
 
+
+  // Nouveau format pour les modes sans QR historique. Les QR v1 et v2 restent lisibles.
+  function validateOtherShare(input) {
+    if (!input || input.v !== 3 || input.p !== "g" ||
+        !["ccf", "training"].includes(input.mode)) throw new Error("Mode QR incompatible");
+    if (input.mode === "ccf") return {v:3,p:"g",mode:"ccf"};
+    if (!["simple","timer","vma"].includes(input.tool)) throw new Error("Outil QR incompatible");
+    const number = (value,min,max) => Number.isFinite(value) && value >= min && value <= max;
+    if (input.tool === "timer" &&
+        (!number(input.duration,1000,86400000) || !number(input.track,1,10000)))
+      throw new Error("Minuteur QR incompatible");
+    if (input.tool === "vma" &&
+        (!number(input.duration,1000,86400000) || !number(input.track,1,10000)))
+      throw new Error("VMA QR incompatible");
+    return input;
+  }
+
+  function sharedSessionDescription(cfg) {
+    if (cfg.p === "e") return {
+      title: "Examen · 3 × 500 m",
+      subtitle: (cfg.l === "seconde" ? "Seconde" : "Première") + " · " + cfg.a + " annonces",
+      instructions: [
+        "Appuyer au passage des 250 m, puis à l’arrivée des 500 m, pour chaque course.",
+        cfg.a === 3
+          ? "Chaque coureur annonce son temps estimé avant les courses 1, 2 et 3."
+          : "Chaque coureur annonce son temps estimé avant les courses 1 et 2. La course 3 est libre.",
+        cfg.s ? "Examen surveillé : validation du professeur requise." : "Suivre les indications du chronomètre."
+      ]
+    };
+    if (cfg.p === "g" && cfg.mode === "ccf") return {
+      title: "CCF · 2 × 800 m", subtitle: "2 courses de 800 m",
+      instructions: ["Appuyer aux passages 200 m, 400 m et 600 m, puis à l’arrivée à 800 m.",
+        "Chaque coureur annonce son temps avant chaque course, dans la fenêtre prévue.",
+        "Respecter la récupération prévue entre les deux courses."]
+    };
+    if (cfg.p === "g") return {
+      title: cfg.tool === "simple" ? "Entraînement · Chrono simple" : cfg.tool === "vma" ? "Entraînement · Test VMA" : "Entraînement · Minuteur / Tours",
+      subtitle: cfg.tool === "simple" ? "Chronométrage libre" : "Durée " + fmtClock(cfg.duration) + " · Piste " + cfg.track + " m",
+      instructions: [cfg.tool === "simple"
+        ? "Démarrer et arrêter le chronomètre selon la consigne du professeur."
+        : "Appuyer à chaque tour complet de " + cfg.track + " m, puis terminer à la fin du temps prévu."]
+    };
+    const series = cfg.p === "s";
+    const distances = series ? cfg.d : [cfg.d];
+    return {
+      title: "Entraînement · Chrono performance",
+      subtitle: series ? distances.join(" → ") + " m" : cfg.d + " m",
+      instructions: [cfg.i
+        ? "Appuyer à chaque passage de " + cfg.s + " m et à l’arrivée de chaque course."
+        : "Ne pas appuyer aux temps intermédiaires : uniquement à l’arrivée.",
+        series ? "Respecter l’ordre des distances de la série." : "Suivre les consignes du professeur."]
+    };
+  }
+
+  function renderSharedStudentWelcome() {
+    let panel = $("sharedStudentWelcome");
+    if (!sharedStudentWelcome) {
+      if (panel) panel.classList.add("hidden");
+      return;
+    }
+    if (!panel) {
+      panel = document.createElement("section");
+      panel.id = "sharedStudentWelcome";
+      panel.className = "card";
+      $("setupPanel").before(panel);
+    }
+    panel.classList.remove("hidden");
+    const cfg = pendingSharedChronoCfg;
+    const info = sharedSessionDescription(cfg);
+    panel.innerHTML =
+      '<div style="max-width:850px;margin:auto;padding:12px 0 24px">' +
+      '<p style="color:#2563eb;font-weight:850;letter-spacing:.08em">SÉANCE TRANSMISE PAR LE PROFESSEUR</p>' +
+      '<h2 style="font-size:clamp(1.7rem,4vw,2.5rem);margin:8px 0">' + esc(info.title) + '</h2>' +
+      '<p style="font-weight:750;color:#475569">' + esc(info.subtitle) + '</p>' +
+      '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:18px;padding:20px;margin:22px 0">' +
+      '<h3 style="margin:0 0 12px">📋 Consignes de réalisation</h3>' +
+      '<ul style="line-height:1.7;margin:0;padding-left:22px">' +
+      info.instructions.map(x => '<li>' + esc(x) + '</li>').join("") + '</ul>' +
+      '<p style="font-size:.88rem;margin:12px 0 0;color:#475569">Réglages du professeur verrouillés pour cette séance.</p></div>' +
+      '<h3>🏃 Les deux coureurs</h3>' +
+      '<p>Complète les informations des deux élèves avant de commencer.</p>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px">' +
+      [1,2].map(i => '<div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:16px;padding:16px">' +
+        '<h4 style="margin:0 0 12px">Coureur ' + i + '</h4>' +
+        '<label class="field">Nom<input id="sharedLast' + i + '" autocomplete="off" placeholder="Nom" /></label>' +
+        '<label class="field">Prénom<input id="sharedFirst' + i + '" autocomplete="off" placeholder="Prénom" /></label>' +
+        '<label class="field">Classe<input id="sharedClass' + i + '" autocomplete="off" placeholder="Classe" /></label>' +
+        '<label class="field">Sexe<select id="sharedSex' + i + '"><option value="">Choisir</option><option value="F">Fille</option><option value="M">Garçon</option></select></label>' +
+        '</div>').join("") + '</div>' +
+      '<button type="button" id="sharedStudentStart" class="btn primary full" style="font-size:1.2rem;min-height:64px;margin-top:24px">Lancer la séance →</button>' +
+      '<p id="sharedStudentError" role="alert" style="color:#b91c1c;font-weight:750"></p></div>';
+    $("sharedStudentStart").onclick = () => {
+      const entries = [1,2].map(i => ({
+        last:$("sharedLast"+i).value.trim(),first:$("sharedFirst"+i).value.trim(),
+        classroom:$("sharedClass"+i).value.trim().toUpperCase(),sex:$("sharedSex"+i).value
+      }));
+      if (entries.some(r => !r.last || !r.first || !r.classroom || !r.sex)) {
+        $("sharedStudentError").textContent = "Complète le nom, le prénom, la classe et le sexe des deux coureurs.";
+        return;
+      }
+      // Même structure d'élève que la saisie normale, sans modifier les données sauvegardées.
+      state.runners = entries.map((r,i) => ({
+        id:uid(),externalId:stableStudentId(r.last,r.first,r.classroom),
+        ...r,name:r.last.toUpperCase()+" "+r.first,
+        project1Ms:null,project2Ms:null,project3Ms:null,
+        tone:i?"blue":"green",lockedIdentity:isExamMode(),
+        stopped:false,stoppedReason:"",stoppedAt:null,stoppedRace:null,stoppedOnlyRaces:[]
+      }));
+      state.activeRunnerId = state.runners[0].id;
+      sharedStudentWelcome = false;
+      pendingSharedChronoCfg = null;
+      save();
+      renderSetup();
+      launch(); // conserve la fenêtre d'annonce existante avant chaque course
+    };
+  }
+
+  function launchSharedOther(cfg) {
+    if (running) return alert("Termine la course avant de changer de séance.");
+    state = base();
+    resetClock();
+    resetTimedRuntime();
+    state.mode = cfg.mode;
+    if (cfg.mode === "ccf") {
+      state.totalDistance = 800; state.splitDistance = 200; state.displayMode = "cumulative";
+    } else {
+      state.trainingTool = cfg.tool;
+      if (cfg.tool === "timer") {
+        state.timerDurationMs = cfg.duration;
+        state.timerDurationChoice = [180000,360000,540000,720000,900000,1200000].includes(cfg.duration) ? String(cfg.duration/1000) : "custom";
+        state.trackDistance = cfg.track;
+        state.trackDistanceChoice = [100,200,250,300,400].includes(cfg.track) ? String(cfg.track) : "custom";
+      } else if (cfg.tool === "vma") {
+        state.vmaDurationMs = cfg.duration;
+        state.vmaProtocol = cfg.duration === 360000 ? "6" : cfg.duration === 720000 ? "12" : "custom";
+        state.vmaTrackDistance = cfg.track;
+        state.vmaTrackDistanceChoice = [100,200,250,300,400].includes(cfg.track) ? String(cfg.track) : "custom";
+      }
+    }
+    state.view = "setup"; setupStep = "runners";
+    save(); render();
+  }
+
+  function beginSharedSession(cfg) {
+    pendingSharedChronoCfg = cfg;
+    if (cfg.p === "e") launchSharedExam500(cfg);
+    else if (cfg.p === "g") launchSharedOther(cfg);
+    else launchSharedChrono(cfg);
+    sharedStudentWelcome = true;
+    render();
+  }
+
   function launchSharedExam500(cfg) {
     if (running) { alert("Termine la course avant de charger une autre séance."); return; }
     state = base();
@@ -7667,7 +7823,6 @@ return null;
     state.view = "setup";
     setupStep = "runners";
     save(); render();
-    toast("Évaluation 3 × 500 chargée : renseigne les coureurs");
   }
 
   function launchSharedChrono(cfg) {
@@ -7698,7 +7853,6 @@ return null;
     setupStep = "runners";
     save();
     render();
-    toast("Nouvelle séance chargée : renseigne les coureurs");
   }
 
   function importSharedChrono() {
@@ -7708,7 +7862,7 @@ return null;
     let cfg;
     try {
       const decoded = decodeChronoShare(raw);
-      cfg = decoded && decoded.p === "e" ? validateExam500Share(decoded) : validateChronoShare(decoded);
+      cfg = decoded && decoded.p === "e" ? validateExam500Share(decoded) : decoded && decoded.p === "g" ? validateOtherShare(decoded) : validateChronoShare(decoded);
     }
     catch (error) { alert("QR code de séance invalide ou incompatible. Aucun réglage modifié."); return; }
 
@@ -7728,7 +7882,7 @@ return null;
         "Annuler : non, récupérer mes résultats avant de continuer."
       );
       if (saved) {
-        (cfg.p === "e" ? launchSharedExam500 : launchSharedChrono)(cfg);
+        beginSharedSession(cfg);
         return;
       }
       pendingSharedChronoCfg = cfg;
@@ -7740,7 +7894,7 @@ return null;
     }
 
     if (hasSession && !confirm("Une séance sans résultat est déjà préparée. La remplacer par celle du professeur ?")) return;
-    (cfg.p === "e" ? launchSharedExam500 : launchSharedChrono)(cfg);
+    beginSharedSession(cfg);
   }
 
   $("startSharedChronoBtn").onclick = () => {
@@ -7763,11 +7917,15 @@ return null;
   $("startSharedChronoFromSheetBtn").onclick = () => $("startSharedChronoBtn").click();
 
   function showChronoShareQr() {
-    if (state.mode !== "exam500") readConfig();
+    if (state.mode === "training") readConfig();
     let cfg;
     try { cfg = state.mode === "exam500"
       ? validateExam500Share({v:2,p:"e",l:state.exam500Level,a:state.exam500EstimateC3?3:2,s:!!state.exam500Supervised})
-      : chronoShareConfig(); }
+      : state.mode === "ccf" ? validateOtherShare({v:3,p:"g",mode:"ccf"})
+      : state.trainingTool === "chrono" ? chronoShareConfig()
+      : validateOtherShare({v:3,p:"g",mode:"training",tool:state.trainingTool,
+          duration:state.trainingTool === "vma" ? currentTimedDuration() : state.timerDurationMs,
+          track:state.trainingTool === "vma" ? state.vmaTrackDistance : state.trackDistance}); }
     catch (error) { alert("Vérifie les distances et les intermédiaires : " + error.message); return; }
     const url = location.origin + "/?c=" + encodeChronoShare(cfg);
     let dialog = $("chronoShareDialog");
@@ -7800,9 +7958,7 @@ return null;
       };
     }
     $("chronoShareSummary").textContent =
-      cfg.p === "e" ? "3 × 500 m · " + (cfg.l === "seconde" ? "Seconde" : "Première") + " · " + cfg.a + " annonces" + (cfg.s ? " · examen surveillé" : "")
-      : (cfg.p === "s" ? cfg.d.join(" → ") : cfg.d) + " m" +
-      (cfg.i ? " · intermédiaires " + cfg.s + " m" : " · temps final seul");
+      sharedSessionDescription(cfg).title + " · " + sharedSessionDescription(cfg).subtitle;
     const box = $("chronoShareBox");
     box.replaceChildren();
     if (!window.QRCode) {
