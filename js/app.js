@@ -7677,38 +7677,37 @@ return null;
 
   function sharedSessionDescription(cfg) {
     if (cfg.p === "e") return {
-      title: "Examen · 3 × 500 m",
-      subtitle: (cfg.l === "seconde" ? "Seconde" : "Première") + " · " + cfg.a + " annonces",
+      title: "3 × 500 m",
+      subtitle: "Classe de " + (cfg.l === "seconde" ? "SECONDE" : "PREMIÈRE"),
+      facts: ["3 courses de 500 m", "Temps intermédiaire : 250 m", cfg.a + " annonces"],
       instructions: [
-        "Appuyer au passage des 250 m, puis à l’arrivée des 500 m, pour chaque course.",
-        cfg.a === 3
-          ? "Chaque coureur annonce son temps estimé avant les courses 1, 2 et 3."
-          : "Chaque coureur annonce son temps estimé avant les courses 1 et 2. La course 3 est libre.",
-        cfg.s ? "Examen surveillé : validation du professeur requise." : "Suivre les indications du chronomètre."
+        "Au passage des 250 m : appuie.",
+        "À 500 m : appuie pour l’arrivée.",
+        cfg.a === 3 ? "Annonce ton temps avant chaque course." : "Annonce ton temps avant les courses 1 et 2.",
+        ...(cfg.a === 2 ? ["Course 3 : sans annonce."] : []),
+        ...(cfg.s ? ["Attends la validation du professeur."] : [])
       ]
     };
     if (cfg.p === "g" && cfg.mode === "ccf") return {
-      title: "CCF · 2 × 800 m", subtitle: "2 courses de 800 m",
-      instructions: ["Appuyer aux passages 200 m, 400 m et 600 m, puis à l’arrivée à 800 m.",
-        "Chaque coureur annonce son temps avant chaque course, dans la fenêtre prévue.",
-        "Respecter la récupération prévue entre les deux courses."]
+      title: "2 × 800 m", subtitle: "CCF · DEMI-FOND",
+      facts: ["2 courses de 800 m", "Temps intermédiaires : tous les 200 m"],
+      instructions: ["Appuie à 200 m, 400 m et 600 m.", "À 800 m : appuie pour l’arrivée.",
+        "Annonce ton temps avant chaque course.", "Respecte le temps de récupération."]
     };
     if (cfg.p === "g") return {
-      title: cfg.tool === "simple" ? "Entraînement · Chrono simple" : cfg.tool === "vma" ? "Entraînement · Test VMA" : "Entraînement · Minuteur / Tours",
-      subtitle: cfg.tool === "simple" ? "Chronométrage libre" : "Durée " + fmtClock(cfg.duration) + " · Piste " + cfg.track + " m",
-      instructions: [cfg.tool === "simple"
-        ? "Démarrer et arrêter le chronomètre selon la consigne du professeur."
-        : "Appuyer à chaque tour complet de " + cfg.track + " m, puis terminer à la fin du temps prévu."]
+      title: cfg.tool === "simple" ? "Chrono libre" : cfg.tool === "vma" ? "Test VMA" : "Minuteur / Tours",
+      subtitle: "ENTRAÎNEMENT",
+      facts: cfg.tool === "simple" ? ["Chronométrage libre"] : ["Durée : " + fmtClock(cfg.duration), "Piste : " + cfg.track + " m"],
+      instructions: [cfg.tool === "simple" ? "Démarre, puis arrête le chrono." :
+        "Appuie à chaque tour de " + cfg.track + " m.", ...(cfg.tool === "simple" ? [] : ["Arrête à la fin du temps prévu."])]
     };
     const series = cfg.p === "s";
-    const distances = series ? cfg.d : [cfg.d];
     return {
-      title: "Entraînement · Chrono performance",
-      subtitle: series ? distances.join(" → ") + " m" : cfg.d + " m",
-      instructions: [cfg.i
-        ? "Appuyer à chaque passage de " + cfg.s + " m et à l’arrivée de chaque course."
-        : "Ne pas appuyer aux temps intermédiaires : uniquement à l’arrivée.",
-        series ? "Respecter l’ordre des distances de la série." : "Suivre les consignes du professeur."]
+      title: "Chrono performance", subtitle: "ENTRAÎNEMENT",
+      facts: [series ? "Série : " + cfg.d.join(" → ") + " m" : "Distance : " + cfg.d + " m",
+        cfg.i ? "Intermédiaires : tous les " + cfg.s + " m" : "Sans temps intermédiaire"],
+      instructions: [cfg.i ? "Appuie à chaque passage de " + cfg.s + " m." : "N’appuie pas pendant la course.",
+        "Appuie à l’arrivée.", ...(series ? ["Suis l’ordre des distances."] : [])]
     };
   }
 
@@ -7729,14 +7728,20 @@ return null;
     const info = sharedSessionDescription(cfg);
     panel.innerHTML =
       '<div style="max-width:850px;margin:auto;padding:12px 0 24px">' +
-      '<p style="color:#2563eb;font-weight:850;letter-spacing:.08em">SÉANCE TRANSMISE PAR LE PROFESSEUR</p>' +
-      '<h2 style="font-size:clamp(1.7rem,4vw,2.5rem);margin:8px 0">' + esc(info.title) + '</h2>' +
-      '<p style="font-weight:750;color:#475569">' + esc(info.subtitle) + '</p>' +
-      '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:18px;padding:20px;margin:22px 0">' +
-      '<h3 style="margin:0 0 12px">📋 Consignes de réalisation</h3>' +
-      '<ul style="line-height:1.7;margin:0;padding-left:22px">' +
-      info.instructions.map(x => '<li>' + esc(x) + '</li>').join("") + '</ul>' +
-      '<p style="font-size:.88rem;margin:12px 0 0;color:#475569">Réglages du professeur verrouillés pour cette séance.</p></div>' +
+      '<div style="background:linear-gradient(120deg,#2563eb,#4f46e5);border-radius:22px;padding:24px;color:white;margin-bottom:18px">' +
+      '<p style="font-weight:850;letter-spacing:.1em;font-size:.9rem;margin:0 0 8px">🏁 SÉANCE DU JOUR</p>' +
+      '<h2 style="font-size:clamp(2rem,5vw,3.2rem);margin:0 0 8px;color:white">' + esc(info.title) + '</h2>' +
+      '<p style="font-size:1.15rem;font-weight:800;margin:0;color:#e0e7ff">' + esc(info.subtitle) + '</p></div>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 22px">' +
+      info.facts.map((fact,i) => '<span style="display:inline-block;background:' + (i===0?'#dcfce7':i===1?'#dbeafe':'#fef3c7') +
+        ';color:' + (i===0?'#166534':i===1?'#1e40af':'#92400e') +
+        ';padding:11px 16px;border-radius:13px;font-size:1rem;font-weight:850">' + esc(fact) + '</span>').join("") + '</div>' +
+      '<div style="background:#f0f7ff;border:2px solid #bfdbfe;border-radius:20px;padding:20px;margin:18px 0 24px">' +
+      '<h3 style="margin:0 0 14px;font-size:1.3rem">🎯 Les consignes</h3>' +
+      '<div style="display:grid;gap:10px">' +
+      info.instructions.map((x,i) => '<div style="display:flex;align-items:flex-start;gap:12px;background:white;border-radius:12px;padding:12px 14px;font-weight:750;line-height:1.35">' +
+        '<span style="background:#dbeafe;color:#1d4ed8;border-radius:50%;width:28px;height:28px;display:inline-flex;flex:none;align-items:center;justify-content:center">' + (i+1) + '</span>' +
+        '<span>' + esc(x) + '</span></div>').join("") + '</div></div>' +
       '<h3>🏃 Organisation des coureurs</h3>' +
       '<p>Choisis si un ou deux élèves courent pendant cette séance.</p>' +
       '<div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0 20px">' +
