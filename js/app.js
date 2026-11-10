@@ -7737,28 +7737,58 @@ return null;
       '<ul style="line-height:1.7;margin:0;padding-left:22px">' +
       info.instructions.map(x => '<li>' + esc(x) + '</li>').join("") + '</ul>' +
       '<p style="font-size:.88rem;margin:12px 0 0;color:#475569">Réglages du professeur verrouillés pour cette séance.</p></div>' +
-      '<h3>🏃 Les deux coureurs</h3>' +
-      '<p>Complète les informations des deux élèves avant de commencer.</p>' +
+      '<h3>🏃 Organisation des coureurs</h3>' +
+      '<p>Choisis si un ou deux élèves courent pendant cette séance.</p>' +
+      '<div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0 20px">' +
+      '<label style="font-weight:750"><input type="radio" name="sharedRunnerCount" value="1"> Un coureur + un observateur</label>' +
+      '<label style="font-weight:750"><input type="radio" name="sharedRunnerCount" value="2" checked> Deux coureurs</label></div>' +
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px">' +
-      [1,2].map(i => '<div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:16px;padding:16px">' +
-        '<h4 style="margin:0 0 12px">Coureur ' + i + '</h4>' +
+      [1,2].map(i => '<div id="sharedRunnerCard' + i + '" style="background:' + (i===1?'#e6f7ec':'#e7f0ff') +
+        ';border:2px solid ' + (i===1?'#7bc99b':'#8bb4f5') + ';border-radius:18px;padding:18px">' +
+        '<h4 style="margin:0 0 12px;color:' + (i===1?'#166534':'#1d4ed8') + '">Coureur ' + i + '</h4>' +
         '<label class="field">Nom<input id="sharedLast' + i + '" autocomplete="off" placeholder="Nom" /></label>' +
         '<label class="field">Prénom<input id="sharedFirst' + i + '" autocomplete="off" placeholder="Prénom" /></label>' +
         '<label class="field">Classe<input id="sharedClass' + i + '" autocomplete="off" placeholder="Classe" /></label>' +
         '<label class="field">Sexe<select id="sharedSex' + i + '"><option value="">Choisir</option><option value="F">Fille</option><option value="M">Garçon</option></select></label>' +
         '</div>').join("") + '</div>' +
-      '<button type="button" id="sharedStudentStart" class="btn primary full" style="font-size:1.2rem;min-height:64px;margin-top:24px">Lancer la séance →</button>' +
+      '<div id="sharedObserverCard" class="hidden" style="background:#f1f5f9;border:2px solid #cbd5e1;border-radius:18px;padding:18px;margin-top:16px">' +
+      '<h4 style="margin:0 0 12px">👀 Observateur</h4>' +
+      '<p style="margin:0 0 12px">Cet élève observe, il ne sera pas chronométré.</p>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px">' +
+      '<label class="field">Nom<input id="sharedObserverLast" autocomplete="off" placeholder="Nom" /></label>' +
+      '<label class="field">Prénom<input id="sharedObserverFirst" autocomplete="off" placeholder="Prénom" /></label></div></div>' +
+      '<button type="button" id="sharedStudentStart" class="btn primary full" style="font-size:1.2rem;min-height:64px;margin-top:24px">Commencer la séance →</button>' +
       '<p id="sharedStudentError" role="alert" style="color:#b91c1c;font-weight:750"></p></div>';
+
+    const updateCount = () => {
+      const single = document.querySelector('input[name="sharedRunnerCount"]:checked')?.value === "1";
+      $("sharedRunnerCard2").classList.toggle("hidden", single);
+      $("sharedObserverCard").classList.toggle("hidden", !single);
+    };
+    document.querySelectorAll('input[name="sharedRunnerCount"]').forEach(radio => {
+      radio.onchange = updateCount;
+    });
+    updateCount();
+
     $("sharedStudentStart").onclick = () => {
-      const entries = [1,2].map(i => ({
+      const single = document.querySelector('input[name="sharedRunnerCount"]:checked')?.value === "1";
+      const entries = (single ? [1] : [1,2]).map(i => ({
         last:$("sharedLast"+i).value.trim(),first:$("sharedFirst"+i).value.trim(),
         classroom:$("sharedClass"+i).value.trim().toUpperCase(),sex:$("sharedSex"+i).value
       }));
       if (entries.some(r => !r.last || !r.first || !r.classroom || !r.sex)) {
-        $("sharedStudentError").textContent = "Complète le nom, le prénom, la classe et le sexe des deux coureurs.";
+        $("sharedStudentError").textContent = "Complète le nom, le prénom, la classe et le sexe de chaque coureur.";
         return;
       }
-      // Même structure d'élève que la saisie normale, sans modifier les données sauvegardées.
+      const observer = single ? {
+        last:$("sharedObserverLast").value.trim(),first:$("sharedObserverFirst").value.trim()
+      } : null;
+      if (single && (!observer.last || !observer.first)) {
+        $("sharedStudentError").textContent = "Complète le nom et le prénom de l’observateur.";
+        return;
+      }
+      // L'observateur est une information de séance, jamais un coureur chronométré.
+      if (observer) state.observer = observer;
       state.runners = entries.map((r,i) => ({
         id:uid(),externalId:stableStudentId(r.last,r.first,r.classroom),
         ...r,name:r.last.toUpperCase()+" "+r.first,
@@ -7771,7 +7801,7 @@ return null;
       pendingSharedChronoCfg = null;
       save();
       renderSetup();
-      launch(); // conserve la fenêtre d'annonce existante avant chaque course
+      launch(); // Les annonces restent demandées avant chaque course concernée.
     };
   }
 
